@@ -16,8 +16,8 @@ import (
 var assets embed.FS
 
 type app struct {
-	db            *DB
-	templateCache *template.Template
+	db   *DB
+	tmpl *template.Template
 }
 
 func main() {
@@ -36,8 +36,8 @@ func main() {
 	}
 
 	app := app{
-		db:            db,
-		templateCache: tmpl,
+		db:   db,
+		tmpl: tmpl,
 	}
 
 	srv := &http.Server{
