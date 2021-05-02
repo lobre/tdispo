@@ -2,59 +2,73 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"embed"
+	"flag"
+	"html/template"
+	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"time"
 )
 
-func main() {
-	ctx := context.Background()
+//go:embed html/*.html migration/*.sql
+var assets embed.FS
 
-	if err := run(ctx); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+type app struct {
+	db            *DB
+	templateCache *template.Template
 }
 
-func run(ctx context.Context) error {
-	db := NewDB("cocorico.db")
+func main() {
+	addr := flag.String("addr", ":8080", "http server address")
+	dsn := flag.String("dsn", "cocorico.db", "datasource name")
+	flag.Parse()
+
+	db := NewDB(*dsn)
 	if err := db.Open(); err != nil {
-		return err
+		log.Fatal(err)
 	}
 
-	statusService := NewStatusService(db)
-
-	statuses, _, err := statusService.FindStatuses(ctx)
+	tmpl, err := template.ParseFS(assets, "html/*.html")
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
-	fmt.Println("list of statuses:")
-	for _, s := range statuses {
-		fmt.Printf("%d: %s\n", s.ID, s.Label)
+	app := app{
+		db:            db,
+		templateCache: tmpl,
 	}
 
-	for _, toAdd := range []string{"created", "canceled", "ready"} {
-		exists := false
-		for _, status := range statuses {
-			if status.Label == toAdd {
-				exists = true
-			}
+	srv := &http.Server{
+		Addr:    *addr,
+		Handler: app.routes(),
+	}
+
+	stop := make(chan os.Signal)
+	signal.Notify(stop, os.Interrupt)
+
+	go func() {
+		log.Printf("starting server on %s\n", *addr)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
 		}
+	}()
 
-		if !exists {
-			newStatus := Status{Label: toAdd}
-			err := statusService.CreateStatus(ctx, &newStatus)
-			if err != nil {
-				return err
-			}
+	<-stop
 
-			fmt.Printf("new status %d: %s created\n", newStatus.ID, newStatus.Label)
-		}
+	log.Println("shutting down server")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal(err)
 	}
+
+	log.Println("server down")
 
 	if err := db.Close(); err != nil {
-		return err
+		log.Fatal(err)
 	}
-
-	return nil
 }

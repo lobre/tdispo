@@ -20,8 +20,8 @@ type Event struct {
 
 // EventUpdate represents a set of fields to be updated via UpdateEvent
 type EventUpdate struct {
-	Title *string
-	Desc *string
+	Title    *string
+	Desc     *string
 	StatusID *int // TODO: see if we need the full object
 }
 

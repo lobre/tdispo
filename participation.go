@@ -22,7 +22,7 @@ const (
 )
 
 // findParticipationsByEvent fetches the participations related to a specific event.
-// For each participation, the guest is attached. 
+// For each participation, the guest is attached.
 func findParticipationsByEvent(ctx context.Context, tx *sql.Tx, id int) (_ []*Participation, n int, err error) {
 	rows, err := tx.QueryContext(ctx,
 		`SELECT
@@ -62,7 +62,7 @@ func findParticipationsByEvent(ctx context.Context, tx *sql.Tx, id int) (_ []*Pa
 }
 
 // findParticipationsByGuest fetches the participations related to a specific guest.
-// For each participation, the event is attached. 
+// For each participation, the event is attached.
 func findParticipationsByGuest(ctx context.Context, tx *sql.Tx, id int) (_ []*Participation, n int, err error) {
 	rows, err := tx.QueryContext(ctx,
 		`SELECT
