@@ -17,7 +17,7 @@ var assets embed.FS
 
 type app struct {
 	db   *DB
-	tmpl *template.Template
+	ts *template.Template // template set
 }
 
 func main() {
@@ -30,14 +30,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	tmpl, err := template.ParseFS(assets, "html/*.html")
+	ts, err := template.ParseFS(assets, "html/*.html")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	app := app{
 		db:   db,
-		tmpl: tmpl,
+		ts: ts,
 	}
 
 	srv := &http.Server{

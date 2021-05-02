@@ -33,7 +33,7 @@ func (app *app) render(w http.ResponseWriter, r *http.Request, name string, td *
 	// Write the template to the buffer, instead of straight to the
 	// http.ResponseWriter. This allows to deal with runtime errors in the
 	// rendering of the template.
-	err := app.tmpl.ExecuteTemplate(buf, name, td)
+	err := app.ts.ExecuteTemplate(buf, name, td)
 	if err != nil {
 		serverError(w, err)
 		return
