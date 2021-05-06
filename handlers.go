@@ -1,13 +1,13 @@
 package main
 
 import (
-	"strconv"
-	"errors"
 	"bytes"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"runtime/debug"
+	"strconv"
 )
 
 type templateData struct {

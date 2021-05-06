@@ -1,17 +1,17 @@
 package main
 
 import (
-	"strings"
-	"io/fs"
-	"path/filepath"
 	"context"
 	"embed"
 	"flag"
 	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -22,8 +22,8 @@ type app struct {
 	ts map[string]*template.Template // template set
 
 	statusService *StatusService
-	guestService *GuestService
-	eventService *EventService
+	guestService  *GuestService
+	eventService  *EventService
 }
 
 func main() {
@@ -45,8 +45,8 @@ func main() {
 		ts: ts,
 
 		statusService: &StatusService{db: db},
-		guestService: &GuestService{db: db},
-		eventService: &EventService{db: db},
+		guestService:  &GuestService{db: db},
+		eventService:  &EventService{db: db},
 	}
 
 	srv := &http.Server{
@@ -98,7 +98,7 @@ func parseTemplates() (map[string]*template.Template, error) {
 			continue
 		}
 
-		t, err := template.ParseFS(assets, name) 
+		t, err := template.ParseFS(assets, name)
 		if err != nil {
 			return nil, err
 		}

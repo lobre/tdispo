@@ -3,14 +3,13 @@
 {{define "title"}}Ajout d’un statut{{end}}
 
 {{define "main"}}
-  <form action="/status/new" method="post"> 
-    <div>
-      <label for="label">Label</label>
-      <input type="text" name="label" required>
-    </div>
-    <div>
-      <input type="submit" value="Créer">
-    </div>
-  </form>
+<form action="/status/new" method="post">
+  <div>
+    <label for="label">Label</label>
+    <input type="text" name="label" required />
+  </div>
+  <div>
+    <input type="submit" value="Créer" />
+  </div>
+</form>
 {{end}}
-
