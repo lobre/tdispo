@@ -19,8 +19,11 @@ import (
 var assets embed.FS
 
 type app struct {
-	db   *DB
 	ts map[string]*template.Template // template set
+
+	statusService *StatusService
+	guestService *GuestService
+	eventService *EventService
 }
 
 func main() {
@@ -39,8 +42,11 @@ func main() {
 	}
 
 	app := app{
-		db:   db,
 		ts: ts,
+
+		statusService: &StatusService{db: db},
+		guestService: &GuestService{db: db},
+		eventService: &EventService{db: db},
 	}
 
 	srv := &http.Server{

@@ -3,6 +3,17 @@
 {{define "title"}}Configuration des statuts{{end}}
 
 {{define "main"}}
-<p>Liste des statuts existants</p>
-{{end}}
+  <p>Liste des statuts existants</p>
 
+  {{if .Statuses}}
+  <ul>
+    {{range .Statuses}}
+    <li>{{.Label}}</li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p>Pas de statut</p>
+  {{end}}
+
+  <a href="/status/create">Nouveau statut</a>
+{{end}}

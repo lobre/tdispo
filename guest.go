@@ -25,10 +25,6 @@ type GuestService struct {
 	db *DB
 }
 
-func NewGuestService(db *DB) *GuestService {
-	return &GuestService{db: db}
-}
-
 func (s *GuestService) FindGuestByID(ctx context.Context, id int) (*Guest, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {

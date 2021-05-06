@@ -1,0 +1,16 @@
+{{template "base" .}}
+
+{{define "title"}}Ajout d’un statut{{end}}
+
+{{define "main"}}
+  <form action="/status/create" method="post"> 
+    <div>
+      <label for="label">Label</label>
+      <input type="text" name="label" required>
+    </div>
+    <div>
+      <input type="submit" value="Créer">
+    </div>
+  </form>
+{{end}}
+

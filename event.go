@@ -29,10 +29,6 @@ type EventService struct {
 	db *DB
 }
 
-func NewEventService(db *DB) *EventService {
-	return &EventService{db: db}
-}
-
 // FindEventByID retrieves an event and attaches participations and status.
 func (s *EventService) FindEventByID(ctx context.Context, id int) (*Event, error) {
 	tx, err := s.db.BeginTx(ctx, nil)

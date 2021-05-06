@@ -10,6 +10,7 @@ import (
 )
 
 type templateData struct {
+	Statuses []*Status
 }
 
 // The serverError helper writes an error message and stack trace to the errorLog,
@@ -54,23 +55,52 @@ func (app *app) home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *app) findStatuses(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "statuses", &templateData{})
+	statuses, _, err := app.statusService.FindStatuses(r.Context())
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	app.render(w, r, "statuses", &templateData{
+		Statuses: statuses,
+	})
 }
 
 func (app *app) findStatusByID(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "to be implemented\n") // TODO: implement
+	fmt.Fprintf(w, "findStatusByID to be implemented\n") // TODO: implement
 }
 
 func (app *app) createStatusForm(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "to be implemented\n") // TODO: implement
+	app.render(w, r, "status_create", &templateData{})
 }
 
 func (app *app) createStatus(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "to be implemented\n") // TODO: implement
+	if r.Method != http.MethodPost {
+		clientError(w, http.StatusMethodNotAllowed)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	s := Status{
+		Label: r.FormValue("label"),
+	}
+
+	err = app.statusService.CreateStatus(r.Context(), &s)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/status/%d", s.ID), http.StatusSeeOther)
 }
 
 func (app *app) deleteStatus(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "to be implemented\n") // TODO: implement
+	fmt.Fprintf(w, "deleteStatus to be implemented\n") // TODO: implement
 }
 
 func logRequest(next http.Handler) http.Handler {

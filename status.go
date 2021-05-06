@@ -14,10 +14,6 @@ type StatusService struct {
 	db *DB
 }
 
-func NewStatusService(db *DB) *StatusService {
-	return &StatusService{db: db}
-}
-
 func (s *StatusService) FindStatusByID(ctx context.Context, id int) (*Status, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
