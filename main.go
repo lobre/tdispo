@@ -1,6 +1,9 @@
 package main
 
 import (
+	"strings"
+	"io/fs"
+	"path/filepath"
 	"context"
 	"embed"
 	"flag"
@@ -17,7 +20,7 @@ var assets embed.FS
 
 type app struct {
 	db   *DB
-	ts *template.Template // template set
+	ts map[string]*template.Template // template set
 }
 
 func main() {
@@ -30,7 +33,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	ts, err := template.ParseFS(assets, "html/*.html")
+	ts, err := parseTemplates()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -71,4 +74,36 @@ func main() {
 	if err := db.Close(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func parseTemplates() (map[string]*template.Template, error) {
+	ts := make(map[string]*template.Template)
+
+	names, err := fs.Glob(assets, "html/*.html")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, name := range names {
+		base := filepath.Base(name)
+		k := strings.TrimSuffix(base, filepath.Ext(base))
+
+		if k == "base" {
+			continue
+		}
+
+		t, err := template.ParseFS(assets, name) 
+		if err != nil {
+			return nil, err
+		}
+
+		t, err = t.ParseFS(assets, "html/base.html")
+		if err != nil {
+			return nil, err
+		}
+
+		ts[k] = t
+	}
+
+	return ts, nil
 }

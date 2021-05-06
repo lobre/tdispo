@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"bytes"
 	"fmt"
 	"log"
@@ -27,28 +28,33 @@ func clientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 }
 
+// render will render the response.
+// Write the template to the buffer, instead of straight to the http.ResponseWriter.
+// This allows to deal with runtime errors in the rendering of the template.
 func (app *app) render(w http.ResponseWriter, r *http.Request, name string, td *templateData) {
 	buf := new(bytes.Buffer)
 
-	// Write the template to the buffer, instead of straight to the
-	// http.ResponseWriter. This allows to deal with runtime errors in the
-	// rendering of the template.
-	err := app.ts.ExecuteTemplate(buf, name, td)
+	tmpl := app.ts[name]
+	if tmpl == nil {
+		serverError(w, errors.New("template not found"))
+		return
+	}
+
+	err := tmpl.Execute(buf, td)
 	if err != nil {
 		serverError(w, err)
 		return
 	}
 
-	// Template has been rendered without any error, we can write it as the response.
 	buf.WriteTo(w)
 }
 
 func (app *app) home(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "home.html", &templateData{})
+	app.render(w, r, "home", &templateData{})
 }
 
 func (app *app) findStatuses(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "statuses.html", &templateData{})
+	app.render(w, r, "statuses", &templateData{})
 }
 
 func (app *app) findStatusByID(w http.ResponseWriter, r *http.Request) {
