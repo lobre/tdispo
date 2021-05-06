@@ -133,6 +133,10 @@ func findGuests(ctx context.Context, tx *sql.Tx) (_ []*Guest, n int, err error) 
 		guests = append(guests, &guest)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
 	return guests, n, nil
 }
 

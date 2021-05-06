@@ -48,7 +48,7 @@ func (app *app) home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *app) findStatuses(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "to be implemented\n") // TODO: implement
+	app.render(w, r, "statuses.html", &templateData{})
 }
 
 func (app *app) findStatusByID(w http.ResponseWriter, r *http.Request) {

@@ -156,13 +156,11 @@ func findEvents(ctx context.Context, tx *sql.Tx) (_ []*Event, n int, err error) 
 			return nil, 0, err
 		}
 
-		// attach status
-		evt.Status, err = findStatusByID(ctx, tx, evt.StatusID)
-		if err != nil {
-			return nil, 0, err
-		}
-
 		events = append(events, &evt)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
 	}
 
 	return events, n, nil

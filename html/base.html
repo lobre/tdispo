@@ -1,0 +1,24 @@
+{{define "base"}}
+<!doctype html>
+<html lang='en'>
+    <head>
+        <meta charset='utf-8'>
+        <title>{{template "title" .}} - PCBB</title>
+    </head>
+    <body>
+        <header>
+            <h1><a href='/'>Sorties PCBB</a></h1>
+        </header>
+        <nav>
+            <div>
+                <a href='/'>Accueil</a>
+                <a href='/status'>Configuration des status</a>
+            </div>
+        </nav>
+        <main>
+          <h1>{{template "title" .}}</h1>
+            {{template "main" .}}
+        </main>
+    </body>
+</html>
+{{end}}

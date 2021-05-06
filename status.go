@@ -100,6 +100,10 @@ func findStatuses(ctx context.Context, tx *sql.Tx) (_ []*Status, n int, err erro
 		statuses = append(statuses, &s)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
 	return statuses, n, nil
 }
 

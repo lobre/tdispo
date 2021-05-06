@@ -58,6 +58,10 @@ func findParticipationsByEvent(ctx context.Context, tx *sql.Tx, id int) (_ []*Pa
 		participations = append(participations, &part)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
 	return participations, n, nil
 }
 
@@ -96,6 +100,10 @@ func findParticipationsByGuest(ctx context.Context, tx *sql.Tx, id int) (_ []*Pa
 		}
 
 		participations = append(participations, &part)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
 	}
 
 	return participations, n, nil
