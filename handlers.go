@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"errors"
 	"bytes"
 	"fmt"
@@ -61,17 +62,13 @@ func (app *app) findStatuses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.render(w, r, "statuses", &templateData{
+	app.render(w, r, "status", &templateData{
 		Statuses: statuses,
 	})
 }
 
-func (app *app) findStatusByID(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "findStatusByID to be implemented\n") // TODO: implement
-}
-
 func (app *app) createStatusForm(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "status_create", &templateData{})
+	app.render(w, r, "status_new", &templateData{})
 }
 
 func (app *app) createStatus(w http.ResponseWriter, r *http.Request) {
@@ -96,11 +93,26 @@ func (app *app) createStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/status/%d", s.ID), http.StatusSeeOther)
+	http.Redirect(w, r, "/status", http.StatusSeeOther)
 }
 
 func (app *app) deleteStatus(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "deleteStatus to be implemented\n") // TODO: implement
+	if r.Method != http.MethodDelete {
+		clientError(w, http.StatusMethodNotAllowed)
+		return
+	}
+
+	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	err = app.statusService.DeleteStatus(r.Context(), id)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
 }
 
 func logRequest(next http.Handler) http.Handler {

@@ -14,9 +14,8 @@ func (app *app) routes() http.Handler {
 
 	// status
 	mux.Get("/status", http.HandlerFunc(app.findStatuses))
-	mux.Get("/status/create", http.HandlerFunc(app.createStatusForm))
-	mux.Post("/status/create", http.HandlerFunc(app.createStatus))
-	mux.Get("/status/:id", http.HandlerFunc(app.findStatusByID))
+	mux.Get("/status/new", http.HandlerFunc(app.createStatusForm))
+	mux.Post("/status/new", http.HandlerFunc(app.createStatus))
 	mux.Del("/status/:id", http.HandlerFunc(app.deleteStatus))
 
 	return chain.Then(mux)

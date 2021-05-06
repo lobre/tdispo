@@ -1,0 +1,36 @@
+{{template "base" .}}
+
+{{define "title"}}Configuration des statuts{{end}}
+
+{{define "main"}}
+  <p>Liste des statuts existants</p>
+
+  {{if .Statuses}}
+  <ul>
+    {{range .Statuses}}
+    <li>{{.Label}} <a href="" onclick="deleteStatus(event, {{.ID}})">delete</a></li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p>Pas de statut</p>
+  {{end}}
+
+  <a href="/status/new">Nouveau statut</a>
+{{end}}
+
+{{define "js"}}
+  function deleteStatus(e, id) {
+    e.preventDefault();
+
+    var request = new XMLHttpRequest();
+    request.open("DELETE", "/status/"+id, true);
+
+    request.onload = function() {
+      if (this.status == 200) {
+        window.location.replace("/status");
+      }
+    };
+
+    request.send();
+  }
+{{end}}
