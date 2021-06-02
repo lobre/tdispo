@@ -1,0 +1,8 @@
+{{template "base" .}}
+
+{{define "title"}}Événement - {{.Event.Title}}{{end}}
+
+{{define "main"}}
+<p>{{.Event.Desc | markdown}}</p>
+<p>Statut : {{.Event.Status.Label}}</p>
+{{end}}

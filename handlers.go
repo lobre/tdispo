@@ -130,7 +130,21 @@ func (app *app) findEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *app) findEventByID(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "not implemented\n")
+	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	event, err := app.eventService.FindEventByID(r.Context(), id)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	app.render(w, r, "event", &templateData{
+		Event: event,
+	})
 }
 
 func (app *app) createEventForm(w http.ResponseWriter, r *http.Request) {
@@ -236,7 +250,7 @@ func (app *app) updateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/event/%d", id), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/events/%d", id), http.StatusSeeOther)
 }
 
 func (app *app) deleteEvent(w http.ResponseWriter, r *http.Request) {

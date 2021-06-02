@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"flag"
+	"fmt"
 	"html/template"
 	"io/fs"
 	"log"
@@ -13,6 +14,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/russross/blackfriday"
 )
 
 //go:embed html/*.html migration/*.sql
@@ -98,7 +101,11 @@ func parseTemplates() (map[string]*template.Template, error) {
 			continue
 		}
 
-		t, err := template.ParseFS(assets, name)
+		t := template.New(base).Funcs(template.FuncMap{
+			"markdown": markdown,
+		})
+
+		t, err = t.ParseFS(assets, name)
 		if err != nil {
 			return nil, err
 		}
@@ -112,4 +119,9 @@ func parseTemplates() (map[string]*template.Template, error) {
 	}
 
 	return ts, nil
+}
+
+func markdown(args ...interface{}) template.HTML {
+	s := blackfriday.MarkdownCommon([]byte(fmt.Sprintf("%s", args...)))
+	return template.HTML(s)
 }

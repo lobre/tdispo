@@ -9,7 +9,7 @@
 <ul>
   {{range .Events}}
   <li>
-    <a href="/participation/{{.ID}}">{{.Title}}</a> (<a href="/events/{{.ID}}/edit">modifier</a>, <a href="" onclick="deleteEvent(event, {{.ID}})">delete</a>)
+    <a href="/events/{{.ID}}">{{.Title}}</a> (<a href="/events/{{.ID}}/edit">modifier</a>, <a href="" onclick="deleteEvent(event, {{.ID}})">delete</a>)
   </li>
   {{end}}
 </ul>
