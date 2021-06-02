@@ -12,6 +12,8 @@ import (
 
 type templateData struct {
 	Statuses []*Status
+	Event    *Event
+	Events   []*Event
 }
 
 // The serverError helper writes an error message and stack trace to the errorLog,
@@ -62,13 +64,13 @@ func (app *app) findStatuses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.render(w, r, "status", &templateData{
+	app.render(w, r, "find_statuses", &templateData{
 		Statuses: statuses,
 	})
 }
 
 func (app *app) createStatusForm(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "status_new", &templateData{})
+	app.render(w, r, "create_status_form", &templateData{})
 }
 
 func (app *app) createStatus(w http.ResponseWriter, r *http.Request) {
@@ -109,6 +111,147 @@ func (app *app) deleteStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = app.statusService.DeleteStatus(r.Context(), id)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+}
+
+func (app *app) findEvents(w http.ResponseWriter, r *http.Request) {
+	events, _, err := app.eventService.FindEvents(r.Context())
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	app.render(w, r, "find_events", &templateData{
+		Events: events,
+	})
+}
+
+func (app *app) findEventByID(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "not implemented\n")
+}
+
+func (app *app) createEventForm(w http.ResponseWriter, r *http.Request) {
+	statuses, _, err := app.statusService.FindStatuses(r.Context())
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	app.render(w, r, "create_event_form", &templateData{
+		Statuses: statuses,
+	})
+}
+
+func (app *app) createEvent(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		clientError(w, http.StatusMethodNotAllowed)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	statusID, err := strconv.Atoi(r.FormValue("status"))
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	evt := Event{
+		Title:    r.FormValue("title"),
+		Desc:     r.FormValue("desc"),
+		StatusID: statusID,
+	}
+
+	err = app.eventService.CreateEvent(r.Context(), &evt)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/events/%d", evt.ID), http.StatusSeeOther)
+}
+
+func (app *app) updateEventForm(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	evt, err := app.eventService.FindEventByID(r.Context(), id)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	statuses, _, err := app.statusService.FindStatuses(r.Context())
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	app.render(w, r, "update_event_form", &templateData{
+		Event:    evt,
+		Statuses: statuses,
+	})
+}
+
+func (app *app) updateEvent(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		clientError(w, http.StatusMethodNotAllowed)
+		return
+	}
+
+	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	statusID, err := strconv.Atoi(r.FormValue("status"))
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	title := r.FormValue("title")
+	desc := r.FormValue("desc")
+
+	upd := EventUpdate{
+		Title:    &title,
+		Desc:     &desc,
+		StatusID: &statusID,
+	}
+
+	_, err = app.eventService.UpdateEvent(r.Context(), id, upd)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/event/%d", id), http.StatusSeeOther)
+}
+
+func (app *app) deleteEvent(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		clientError(w, http.StatusMethodNotAllowed)
+		return
+	}
+
+	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	err = app.eventService.DeleteEvent(r.Context(), id)
 	if err != nil {
 		serverError(w, err)
 		return

@@ -1,0 +1,38 @@
+{{template "base" .}}
+
+{{define "title"}}Liste des événements{{end}}
+
+{{define "main"}}
+<p>Liste des événements existants</p>
+
+{{if .Events}}
+<ul>
+  {{range .Events}}
+  <li>
+    <a href="/participation/{{.ID}}">{{.Title}}</a> (<a href="/events/{{.ID}}/edit">modifier</a>, <a href="" onclick="deleteEvent(event, {{.ID}})">delete</a>)
+  </li>
+  {{end}}
+</ul>
+{{else}}
+<p>Pas d’événement</p>
+{{end}}
+
+<a href="/events/new">Nouvel événement</a>
+{{end}}
+
+{{define "js"}}
+function deleteEvent(e, id) {
+  e.preventDefault();
+  var request = new XMLHttpRequest();
+
+  request.open("DELETE", "/events/"+id, true);
+
+  request.onload = function() {
+    if (this.status == 200) {
+      window.location.replace("/events");
+    }
+  };
+
+  request.send();
+}
+{{end}}

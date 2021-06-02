@@ -215,7 +215,7 @@ func updateEvent(ctx context.Context, tx *sql.Tx, id int, upd EventUpdate) (*Eve
 		`UPDATE events SET title = ?, desc = ?, status = ? WHERE id = ?`,
 		event.Title,
 		event.Desc,
-		event.Status,
+		event.StatusID,
 		id,
 	)
 	if err != nil {
@@ -226,7 +226,7 @@ func updateEvent(ctx context.Context, tx *sql.Tx, id int, upd EventUpdate) (*Eve
 }
 
 func deleteEvent(ctx context.Context, tx *sql.Tx, id int) error {
-	_, err := tx.ExecContext(ctx, `DELETE FROM events WHERE id = ?`, id)
+	_, err := tx.ExecContext(ctx, `DELETE FROM events WHERE id = ?`, id)
 	if err != nil {
 		return err
 	}

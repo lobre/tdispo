@@ -1,0 +1,27 @@
+{{template "base" .}}
+
+{{define "title"}}Ajout d’un événement{{end}}
+
+{{define "main"}}
+<form action="/events/new" method="post">
+  <div>
+    <label for="title">Titre</label>
+    <input type="text" name="title" required />
+  </div>
+  <div>
+    <label for="desc">Description</label>
+    <textarea name="desc" rows="4" cols="50"></textarea>
+  </div>
+  <div>
+    <label for="status">Statut</label>
+    <select name="status">
+      {{range .Statuses}}
+      <option value="{{.ID}}">{{.Label}}</option>
+      {{end}}
+    </select>
+  </div>
+  <div>
+    <input type="submit" value="Créer" />
+  </div>
+</form>
+{{end}}
