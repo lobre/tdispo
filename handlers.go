@@ -14,6 +14,8 @@ type templateData struct {
 	Statuses []*Status
 	Event    *Event
 	Events   []*Event
+	Guest    *Guest
+	Guests   []*Guest
 }
 
 // The serverError helper writes an error message and stack trace to the errorLog,
@@ -266,6 +268,114 @@ func (app *app) deleteEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = app.eventService.DeleteEvent(r.Context(), id)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+}
+
+func (app *app) findGuests(w http.ResponseWriter, r *http.Request) {
+	guests, _, err := app.guestService.FindGuests(r.Context())
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	app.render(w, r, "find_guests", &templateData{
+		Guests: guests,
+	})
+}
+
+func (app *app) createGuestForm(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, "create_guest_form", &templateData{})
+}
+
+func (app *app) createGuest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		clientError(w, http.StatusMethodNotAllowed)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	guest := Guest{
+		Name:  r.FormValue("name"),
+		Email: r.FormValue("email"),
+	}
+
+	err = app.guestService.CreateGuest(r.Context(), &guest)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	http.Redirect(w, r, "/guests", http.StatusSeeOther)
+}
+
+func (app *app) updateGuestForm(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	guest, err := app.guestService.FindGuestByID(r.Context(), id)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	app.render(w, r, "update_guest_form", &templateData{
+		Guest: guest,
+	})
+}
+
+func (app *app) updateGuest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		clientError(w, http.StatusMethodNotAllowed)
+		return
+	}
+
+	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	name := r.FormValue("name")
+	email := r.FormValue("email")
+
+	upd := GuestUpdate{
+		Name:  &name,
+		Email: &email,
+	}
+
+	_, err = app.guestService.UpdateGuest(r.Context(), id, upd)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	http.Redirect(w, r, "/guests", http.StatusSeeOther)
+}
+
+func (app *app) deleteGuest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		clientError(w, http.StatusMethodNotAllowed)
+		return
+	}
+
+	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	err = app.guestService.DeleteGuest(r.Context(), id)
 	if err != nil {
 		serverError(w, err)
 		return

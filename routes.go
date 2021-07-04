@@ -21,6 +21,14 @@ func (app *app) routes() http.Handler {
 	mux.Get("/events/:id", http.HandlerFunc(app.findEventByID))
 	mux.Del("/events/:id", http.HandlerFunc(app.deleteEvent))
 
+	// guests
+	mux.Get("/guests", http.HandlerFunc(app.findGuests))
+	mux.Get("/guests/new", http.HandlerFunc(app.createGuestForm))
+	mux.Post("/guests/new", http.HandlerFunc(app.createGuest))
+	mux.Get("/guests/:id/edit", http.HandlerFunc(app.updateGuestForm))
+	mux.Post("/guests/:id/edit", http.HandlerFunc(app.updateGuest))
+	mux.Del("/guests/:id", http.HandlerFunc(app.deleteGuest))
+
 	// status
 	mux.Get("/status", http.HandlerFunc(app.findStatuses))
 	mux.Get("/status/new", http.HandlerFunc(app.createStatusForm))

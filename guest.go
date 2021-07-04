@@ -149,7 +149,7 @@ func findGuestByID(ctx context.Context, tx *sql.Tx, id int) (*Guest, error) {
 
 func createGuest(ctx context.Context, tx *sql.Tx, guest *Guest) error {
 	res, err := tx.ExecContext(ctx,
-		`INSERT INTO guests (name, desc) VALUES (?, ?)`,
+		`INSERT INTO guests (name, email) VALUES (?, ?)`,
 		guest.Name,
 		guest.Email,
 	)

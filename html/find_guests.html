@@ -1,0 +1,38 @@
+{{template "base" .}}
+
+{{define "title"}}Configuration des participants{{end}}
+
+{{define "main"}}
+<p>Liste des participants existants</p>
+
+{{if .Guests}}
+<ul>
+  {{range .Guests}}
+  <li>
+    {{.Name}}, <a href="mailto:{{.Email}}">{{.Email}}</a> (<a href="/guests/{{.ID}}/edit">modifier</a>, <a href="" onclick="deleteGuest(event, {{.ID}})">supprimer</a>)
+  </li>
+  {{end}}
+</ul>
+{{else}}
+<p>Pas de participants</p>
+{{end}}
+
+<a href="/guests/new">Nouveau participant</a>
+{{end}}
+
+{{define "js"}}
+function deleteGuest(e, id) {
+  e.preventDefault();
+  var request = new XMLHttpRequest();
+
+  request.open("DELETE", "/guests/"+id, true);
+
+  request.onload = function() {
+    if (this.status == 200) {
+      window.location.replace("/guests");
+    }
+  };
+
+  request.send();
+}
+{{end}}
