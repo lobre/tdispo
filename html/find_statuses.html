@@ -6,10 +6,10 @@
 <p>Liste des statuts existants</p>
 
 {{if .Statuses}}
-<ul>
+<ul id="statuses">
   {{range .Statuses}}
   <li>
-    {{.Label}} (<a href="" onclick="deleteStatus(event, {{.ID}})">supprimer</a>)
+    {{.Label}} (<a href="" class="delete" data-status-id="{{.ID}}">supprimer</a>)
   </li>
   {{end}}
 </ul>
@@ -21,18 +21,25 @@
 {{end}}
 
 {{define "js"}}
-function deleteStatus(e, id) {
-  e.preventDefault();
-  var request = new XMLHttpRequest();
+const statuses = document.getElementById("statuses")
+statuses.addEventListener("click", function(event) {
+  const target = event.target;
+  if (target.matches("a.delete")) {
+    event.preventDefault();
+    deleteStatus(target.dataset.statusId);
+  }
+})
 
-  request.open("DELETE", "/status/"+id, true);
-
-  request.onload = function() {
-    if (this.status == 200) {
-      window.location.replace("/status");
+async function deleteStatus(statusId) {
+  try {
+    const resp = await fetch(`/status/${statusId}`, { method: "DELETE" })
+    if (!resp.ok) {
+      throw `server error: http code ${resp.status}`;
     }
-  };
 
-  request.send();
+    window.location.replace("/status");
+  } catch (error) {
+    console.log(error);
+  }
 }
 {{end}}

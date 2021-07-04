@@ -12,10 +12,13 @@ func (app *app) routes() http.Handler {
 	mux := pat.New()
 	mux.Get("/", http.HandlerFunc(app.home))
 
+	mux.Get("/admin", http.HandlerFunc(app.authenticate))
+
 	// events
 	mux.Get("/events", http.HandlerFunc(app.findEvents))
 	mux.Get("/events/new", http.HandlerFunc(app.createEventForm))
 	mux.Post("/events/new", http.HandlerFunc(app.createEvent))
+	mux.Post("/events/:event/participate/:guest", http.HandlerFunc(app.participate))
 	mux.Get("/events/:id/edit", http.HandlerFunc(app.updateEventForm))
 	mux.Post("/events/:id/edit", http.HandlerFunc(app.updateEvent))
 	mux.Get("/events/:id", http.HandlerFunc(app.findEventByID))

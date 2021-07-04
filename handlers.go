@@ -144,8 +144,15 @@ func (app *app) findEventByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	allGuests, _, err := app.guestService.FindGuests(r.Context())
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
 	app.render(w, r, "event", &templateData{
-		Event: event,
+		Event:  event,
+		Guests: allGuests,
 	})
 }
 
@@ -380,6 +387,32 @@ func (app *app) deleteGuest(w http.ResponseWriter, r *http.Request) {
 		serverError(w, err)
 		return
 	}
+}
+
+func (app *app) participate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		clientError(w, http.StatusMethodNotAllowed)
+		return
+	}
+
+	eventID, err := strconv.Atoi(r.URL.Query().Get(":event"))
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	guestID, err := strconv.Atoi(r.URL.Query().Get(":guest"))
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	fmt.Fprintf(w, fmt.Sprintf("%d, %d", eventID, guestID))
+}
+
+// TODO: implement
+func (app *app) authenticate(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "authenticate with a cookie")
 }
 
 func logRequest(next http.Handler) http.Handler {

@@ -18,6 +18,25 @@ type Event struct {
 	Participations []*Participation
 }
 
+// YetToParticipate returns the list of guests that haven’t
+// participated yet to the event.
+func (evt *Event) YetToParticipate(all []*Guest) []*Guest {
+	var res []*Guest
+	for _, guest := range all {
+		participated := false
+		for _, part := range evt.Participations {
+			if part.GuestID == guest.ID {
+				participated = true
+				break
+			}
+		}
+		if !participated {
+			res = append(res, guest)
+		}
+	}
+	return res
+}
+
 // EventUpdate represents a set of fields to be updated via UpdateEvent
 type EventUpdate struct {
 	Title    *string

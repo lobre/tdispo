@@ -6,10 +6,10 @@
 <p>Liste des événements existants</p>
 
 {{if .Events}}
-<ul>
+<ul id="events">
   {{range .Events}}
   <li>
-    <a href="/events/{{.ID}}">{{.Title}}</a> (<a href="/events/{{.ID}}/edit">modifier</a>, <a href="" onclick="deleteEvent(event, {{.ID}})">supprimer</a>)
+    <a href="/events/{{.ID}}">{{.Title}}</a> (<a href="/events/{{.ID}}/edit">modifier</a>, <a href="" class="delete" data-event-id="{{.ID}}">supprimer</a>)
   </li>
   {{end}}
 </ul>
@@ -21,18 +21,25 @@
 {{end}}
 
 {{define "js"}}
-function deleteEvent(e, id) {
-  e.preventDefault();
-  var request = new XMLHttpRequest();
+const events = document.getElementById("events")
+events.addEventListener("click", function(event) {
+  const target = event.target;
+  if (target.matches("a.delete")) {
+    event.preventDefault();
+    deleteEvent(target.dataset.eventId);
+  }
+})
 
-  request.open("DELETE", "/events/"+id, true);
-
-  request.onload = function() {
-    if (this.status == 200) {
-      window.location.replace("/events");
+async function deleteEvent(eventId) {
+  try {
+    const resp = await fetch(`/events/${eventId}`, { method: "DELETE" })
+    if (!resp.ok) {
+      throw `server error: http code ${resp.status}`;
     }
-  };
 
-  request.send();
+    window.location.replace("/events");
+  } catch (error) {
+    console.log(error);
+  }
 }
 {{end}}
