@@ -1,6 +1,6 @@
 {{ template "base" . }}
 
-{{ define "title" -}} Événement - {{ .Event.Title }} {{- end }}
+{{ define "title" }}Événement - {{ .Event.Title }}{{ end }}
 
 {{ define "main" }}
   <form action="/events/{{ .Event.ID }}/edit" method="post">

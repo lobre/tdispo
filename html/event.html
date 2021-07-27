@@ -1,6 +1,6 @@
 {{ template "base" . }}
 
-{{ define "title" -}} Événement - {{ .Event.Title }} {{- end }}
+{{ define "title" }}Événement - {{ .Event.Title }}{{ end }}
 
 {{ define "main" }}
   <p>{{ .Event.Desc | markdown }}</p>

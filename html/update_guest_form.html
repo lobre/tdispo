@@ -1,6 +1,6 @@
 {{ template "base" . }}
 
-{{ define "title" -}} Participant - {{ .Guest.Name }} {{- end }}
+{{ define "title" }}Participant - {{ .Guest.Name }}{{ end }}
 
 {{ define "main" }}
   <form action="/guests/{{ .Guest.ID }}/edit" method="post">
