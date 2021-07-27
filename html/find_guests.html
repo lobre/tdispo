@@ -1,45 +1,45 @@
-{{template "base" .}}
+{{ template "base" . }}
 
-{{define "title"}}Configuration des participants{{end}}
+{{ define "title" -}} Configuration des participants {{- end }}
 
-{{define "main"}}
-<p>Liste des participants existants</p>
+{{ define "main" }}
+  <p>Liste des participants existants</p>
 
-{{if .Guests}}
-<ul id="guests">
-  {{range .Guests}}
-  <li>
-    {{.Name}}, <a href="mailto:{{.Email}}">{{.Email}}</a> (<a href="/guests/{{.ID}}/edit">modifier</a>, <a href="" class="delete" data-guest-id="{{.ID}}">supprimer</a>)
-  </li>
-  {{end}}
-</ul>
-{{else}}
-<p>Pas de participants</p>
-{{end}}
+  {{ if .Guests }}
+    <ul id="guests">
+      {{ range .Guests }}
+        <li>
+          {{ .Name }}, <a href="mailto:{{ .Email }}">{{ .Email }}</a> (<a href="/guests/{{ .ID }}/edit">modifier</a>, <a href="" class="delete" data-guest-id="{{ .ID }}">supprimer</a>)
+        </li>
+      {{ end }}
+    </ul>
+  {{ else }}
+    <p>Pas de participants</p>
+  {{ end }}
 
-<a href="/guests/new">Nouveau participant</a>
-{{end}}
+  <a href="/guests/new">Nouveau participant</a>
 
-{{define "js"}}
-const guests = document.getElementById("guests")
-guests.addEventListener("click", function(event) {
-  const target = event.target;
-  if (target.matches("a.delete")) {
-    event.preventDefault();
-    deleteGuest(target.dataset.guestId);
-  }
-})
+  <script>
+    const guests = document.getElementById("guests")
+    guests.addEventListener("click", function(event) {
+      const target = event.target;
+      if (target.matches("a.delete")) {
+        event.preventDefault();
+        deleteGuest(target.dataset.guestId);
+      }
+    })
 
-async function deleteGuest(guestId) {
-  try {
-    const resp = await fetch(`/guests/${guestId}`, { method: "DELETE" })
-    if (!resp.ok) {
-      throw `server error: http code ${resp.status}`;
+    async function deleteGuest(guestId) {
+      try {
+        const resp = await fetch(`/guests/${guestId}`, { method: "DELETE" })
+        if (!resp.ok) {
+          throw `server error: http code ${resp.status}`;
+        }
+
+        window.location.replace("/guests");
+      } catch (error) {
+        console.log(error);
+      }
     }
-
-    window.location.replace("/guests");
-  } catch (error) {
-    console.log(error);
-  }
-}
-{{end}}
+  </script>
+{{ end }}

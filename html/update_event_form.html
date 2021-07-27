@@ -1,26 +1,27 @@
-{{template "base" .}}
+{{ template "base" . }}
 
-{{define "title"}}Événement - {{.Event.Title}}{{end}}
+{{ define "title" -}} Événement - {{ .Event.Title }} {{- end }}
 
-{{define "main"}}
-<form action="/events/{{.Event.ID}}/edit" method="post">
-  <div>
-    <label for="title">Titre</label>
-    <input type="text" name="title" value="{{.Event.Title}}" required />
-  </div>
-  <div>
-    <label for="desc">Description</label>
-    <textarea name="desc" rows="4" cols="50">{{.Event.Desc}}</textarea>
-  </div>
-  <div>
-    <label for="status">Statut</label>
-    <select name="status">
-      {{range .Statuses}}
-      <option value="{{.ID}}" {{ if eq .ID $.Event.StatusID }}selected="selected"{{ end }}>{{.Label}}</option>
-      {{end}}
-    </select>
-  </div>
-  <div>
-    <input type="submit" value="Sauvegarder" />
-  </div>
-{{end}}
+{{ define "main" }}
+  <form action="/events/{{ .Event.ID }}/edit" method="post">
+    <div>
+      <label for="title">Titre</label>
+      <input type="text" name="title" value="{{ .Event.Title }}" required />
+    </div>
+    <div>
+      <label for="desc">Description</label>
+      <textarea name="desc" rows="4" cols="50">{{ .Event.Desc }}</textarea>
+    </div>
+    <div>
+      <label for="status">Statut</label>
+      <select name="status">
+        {{ range .Statuses }}
+          <option value="{{ .ID }}" {{  if eq .ID $.Event.StatusID  }}selected="selected"{{  end  }}>{{ .Label }}</option>
+        {{ end }}
+      </select>
+    </div>
+    <div>
+      <input type="submit" value="Sauvegarder" />
+    </div>
+  </form>
+{{ end }}

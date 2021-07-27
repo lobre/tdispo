@@ -1,45 +1,45 @@
-{{template "base" .}}
+{{ template "base" . }}
 
-{{define "title"}}Liste des événements{{end}}
+{{ define "title" -}} Liste des événements {{- end }}
 
-{{define "main"}}
-<p>Liste des événements existants</p>
+{{ define "main" }}
+  <p>Liste des événements existants</p>
 
-{{if .Events}}
-<ul id="events">
-  {{range .Events}}
-  <li>
-    <a href="/events/{{.ID}}">{{.Title}}</a> (<a href="/events/{{.ID}}/edit">modifier</a>, <a href="" class="delete" data-event-id="{{.ID}}">supprimer</a>)
-  </li>
-  {{end}}
-</ul>
-{{else}}
-<p>Pas d’événement</p>
-{{end}}
+  {{ if .Events }}
+    <ul id="events">
+      {{ range .Events }}
+        <li>
+          <a href="/events/{{ .ID }}">{{ .Title }}</a> (<a href="/events/{{ .ID }}/edit">modifier</a>, <a href="" class="delete" data-event-id="{{ .ID }}">supprimer</a>)
+        </li>
+      {{ end }}
+    </ul>
+  {{ else }}
+    <p>Pas d’événement</p>
+  {{ end }}
 
-<a href="/events/new">Nouvel événement</a>
-{{end}}
+  <a href="/events/new">Nouvel événement</a>
 
-{{define "js"}}
-const events = document.getElementById("events")
-events.addEventListener("click", function(event) {
-  const target = event.target;
-  if (target.matches("a.delete")) {
-    event.preventDefault();
-    deleteEvent(target.dataset.eventId);
-  }
-})
+  <script>
+    const events = document.getElementById("events")
+    events.addEventListener("click", function(event) {
+      const target = event.target;
+      if (target.matches("a.delete")) {
+        event.preventDefault();
+        deleteEvent(target.dataset.eventId);
+      }
+    })
 
-async function deleteEvent(eventId) {
-  try {
-    const resp = await fetch(`/events/${eventId}`, { method: "DELETE" })
-    if (!resp.ok) {
-      throw `server error: http code ${resp.status}`;
+    async function deleteEvent(eventId) {
+      try {
+        const resp = await fetch(`/events/${eventId}`, { method: "DELETE" })
+        if (!resp.ok) {
+          throw `server error: http code ${resp.status}`;
+        }
+
+        window.location.replace("/events");
+      } catch (error) {
+        console.log(error);
+      }
     }
-
-    window.location.replace("/events");
-  } catch (error) {
-    console.log(error);
-  }
-}
-{{end}}
+  </script>
+{{ end }}

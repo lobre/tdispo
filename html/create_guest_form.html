@@ -1,19 +1,19 @@
-{{template "base" .}}
+{{ template "base" . }}
 
-{{define "title"}}Ajout d’un participant{{end}}
+{{ define "title" -}} Ajout d’un participant {{- end }}
 
-{{define "main"}}
-<form action="/guests/new" method="post">
-  <div>
-    <label for="name">Name</label>
-    <input type="text" name="name" required />
-  </div>
-  <div>
-    <label for="email">Email</label>
-    <input type="email" name="email" required />
-  </div>
-  <div>
-    <input type="submit" value="Créer" />
-  </div>
-</form>
-{{end}}
+{{ define "main" }}
+  <form action="/guests/new" method="post">
+    <div>
+      <label for="name">Name</label>
+      <input type="text" name="name" required />
+    </div>
+    <div>
+      <label for="email">Email</label>
+      <input type="email" name="email" required />
+    </div>
+    <div>
+      <input type="submit" value="Créer" />
+    </div>
+  </form>
+{{ end}}

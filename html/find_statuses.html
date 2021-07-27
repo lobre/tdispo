@@ -1,45 +1,45 @@
-{{template "base" .}}
+{{ template "base" . }}
 
-{{define "title"}}Configuration des statuts{{end}}
+{{ define "title" -}} Configuration des statuts {{- end }}
 
-{{define "main"}}
-<p>Liste des statuts existants</p>
+{{ define "main" }}
+  <p>Liste des statuts existants</p>
 
-{{if .Statuses}}
-<ul id="statuses">
-  {{range .Statuses}}
-  <li>
-    {{.Label}} (<a href="" class="delete" data-status-id="{{.ID}}">supprimer</a>)
-  </li>
-  {{end}}
-</ul>
-{{else}}
-<p>Pas de statut</p>
-{{end}}
+  {{ if .Statuses }}
+    <ul id="statuses">
+      {{ range .Statuses }}
+        <li>
+          {{ .Label }} (<a href="" class="delete" data-status-id="{{ .ID }}">supprimer</a>)
+        </li>
+      {{ end }}
+    </ul>
+  {{ else }}
+    <p>Pas de statut</p>
+  {{ end }}
 
-<a href="/status/new">Nouveau statut</a>
-{{end}}
+  <a href="/status/new">Nouveau statut</a>
 
-{{define "js"}}
-const statuses = document.getElementById("statuses")
-statuses.addEventListener("click", function(event) {
-  const target = event.target;
-  if (target.matches("a.delete")) {
-    event.preventDefault();
-    deleteStatus(target.dataset.statusId);
-  }
-})
+  <script>
+    const statuses = document.getElementById("statuses")
+    statuses.addEventListener("click", function(event) {
+      const target = event.target;
+      if (target.matches("a.delete")) {
+        event.preventDefault();
+        deleteStatus(target.dataset.statusId);
+      }
+    })
 
-async function deleteStatus(statusId) {
-  try {
-    const resp = await fetch(`/status/${statusId}`, { method: "DELETE" })
-    if (!resp.ok) {
-      throw `server error: http code ${resp.status}`;
+    async function deleteStatus(statusId) {
+      try {
+        const resp = await fetch(`/status/${statusId}`, { method: "DELETE" })
+        if (!resp.ok) {
+          throw `server error: http code ${resp.status}`;
+        }
+
+        window.location.replace("/status");
+      } catch (error) {
+        console.log(error);
+      }
     }
-
-    window.location.replace("/status");
-  } catch (error) {
-    console.log(error);
-  }
-}
-{{end}}
+  </script>
+{{ end }}
