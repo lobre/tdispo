@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"embed"
+	"errors"
 	"flag"
 	"fmt"
 	"html/template"
@@ -18,10 +19,18 @@ import (
 	"github.com/russross/blackfriday"
 )
 
-//go:embed html/*.html migration/*.sql
+//go:embed html/*.html migrations/*.sql
 var assets embed.FS
 
-type app struct {
+type config struct {
+	port int
+	dsn  string
+}
+
+type application struct {
+	config config
+	logger *log.Logger
+
 	ts map[string]*template.Template // template set
 
 	statusService *StatusService
@@ -30,21 +39,28 @@ type app struct {
 }
 
 func main() {
-	addr := flag.String("addr", ":8080", "http server address")
-	dsn := flag.String("dsn", "cocorico.db", "datasource name")
+	var cfg config
+
+	flag.IntVar(&cfg.port, "port", 8080, "http server port")
+	flag.StringVar(&cfg.dsn, "dsn", "cocorico.db", "database datasource name")
 	flag.Parse()
 
-	db := NewDB(*dsn)
+	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+
+	db := NewDB(cfg.dsn)
 	if err := db.Open(); err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	ts, err := parseTemplates()
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
-	app := app{
+	app := application{
+		config: cfg,
+		logger: logger,
+
 		ts: ts,
 
 		statusService: &StatusService{db: db},
@@ -53,35 +69,44 @@ func main() {
 	}
 
 	srv := &http.Server{
-		Addr:    *addr,
-		Handler: app.routes(),
+		Addr:         fmt.Sprintf(":%d", cfg.port),
+		Handler:      app.routes(),
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
 	}
 
-	stop := make(chan os.Signal)
-	signal.Notify(stop, os.Interrupt)
+	shutdown := make(chan error)
 
 	go func() {
-		log.Printf("starting server on %s\n", *addr)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal(err)
-		}
+		stop := make(chan os.Signal, 1)
+		signal.Notify(stop, os.Interrupt)
+		<-stop
+
+		logger.Println("shutting down server")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		shutdown <- srv.Shutdown(ctx)
 	}()
 
-	<-stop
+	logger.Printf("starting server on port %d\n", cfg.port)
 
-	log.Println("shutting down server")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal(err)
+	err = srv.ListenAndServe()
+	if !errors.Is(err, http.ErrServerClosed) {
+		logger.Fatal(err)
 	}
 
-	log.Println("server down")
+	err = <-shutdown
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	logger.Println("server stopped")
 
 	if err := db.Close(); err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 }
 

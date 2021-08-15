@@ -1,28 +1,36 @@
 package main
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/bmizerany/pat"
 	"github.com/justinas/alice"
-	"net/http"
 )
 
-func (app *app) routes() http.Handler {
-	chain := alice.New(logRequest)
+const api = "/api"
+
+func (app *application) routes() http.Handler {
+	chain := alice.New(app.logRequest)
 
 	mux := pat.New()
-	mux.Get("/", http.HandlerFunc(app.home))
+	mux.NotFound = http.HandlerFunc(app.notFound)
 
-	mux.Get("/admin", http.HandlerFunc(app.authenticate))
+	mux.Get("/", http.HandlerFunc(app.home))
+	mux.Get("/todo", http.HandlerFunc(app.todo))
+
+	// authentication
+	mux.Get("/login", http.HandlerFunc(app.login))
+	mux.Get("/logout", http.HandlerFunc(app.logout))
 
 	// events
+	// TODO: make events at root /
 	mux.Get("/events", http.HandlerFunc(app.findEvents))
 	mux.Get("/events/new", http.HandlerFunc(app.createEventForm))
 	mux.Post("/events/new", http.HandlerFunc(app.createEvent))
-	mux.Post("/events/:event/participate/:guest", http.HandlerFunc(app.participate))
 	mux.Get("/events/:id/edit", http.HandlerFunc(app.updateEventForm))
 	mux.Post("/events/:id/edit", http.HandlerFunc(app.updateEvent))
 	mux.Get("/events/:id", http.HandlerFunc(app.findEventByID))
-	mux.Del("/events/:id", http.HandlerFunc(app.deleteEvent))
 
 	// guests
 	mux.Get("/guests", http.HandlerFunc(app.findGuests))
@@ -30,13 +38,18 @@ func (app *app) routes() http.Handler {
 	mux.Post("/guests/new", http.HandlerFunc(app.createGuest))
 	mux.Get("/guests/:id/edit", http.HandlerFunc(app.updateGuestForm))
 	mux.Post("/guests/:id/edit", http.HandlerFunc(app.updateGuest))
-	mux.Del("/guests/:id", http.HandlerFunc(app.deleteGuest))
 
 	// status
 	mux.Get("/status", http.HandlerFunc(app.findStatuses))
 	mux.Get("/status/new", http.HandlerFunc(app.createStatusForm))
 	mux.Post("/status/new", http.HandlerFunc(app.createStatus))
-	mux.Del("/status/:id", http.HandlerFunc(app.deleteStatus))
+
+	// api
+	mux.Post(fmt.Sprintf("%s/participate", api), http.HandlerFunc(app.participate))
+	mux.Post(fmt.Sprintf("%s/deleteStatus", api), http.HandlerFunc(app.deleteStatus))
+	mux.Post(fmt.Sprintf("%s/deleteEvent", api), http.HandlerFunc(app.deleteEvent))
+	mux.Post(fmt.Sprintf("%s/deleteGuest", api), http.HandlerFunc(app.deleteGuest))
+	mux.Post(fmt.Sprintf("%s/courses", api), http.HandlerFunc(app.courses))
 
 	return chain.Then(mux)
 }

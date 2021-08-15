@@ -1,0 +1,15 @@
+{{ template "base" . }}
+
+{{ define "title" }}Une erreur est survenue{{ end }}
+
+{{ define "main" }}
+  {{ if eq (len .Errors) 1 }}
+    <p>{{ index .Errors 0 }}</p>
+  {{ else }}
+    <ul>
+      {{ range .Errors }}
+        <li>{{ . }}</li>
+      {{ end }}
+    </ul>
+  {{ end }}
+{{ end }}

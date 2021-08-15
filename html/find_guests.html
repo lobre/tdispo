@@ -41,5 +41,28 @@
         console.log(error);
       }
     }
+
+    // TODO: implement
+    async function api(endpoint, payload) {
+      try {
+        const resp = await fetch(`/api/${endpoint}`, { method: "POST" })
+        if (!resp.ok) {
+            // handle error in flash message
+            // throw error
+        }
+
+        // return data
+      } catch (error) {
+            // handle error in flash message
+            // throw error
+      } 
+    }
+
+    async function mySpecificAPICall() {
+          try {
+              data = await api("toto", { "id": 1 })
+          } catch (error) {
+          }
+    }
   </script>
 {{ end }}

@@ -26,6 +26,7 @@ func NewDB(dns string) *DB {
 	}
 }
 
+// TODO: set limits such as SetMaxOpenConns for security taken from config.
 func (db *DB) Open() (err error) {
 	if db.DSN == "" {
 		return fmt.Errorf("dsn required")
@@ -67,7 +68,7 @@ func (db *DB) migrate() error {
 		return fmt.Errorf("cannot create migrations table: %w", err)
 	}
 
-	names, err := fs.Glob(assets, "migration/*.sql")
+	names, err := fs.Glob(assets, "migrations/*.sql")
 	if err != nil {
 		return err
 	}

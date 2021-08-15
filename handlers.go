@@ -1,89 +1,56 @@
 package main
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
-	"log"
 	"net/http"
-	"runtime/debug"
 	"strconv"
 )
 
-type templateData struct {
-	Statuses []*Status
-	Event    *Event
-	Events   []*Event
-	Guest    *Guest
-	Guests   []*Guest
+func (app *application) home(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, "home", &data{})
 }
 
-// The serverError helper writes an error message and stack trace to the errorLog,
-// then sends a generic 500 Internal Server Error response to the user.
-func serverError(w http.ResponseWriter, err error) {
-	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-	log.Output(2, trace)
-
-	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+func (app *application) todo(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, "todo", &data{})
 }
 
-// The clientError helper sends a specific status code and corresponding description
-// to the user. This should be used to send responses when there's a problem with the
-// request that the user sent.
-func clientError(w http.ResponseWriter, status int) {
-	http.Error(w, http.StatusText(status), status)
+// TODO: implement
+// function should set the cookie and redirect to home
+func (app *application) login(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, "login", &data{})
 }
 
-// render will render the response.
-// Write the template to the buffer, instead of straight to the http.ResponseWriter.
-// This allows to deal with runtime errors in the rendering of the template.
-func (app *app) render(w http.ResponseWriter, r *http.Request, name string, td *templateData) {
-	buf := new(bytes.Buffer)
-
-	tmpl := app.ts[name]
-	if tmpl == nil {
-		serverError(w, errors.New("template not found"))
-		return
-	}
-
-	err := tmpl.Execute(buf, td)
-	if err != nil {
-		serverError(w, err)
-		return
-	}
-
-	buf.WriteTo(w)
+// TODO: implement
+// function should unset the cookie and redirect to home
+func (app *application) logout(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, "logout", &data{})
 }
 
-func (app *app) home(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "home", &templateData{})
-}
-
-func (app *app) findStatuses(w http.ResponseWriter, r *http.Request) {
+func (app *application) findStatuses(w http.ResponseWriter, r *http.Request) {
 	statuses, _, err := app.statusService.FindStatuses(r.Context())
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
-	app.render(w, r, "find_statuses", &templateData{
+	app.render(w, r, "find_statuses", &data{
 		Statuses: statuses,
 	})
 }
 
-func (app *app) createStatusForm(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "create_status_form", &templateData{})
+func (app *application) createStatusForm(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, "create_status_form", &data{})
 }
 
-func (app *app) createStatus(w http.ResponseWriter, r *http.Request) {
+func (app *application) createStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		clientError(w, http.StatusMethodNotAllowed)
+		app.methodNotAllowed(w, r)
 		return
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		clientError(w, http.StatusBadRequest)
+		app.badRequest(w, r, err)
 		return
 	}
 
@@ -93,96 +60,77 @@ func (app *app) createStatus(w http.ResponseWriter, r *http.Request) {
 
 	err = app.statusService.CreateStatus(r.Context(), &s)
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
 	http.Redirect(w, r, "/status", http.StatusSeeOther)
 }
 
-func (app *app) deleteStatus(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodDelete {
-		clientError(w, http.StatusMethodNotAllowed)
-		return
-	}
-
-	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
-	if err != nil {
-		serverError(w, err)
-		return
-	}
-
-	err = app.statusService.DeleteStatus(r.Context(), id)
-	if err != nil {
-		serverError(w, err)
-		return
-	}
-}
-
-func (app *app) findEvents(w http.ResponseWriter, r *http.Request) {
+func (app *application) findEvents(w http.ResponseWriter, r *http.Request) {
 	events, _, err := app.eventService.FindEvents(r.Context())
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
-	app.render(w, r, "find_events", &templateData{
+	app.render(w, r, "find_events", &data{
 		Events: events,
 	})
 }
 
-func (app *app) findEventByID(w http.ResponseWriter, r *http.Request) {
+func (app *application) findEventByID(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
 	event, err := app.eventService.FindEventByID(r.Context(), id)
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
 	allGuests, _, err := app.guestService.FindGuests(r.Context())
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
-	app.render(w, r, "event", &templateData{
+	app.render(w, r, "event", &data{
 		Event:  event,
 		Guests: allGuests,
 	})
 }
 
-func (app *app) createEventForm(w http.ResponseWriter, r *http.Request) {
+func (app *application) createEventForm(w http.ResponseWriter, r *http.Request) {
 	statuses, _, err := app.statusService.FindStatuses(r.Context())
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
-	app.render(w, r, "create_event_form", &templateData{
+	app.render(w, r, "create_event_form", &data{
 		Statuses: statuses,
 	})
 }
 
-func (app *app) createEvent(w http.ResponseWriter, r *http.Request) {
+func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		clientError(w, http.StatusMethodNotAllowed)
+		app.methodNotAllowed(w, r)
 		return
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		clientError(w, http.StatusBadRequest)
+		app.badRequest(w, r, err)
 		return
 	}
 
 	statusID, err := strconv.Atoi(r.FormValue("status"))
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
@@ -194,53 +142,53 @@ func (app *app) createEvent(w http.ResponseWriter, r *http.Request) {
 
 	err = app.eventService.CreateEvent(r.Context(), &evt)
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/events/%d", evt.ID), http.StatusSeeOther)
 }
 
-func (app *app) updateEventForm(w http.ResponseWriter, r *http.Request) {
+func (app *application) updateEventForm(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
 	evt, err := app.eventService.FindEventByID(r.Context(), id)
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
 	statuses, _, err := app.statusService.FindStatuses(r.Context())
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
-	app.render(w, r, "update_event_form", &templateData{
+	app.render(w, r, "update_event_form", &data{
 		Event:    evt,
 		Statuses: statuses,
 	})
 }
 
-func (app *app) updateEvent(w http.ResponseWriter, r *http.Request) {
+func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		clientError(w, http.StatusMethodNotAllowed)
+		app.methodNotAllowed(w, r)
 		return
 	}
 
 	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
 	statusID, err := strconv.Atoi(r.FormValue("status"))
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
@@ -255,57 +203,38 @@ func (app *app) updateEvent(w http.ResponseWriter, r *http.Request) {
 
 	_, err = app.eventService.UpdateEvent(r.Context(), id, upd)
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/events/%d", id), http.StatusSeeOther)
 }
 
-func (app *app) deleteEvent(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodDelete {
-		clientError(w, http.StatusMethodNotAllowed)
-		return
-	}
-
-	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
-	if err != nil {
-		serverError(w, err)
-		return
-	}
-
-	err = app.eventService.DeleteEvent(r.Context(), id)
-	if err != nil {
-		serverError(w, err)
-		return
-	}
-}
-
-func (app *app) findGuests(w http.ResponseWriter, r *http.Request) {
+func (app *application) findGuests(w http.ResponseWriter, r *http.Request) {
 	guests, _, err := app.guestService.FindGuests(r.Context())
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
-	app.render(w, r, "find_guests", &templateData{
+	app.render(w, r, "find_guests", &data{
 		Guests: guests,
 	})
 }
 
-func (app *app) createGuestForm(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "create_guest_form", &templateData{})
+func (app *application) createGuestForm(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, "create_guest_form", &data{})
 }
 
-func (app *app) createGuest(w http.ResponseWriter, r *http.Request) {
+func (app *application) createGuest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		clientError(w, http.StatusMethodNotAllowed)
+		app.methodNotAllowed(w, r)
 		return
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		clientError(w, http.StatusBadRequest)
+		app.badRequest(w, r, err)
 		return
 	}
 
@@ -316,40 +245,40 @@ func (app *app) createGuest(w http.ResponseWriter, r *http.Request) {
 
 	err = app.guestService.CreateGuest(r.Context(), &guest)
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
 	http.Redirect(w, r, "/guests", http.StatusSeeOther)
 }
 
-func (app *app) updateGuestForm(w http.ResponseWriter, r *http.Request) {
+func (app *application) updateGuestForm(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
 	guest, err := app.guestService.FindGuestByID(r.Context(), id)
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
-	app.render(w, r, "update_guest_form", &templateData{
+	app.render(w, r, "update_guest_form", &data{
 		Guest: guest,
 	})
 }
 
-func (app *app) updateGuest(w http.ResponseWriter, r *http.Request) {
+func (app *application) updateGuest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		clientError(w, http.StatusMethodNotAllowed)
+		app.methodNotAllowed(w, r)
 		return
 	}
 
 	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
@@ -363,61 +292,9 @@ func (app *app) updateGuest(w http.ResponseWriter, r *http.Request) {
 
 	_, err = app.guestService.UpdateGuest(r.Context(), id, upd)
 	if err != nil {
-		serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
 
 	http.Redirect(w, r, "/guests", http.StatusSeeOther)
-}
-
-func (app *app) deleteGuest(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodDelete {
-		clientError(w, http.StatusMethodNotAllowed)
-		return
-	}
-
-	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
-	if err != nil {
-		serverError(w, err)
-		return
-	}
-
-	err = app.guestService.DeleteGuest(r.Context(), id)
-	if err != nil {
-		serverError(w, err)
-		return
-	}
-}
-
-func (app *app) participate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		clientError(w, http.StatusMethodNotAllowed)
-		return
-	}
-
-	eventID, err := strconv.Atoi(r.URL.Query().Get(":event"))
-	if err != nil {
-		serverError(w, err)
-		return
-	}
-
-	guestID, err := strconv.Atoi(r.URL.Query().Get(":guest"))
-	if err != nil {
-		serverError(w, err)
-		return
-	}
-
-	fmt.Fprintf(w, fmt.Sprintf("%d, %d", eventID, guestID))
-}
-
-// TODO: implement
-func (app *app) authenticate(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "authenticate with a cookie")
-}
-
-func logRequest(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
-		next.ServeHTTP(w, r)
-	})
 }

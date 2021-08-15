@@ -1,0 +1,23 @@
+{{ template "base" . }}
+
+{{ define "title" }}Todo{{ end }}
+
+{{ define "main" }}
+  <h1>Liste de courses Alpine</h1>
+
+  <ul x-data="{ items: ['Beurre', 'Savon'] }" x-init="items = items.concat(await getMoreItems())">
+    <template x-for="item in items">
+      <li x-text="item"></li>
+    </template>
+  </ul>
+
+  <script>
+    async function getMoreItems() {
+      let courses = [];
+      await api('courses', { item: 'PQ' })
+        .then(resp => courses = resp.courses)
+        .catch(err => console.log(err));
+      return courses;
+    }
+  </script>
+{{ end }}
