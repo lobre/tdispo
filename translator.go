@@ -6,12 +6,10 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"sync"
 )
 
 type translator struct {
 	index   map[string]string
-	lock    sync.RWMutex
 	csvPath string
 }
 
