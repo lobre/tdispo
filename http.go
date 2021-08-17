@@ -43,7 +43,7 @@ func (app *application) error(w http.ResponseWriter, r *http.Request, status int
 
 	// if api endpoint, return json instead
 	if strings.HasPrefix(r.URL.EscapedPath(), fmt.Sprintf("%s/", api)) {
-		env := envelope{"error": errors}
+		env := envelope{"errors": errors}
 
 		err := app.writeJSON(w, status, env, nil)
 		if err != nil {
@@ -65,19 +65,19 @@ func (app *application) serverError(w http.ResponseWriter, r *http.Request, err 
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
 	app.logger.Output(2, trace)
 
-	msg := "the server encountered a problem and could not process your request"
+	msg := "The server encountered a problem and could not process your request."
 	app.error(w, r, http.StatusInternalServerError, msg)
 }
 
 // notFound will be used to send a 404 Not Found status code and response to the client.
 func (app *application) notFound(w http.ResponseWriter, r *http.Request) {
-	msg := "the requested resource could not be found"
+	msg := "The requested resource could not be found."
 	app.error(w, r, http.StatusNotFound, msg)
 }
 
 // methodNotAllowed is used to send a 405 Method Not Allowed status code and response to the client.
 func (app *application) methodNotAllowed(w http.ResponseWriter, r *http.Request) {
-	msg := fmt.Sprintf("the %s method is not supported for this resource", r.Method)
+	msg := fmt.Sprintf("The %s method is not supported for this resource.", r.Method)
 	app.error(w, r, http.StatusMethodNotAllowed, msg)
 }
 
@@ -92,7 +92,7 @@ func (app *application) badRequest(w http.ResponseWriter, r *http.Request, err e
 func (app *application) render(w http.ResponseWriter, r *http.Request, name string, data *data) {
 	buf := new(bytes.Buffer)
 
-	tmpl := app.ts[name]
+	tmpl := app.templates[name]
 	if tmpl == nil {
 		app.serverError(w, r, errors.New("template not found"))
 		return
@@ -144,28 +144,28 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst int
 
 		switch {
 		case errors.As(err, &syntaxError):
-			return fmt.Errorf("body contains badly-formed JSON (at character %d)", syntaxError.Offset)
+			return fmt.Errorf("Body contains badly-formed JSON (at character %d).", syntaxError.Offset)
 
 		// For more info see https://github.com/golang/go/issues/25956.
 		case errors.Is(err, io.ErrUnexpectedEOF):
-			return errors.New("body contains badly-formed JSON")
+			return errors.New("Body contains badly-formed JSON.")
 
 		case errors.As(err, &unmarshalTypeError):
 			if unmarshalTypeError.Field != "" {
-				return fmt.Errorf("body contains incorrect JSON type for field %q", unmarshalTypeError.Field)
+				return fmt.Errorf("Body contains incorrect JSON type for field %q.", unmarshalTypeError.Field)
 			}
-			return fmt.Errorf("body contains incorrect JSON type (at character %d)", unmarshalTypeError.Offset)
+			return fmt.Errorf("Body contains incorrect JSON type (at character %d).", unmarshalTypeError.Offset)
 
 		case errors.Is(err, io.EOF):
-			return errors.New("body must not be empty")
+			return errors.New("Body must not be empty.")
 
 		// workaround for https://github.com/golang/go/issues/29035
 		case strings.HasPrefix(err.Error(), "json: unknown field "):
 			fieldName := strings.TrimPrefix(err.Error(), "json: unknown field ")
-			return fmt.Errorf("body contains unknown key %s", fieldName)
+			return fmt.Errorf("Body contains unknown key %s.", fieldName)
 
 		case err.Error() == "http: request body too large":
-			return fmt.Errorf("body must not be larger than %d bytes", maxBytes)
+			return fmt.Errorf("Body must not be larger than %d bytes.", maxBytes)
 
 		case errors.As(err, &invalidUnmarshalError):
 			panic(err)
@@ -177,7 +177,7 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst int
 
 	err = dec.Decode(&struct{}{})
 	if err != io.EOF {
-		return errors.New("body must only contain a single JSON value")
+		return errors.New("Body must only contain a single JSON value.")
 	}
 
 	return nil

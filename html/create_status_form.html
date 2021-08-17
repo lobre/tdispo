@@ -1,15 +1,15 @@
 {{ template "base" . }}
 
-{{ define "title" }}Ajout d’un statut{{ end }}
+{{ define "title" }}{{ "Add a status" | translate }}{{ end }}
 
 {{ define "main" }}
   <form action="/status/new" method="post">
     <div>
-      <label for="label">Label</label>
+      <label for="label">{{ "Label" | translate }}</label>
       <input type="text" name="label" required />
     </div>
     <div>
-      <input type="submit" value="Créer" />
+      <input type="submit" value='{{ "Create" | translate }}' />
     </div>
   </form>
 {{ end }}

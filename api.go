@@ -19,6 +19,7 @@ func (app *application) courses(w http.ResponseWriter, r *http.Request) {
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.badRequest(w, r, err)
+		return
 	}
 
 	items := []string{

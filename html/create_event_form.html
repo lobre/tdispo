@@ -1,19 +1,19 @@
 {{ template "base" . }}
 
-{{ define "title" }}Ajout d’un événement{{ end }}
+{{ define "title" }}{{ "Add an event" | translate }}{{ end }}
 
 {{ define "main" }}
   <form action="/events/new" method="post">
     <div>
-      <label for="title">Titre</label>
+      <label for="title">{{ "Title" | translate }}</label>
       <input type="text" name="title" required />
     </div>
     <div>
-      <label for="desc">Description</label>
+      <label for="desc">{{ "Description" | translate }}</label>
       <textarea name="desc" rows="4" cols="50"></textarea>
     </div>
     <div>
-      <label for="status">Statut</label>
+      <label for="status">{{ "Status" | translate }}</label>
       <select name="status">
         {{ range .Statuses }}
           <option value="{{ .ID }}">{{ .Label }}</option>
@@ -21,7 +21,7 @@
       </select>
     </div>
     <div>
-      <input type="submit" value="Créer" />
+      <input type="submit" value='{{ "Create" | translate }}' />
     </div>
   </form>
 {{ end }}

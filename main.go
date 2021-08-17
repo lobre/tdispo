@@ -19,19 +19,21 @@ import (
 	"github.com/russross/blackfriday"
 )
 
-//go:embed html/*.html migrations/*.sql
+//go:embed html/*.html migrations/*.sql translations/*.csv
 var assets embed.FS
 
 type config struct {
 	port int
 	dsn  string
+	lang string
 }
 
 type application struct {
 	config config
 	logger *log.Logger
 
-	ts map[string]*template.Template // template set
+	templates  map[string]*template.Template
+	translator *translator
 
 	statusService *StatusService
 	guestService  *GuestService
@@ -43,6 +45,7 @@ func main() {
 
 	flag.IntVar(&cfg.port, "port", 8080, "http server port")
 	flag.StringVar(&cfg.dsn, "dsn", "cocorico.db", "database datasource name")
+	flag.StringVar(&cfg.lang, "lang", "en", "language of the application")
 	flag.Parse()
 
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
@@ -52,20 +55,25 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	ts, err := parseTemplates()
+	transFile := fmt.Sprintf("translations/%s.csv", cfg.lang)
+	translator, err := newTranslator(transFile)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
 	app := application{
-		config: cfg,
-		logger: logger,
-
-		ts: ts,
+		config:     cfg,
+		logger:     logger,
+		translator: translator,
 
 		statusService: &StatusService{db: db},
 		guestService:  &GuestService{db: db},
 		eventService:  &EventService{db: db},
+	}
+
+	err = app.parseTemplates()
+	if err != nil {
+		logger.Fatal(err)
 	}
 
 	srv := &http.Server{
@@ -110,12 +118,12 @@ func main() {
 	}
 }
 
-func parseTemplates() (map[string]*template.Template, error) {
-	ts := make(map[string]*template.Template)
+func (app *application) parseTemplates() error {
+	app.templates = make(map[string]*template.Template)
 
 	names, err := fs.Glob(assets, "html/*.html")
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	for _, name := range names {
@@ -127,23 +135,24 @@ func parseTemplates() (map[string]*template.Template, error) {
 		}
 
 		t := template.New(base).Funcs(template.FuncMap{
-			"markdown": markdown,
+			"markdown":  markdown,
+			"translate": app.translator.translate,
 		})
 
 		t, err = t.ParseFS(assets, name)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		t, err = t.ParseFS(assets, "html/base.html")
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		ts[k] = t
+		app.templates[k] = t
 	}
 
-	return ts, nil
+	return nil
 }
 
 func markdown(args ...interface{}) template.HTML {

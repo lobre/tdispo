@@ -1,23 +1,23 @@
 {{ template "base" . }}
 
-{{ define "title" }}Configuration des participants{{ end }}
+{{ define "title" }}{{ "Configuration of guests" | translate }}{{ end }}
 
 {{ define "main" }}
-  <p>Liste des participants existants</p>
+  <p>{{ "List of guests" | translate }}</p>
 
   {{ if .Guests }}
     <ul id="guests">
       {{ range .Guests }}
         <li>
-          {{ .Name }}, <a href="mailto:{{ .Email }}">{{ .Email }}</a> (<a href="/guests/{{ .ID }}/edit">modifier</a>, <a href="" class="delete" data-guest-id="{{ .ID }}">supprimer</a>)
+          {{ .Name }}, <a href="mailto:{{ .Email }}">{{ .Email }}</a> (<a href="/guests/{{ .ID }}/edit">modifier</a>, <a href="" class="delete" data-guest-id="{{ .ID }}">{{ "delete" | translate }}</a>)
         </li>
       {{ end }}
     </ul>
   {{ else }}
-    <p>Pas de participants</p>
+    <p>{{ "No guests" | translate }}</p>
   {{ end }}
 
-  <a href="/guests/new">Nouveau participant</a>
+  <a href="/guests/new">{{ "New guest" | translate }}</a>
 
   <script>
     const guests = document.getElementById("guests")

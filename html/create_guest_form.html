@@ -1,19 +1,19 @@
 {{ template "base" . }}
 
-{{ define "title" }}Ajout d’un participant{{ end }}
+{{ define "title" }}{{ "Add a guest" | translate }}{{ end }}
 
 {{ define "main" }}
   <form action="/guests/new" method="post">
     <div>
-      <label for="name">Name</label>
+      <label for="name">{{ "Name" | translate }}</label>
       <input type="text" name="name" required />
     </div>
     <div>
-      <label for="email">Email</label>
+      <label for="email">{{ "Email" | translate }}</label>
       <input type="email" name="email" required />
     </div>
     <div>
-      <input type="submit" value="Créer" />
+      <input type="submit" value='{{ "Create" | translate }}' />
     </div>
   </form>
 {{ end}}

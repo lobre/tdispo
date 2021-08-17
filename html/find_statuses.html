@@ -1,23 +1,23 @@
 {{ template "base" . }}
 
-{{ define "title" }}Configuration des statuts{{ end }}
+{{ define "title" }}{{ "Configuration of statuses" | translate }}{{ end }}
 
 {{ define "main" }}
-  <p>Liste des statuts existants</p>
+<p>{{ "List of statuses" | translate }}</p>
 
   {{ if .Statuses }}
     <ul id="statuses">
       {{ range .Statuses }}
         <li>
-          {{ .Label }} (<a href="" class="delete" data-status-id="{{ .ID }}">supprimer</a>)
+          {{ .Label }} (<a href="" class="delete" data-status-id="{{ .ID }}">{{ "delete" | translate }}</a>)
         </li>
       {{ end }}
     </ul>
   {{ else }}
-    <p>Pas de statut</p>
+    <p>{{ "No statuses" | translate }}</p>
   {{ end }}
 
-  <a href="/status/new">Nouveau statut</a>
+  <a href="/status/new">{{ "New status" | translate }}</a>
 
   <script>
     const statuses = document.getElementById("statuses")

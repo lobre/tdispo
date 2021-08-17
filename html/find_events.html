@@ -1,23 +1,21 @@
 {{ template "base" . }}
 
-{{ define "title" }}Liste des événements{{ end }}
+{{ define "title" }}{{ "List of events" | translate }}{{ end }}
 
 {{ define "main" }}
-  <p>Liste des événements existants</p>
-
   {{ if .Events }}
     <ul id="events">
       {{ range .Events }}
         <li>
-          <a href="/events/{{ .ID }}">{{ .Title }}</a> (<a href="/events/{{ .ID }}/edit">modifier</a>, <a href="" class="delete" data-event-id="{{ .ID }}">supprimer</a>)
+          <a href="/events/{{ .ID }}">{{ .Title }}</a> (<a href="/events/{{ .ID }}/edit">modifier</a>, <a href="" class="delete" data-event-id="{{ .ID }}">{{ "delete" | translate }}</a>)
         </li>
       {{ end }}
     </ul>
   {{ else }}
-    <p>Pas d’événement</p>
+    <p>{{ "No events" | translate }}</p>
   {{ end }}
 
-  <a href="/events/new">Nouvel événement</a>
+  <a href="/events/new">{{ "New event" | translate }}</a>
 
   <script>
     const events = document.getElementById("events")

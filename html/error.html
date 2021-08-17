@@ -1,14 +1,14 @@
 {{ template "base" . }}
 
-{{ define "title" }}Une erreur est survenue{{ end }}
+{{ define "title" }}{{ "An error has occured" | translate }}{{ end }}
 
 {{ define "main" }}
   {{ if eq (len .Errors) 1 }}
-    <p>{{ index .Errors 0 }}</p>
+    <p>{{ index .Errors 0 | translate }}</p>
   {{ else }}
     <ul>
       {{ range .Errors }}
-        <li>{{ . }}</li>
+        <li>{{ . | translate }}</li>
       {{ end }}
     </ul>
   {{ end }}

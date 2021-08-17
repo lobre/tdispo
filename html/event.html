@@ -1,12 +1,12 @@
 {{ template "base" . }}
 
-{{ define "title" }}Événement - {{ .Event.Title }}{{ end }}
+{{ define "title" }}{{ "Event" | translate }} - {{ .Event.Title }}{{ end }}
 
 {{ define "main" }}
   <p>{{ .Event.Desc | markdown }}</p>
   <p>Statut : {{ .Event.Status.Label }}</p>
 
-  <h2>Participations</h2>
+  <h2>{{ "Guests" | translate }}</h2>
   {{ if .Event.Participations }}
     <ul>
       {{ range .Event.Participations }}
@@ -14,20 +14,20 @@
       {{ end }}
     </ul>
   {{ else }}
-    <p>Pas de participation</p>
+    <p>{{ "No guests" | translate }}</p>
   {{ end }}
 
-  <h2>En attente de participation</h2>
+  <h2>{{ "Yet to participate" | translate }}</h2>
   {{ if .Event.YetToParticipate .Guests }}
     <ul id="yetToParticipate" data-event-id="{{ .Event.ID }}">
       {{ range .Event.YetToParticipate .Guests }}
         <li>
-          {{ .Name }} <a class="participate" data-guest-id="{{ .ID }}">participer</a>
+          {{ .Name }} <a class="participate" data-guest-id="{{ .ID }}">{{ "participate" | translate }}</a>
         </li>
       {{ end }}
     </ul>
   {{ else }}
-    <p>Tout le monde a participé</p>
+    <p>{{ "Everyone participated" | translate }}</p>
   {{ end }}
 
   <script>
