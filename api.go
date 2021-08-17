@@ -1,79 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"strconv"
 )
-
-func (app *application) courses(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		app.methodNotAllowed(w, r)
-		return
-	}
-
-	var input struct {
-		Item string `json:"item"`
-	}
-
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.badRequest(w, r, err)
-		return
-	}
-
-	items := []string{
-		"Noisettes",
-		"Chocolat",
-		"Fraises",
-	}
-
-	items = append(items, input.Item)
-
-	env := envelope{"courses": items}
-
-	err = app.writeJSON(w, http.StatusOK, env, nil)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
-}
-
-func (app *application) participate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		app.methodNotAllowed(w, r)
-		return
-	}
-
-	err := r.ParseForm()
-	if err != nil {
-		app.badRequest(w, r, err)
-		return
-	}
-
-	eventID, err := strconv.Atoi(r.Form.Get("event"))
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	guestID, err := strconv.Atoi(r.Form.Get("guest"))
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	env := envelope{
-		"event_id": eventID,
-		"guest_id": guestID,
-	}
-
-	app.logger.Println(env)
-
-	err = app.writeJSON(w, http.StatusOK, env, nil)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
-}
 
 func (app *application) deleteStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -81,7 +12,22 @@ func (app *application) deleteStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
+	var req struct {
+		ID int `json:"id"`
+	}
+
+	err := app.readJSON(w, r, &req)
+	if err != nil {
+		app.badRequest(w, r, err)
+		return
+	}
+
+	if req.ID == 0 {
+		app.badRequest(w, r, errors.New("Missing id field in request."))
+		return
+	}
+
+	err = app.statusService.DeleteStatus(r.Context(), req.ID)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -92,8 +38,15 @@ func (app *application) deleteStatus(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, r, err)
 		return
 	}
+}
 
-	fmt.Println(id)
+func (app *application) participate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		app.methodNotAllowed(w, r)
+		return
+	}
+
+	// to implement
 }
 
 func (app *application) deleteEvent(w http.ResponseWriter, r *http.Request) {

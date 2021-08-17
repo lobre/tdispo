@@ -6,13 +6,13 @@ import (
 )
 
 type Guest struct {
-	ID    int
-	Name  string
-	Email string
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 
 	// List of associated participations.
 	// This is only set when returning a single guest.
-	Participations []*Participation
+	Participations []*Participation `json:"participations"`
 }
 
 // GuestUpdate represents a set of fields to be updated via UpdateGuest.

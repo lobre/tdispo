@@ -17,7 +17,6 @@ func (app *application) routes() http.Handler {
 	mux.NotFound = http.HandlerFunc(app.notFound)
 
 	mux.Get("/", http.HandlerFunc(app.home))
-	mux.Get("/todo", http.HandlerFunc(app.todo))
 
 	// authentication
 	mux.Get("/login", http.HandlerFunc(app.login))
@@ -49,7 +48,6 @@ func (app *application) routes() http.Handler {
 	mux.Post(fmt.Sprintf("%s/deleteStatus", api), http.HandlerFunc(app.deleteStatus))
 	mux.Post(fmt.Sprintf("%s/deleteEvent", api), http.HandlerFunc(app.deleteEvent))
 	mux.Post(fmt.Sprintf("%s/deleteGuest", api), http.HandlerFunc(app.deleteGuest))
-	mux.Post(fmt.Sprintf("%s/courses", api), http.HandlerFunc(app.courses))
 
 	return chain.Then(mux)
 }

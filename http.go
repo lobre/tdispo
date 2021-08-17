@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"net/http"
 	"runtime/debug"
@@ -14,12 +15,13 @@ import (
 // data contains all kinds of objects
 // that can be returned in a template.
 type data struct {
-	Errors   []string
-	Statuses []*Status
-	Event    *Event
-	Events   []*Event
-	Guest    *Guest
-	Guests   []*Guest
+	Errors     []string
+	Statuses   []*Status
+	StatusesJS template.JS
+	Event      *Event
+	Events     []*Event
+	Guest      *Guest
+	Guests     []*Guest
 }
 
 type envelope map[string]interface{}

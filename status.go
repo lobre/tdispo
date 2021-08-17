@@ -6,8 +6,8 @@ import (
 )
 
 type Status struct {
-	ID    int
-	Label string
+	ID    int    `json:"id"`
+	Label string `json:"label"`
 }
 
 type StatusService struct {

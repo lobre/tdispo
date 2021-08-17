@@ -6,13 +6,13 @@ import (
 )
 
 type Participation struct {
-	GuestID int
-	Guest   *Guest
+	GuestID int    `json:"-"`
+	Guest   *Guest `json:"guest"`
 
-	EventID int
-	Event   *Event
+	EventID int    `json:"-"`
+	Event   *Event `json:"event"`
 
-	Assist int
+	Assist int `json:"assist"`
 }
 
 const (

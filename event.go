@@ -6,16 +6,16 @@ import (
 )
 
 type Event struct {
-	ID    int
-	Title string
-	Desc  string
+	ID    int    `json:"id"`
+	Title string `json:"title"`
+	Desc  string `json:"desc"`
 
-	StatusID int
-	Status   *Status
+	StatusID int     `json:"-"`
+	Status   *Status `json:"status"`
 
 	// List of associated participations.
 	// This is only set when returning a single event.
-	Participations []*Participation
+	Participations []*Participation `json:"participations"`
 }
 
 // YetToParticipate returns the list of guests that haven’t

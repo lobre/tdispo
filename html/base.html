@@ -39,8 +39,8 @@
             body: JSON.stringify(req)
           })
           return resp.json().then(json => {
-            if (json.error) {
-              throw new Error(json.error)
+            if (json.errors) {
+              throw new Error(json.errors)
             }
             return json
           })

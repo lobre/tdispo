@@ -1,17 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 	"strconv"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, "home", &data{})
-}
-
-func (app *application) todo(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "todo", &data{})
 }
 
 // TODO: implement
@@ -33,8 +31,14 @@ func (app *application) findStatuses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	js, err := json.Marshal(statuses)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	app.render(w, r, "find_statuses", &data{
-		Statuses: statuses,
+		StatusesJS: template.JS(js),
 	})
 }
 
