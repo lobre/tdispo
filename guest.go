@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 )
 
 type Guest struct {
@@ -10,9 +12,18 @@ type Guest struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 
-	// List of associated participations.
+	// List of participations to answered events.
 	// This is only set when returning a single guest.
-	Participations []*Participation `json:"participations"`
+	Answered []*Participation `json:"answered"`
+
+	// List of events to which the guest hasn’t answerd yet.
+	// This is only set when returning a single guest.
+	Pending []*Event `json:"pending"`
+}
+
+type GuestFilter struct {
+	ID      *int
+	IDNotIn []int
 }
 
 // GuestUpdate represents a set of fields to be updated via UpdateGuest.
@@ -37,8 +48,19 @@ func (s *GuestService) FindGuestByID(ctx context.Context, id int) (*Guest, error
 		return nil, err
 	}
 
-	// attach participations
-	guest.Participations, _, err = findParticipationsByGuest(ctx, tx, guest.ID)
+	// attach answered participations
+	guest.Answered, _, err = findParticipationsByGuest(ctx, tx, guest.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var eventIDs []int
+	for _, part := range guest.Answered {
+		eventIDs = append(eventIDs, part.EventID)
+	}
+
+	// attach events to which the guest hasn’t answered yet
+	guest.Pending, _, err = findEvents(ctx, tx, EventFilter{IDNotIn: eventIDs})
 	if err != nil {
 		return nil, err
 	}
@@ -46,14 +68,14 @@ func (s *GuestService) FindGuestByID(ctx context.Context, id int) (*Guest, error
 	return guest, nil
 }
 
-func (s *GuestService) FindGuests(ctx context.Context) ([]*Guest, int, error) {
+func (s *GuestService) FindGuests(ctx context.Context, filter GuestFilter) ([]*Guest, int, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer tx.Rollback()
 
-	return findGuests(ctx, tx)
+	return findGuests(ctx, tx, filter)
 }
 
 func (s *GuestService) CreateGuest(ctx context.Context, guest *Guest) error {
@@ -101,7 +123,21 @@ func (s *GuestService) UpdateGuest(ctx context.Context, id int, upd GuestUpdate)
 	return guest, tx.Commit()
 }
 
-func findGuests(ctx context.Context, tx *sql.Tx) (_ []*Guest, n int, err error) {
+func findGuests(ctx context.Context, tx *sql.Tx, filter GuestFilter) (_ []*Guest, n int, err error) {
+	where, args := []string{"1 = 1"}, []interface{}{}
+	if filter.ID != nil {
+		where, args = append(where, "id = ?"), append(args, *filter.ID)
+	}
+
+	if filter.IDNotIn != nil {
+		var placeholder []string
+		for _, id := range filter.IDNotIn {
+			placeholder = append(placeholder, "?")
+			args = append(args, id)
+		}
+		where = append(where, fmt.Sprintf("id NOT IN (%s)", strings.Join(placeholder, ",")))
+	}
+
 	rows, err := tx.QueryContext(ctx,
 		`SELECT 
 			id,
@@ -109,7 +145,9 @@ func findGuests(ctx context.Context, tx *sql.Tx) (_ []*Guest, n int, err error) 
 			email,
 			COUNT(*) OVER()
 		FROM guests
+		WHERE `+strings.Join(where, " AND ")+`
 		ORDER BY name`,
+		args...,
 	)
 	if err != nil {
 		return nil, 0, err

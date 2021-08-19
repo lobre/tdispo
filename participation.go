@@ -108,3 +108,17 @@ func findParticipationsByGuest(ctx context.Context, tx *sql.Tx, id int) (_ []*Pa
 
 	return participations, n, nil
 }
+
+func participate(ctx context.Context, tx *sql.Tx, part *Participation) error {
+	_, err := tx.ExecContext(ctx,
+		`INSERT OR REPLACE INTO participations (guest_id, event_id, assist) VALUES (?, ?, ?)`,
+		part.Guest.ID,
+		part.Event.ID,
+		part.Assist,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

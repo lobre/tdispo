@@ -7,7 +7,7 @@
     <ul x-show="list.length">
       <template x-for="event in list">
         <li>
-          <span x-text="event.title"></span>
+          <a x-bind:href="showLink(event.id)" x-text="event.title"></a>
           <a x-bind:href="editLink(event.id)">({{ "edit" | translate }})</a>
           <a href="" @click.prevent="await deleteEvent(guest.id)">({{ "delete" | translate }})</a>
         </li>
@@ -22,6 +22,10 @@
     document.addEventListener('alpine:init', () => {
       Alpine.data('events', () => ({
         list: {{ .EventsJS }},
+
+        showLink(id) {
+          return '/events/' + id
+        },
 
         editLink(id) {
           return '/events/' + id + '/edit'

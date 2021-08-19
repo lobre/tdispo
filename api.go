@@ -79,7 +79,45 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// to implement
+	var req struct {
+		GuestID int `json:"guest_id"`
+		EventID int `json:"event_id"`
+		Assist  int `json:"assist"`
+	}
+
+	err := app.readJSON(w, r, &req)
+	if err != nil {
+		app.badRequest(w, r, err)
+		return
+	}
+
+	if req.GuestID == 0 {
+		app.badRequest(w, r, errors.New("Missing guest_id field in request"))
+		return
+	}
+
+	if req.EventID == 0 {
+		app.badRequest(w, r, errors.New("Missing event_id field in request"))
+		return
+	}
+
+	part := Participation{
+		GuestID: req.GuestID,
+		EventID: req.EventID,
+		Assist:  req.Assist,
+	}
+
+	err = app.eventService.Participate(r.Context(), &part)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{}, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 }
 
 func (app *application) deleteEvent(w http.ResponseWriter, r *http.Request) {

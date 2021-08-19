@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 )
 
 type Event struct {
@@ -13,28 +15,18 @@ type Event struct {
 	StatusID int     `json:"-"`
 	Status   *Status `json:"status"`
 
-	// List of associated participations.
+	// List of participations to answered events.
 	// This is only set when returning a single event.
-	Participations []*Participation `json:"participations"`
+	Answered []*Participation `json:"answered"`
+
+	// List of pending guests that haven’t participated yet.
+	// This is only set when returning a single event.
+	Pending []*Guest `json:"pending"`
 }
 
-// YetToParticipate returns the list of guests that haven’t
-// participated yet to the event.
-func (evt *Event) YetToParticipate(all []*Guest) []*Guest {
-	var res []*Guest
-	for _, guest := range all {
-		participated := false
-		for _, part := range evt.Participations {
-			if part.GuestID == guest.ID {
-				participated = true
-				break
-			}
-		}
-		if !participated {
-			res = append(res, guest)
-		}
-	}
-	return res
+type EventFilter struct {
+	ID      *int
+	IDNotIn []int
 }
 
 // EventUpdate represents a set of fields to be updated via UpdateEvent
@@ -66,7 +58,19 @@ func (s *EventService) FindEventByID(ctx context.Context, id int) (*Event, error
 		return nil, err
 	}
 
-	event.Participations, _, err = findParticipationsByEvent(ctx, tx, event.ID)
+	// attach participations for this event
+	event.Answered, _, err = findParticipationsByEvent(ctx, tx, event.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var guestIDs []int
+	for _, part := range event.Answered {
+		guestIDs = append(guestIDs, part.GuestID)
+	}
+
+	// attach guests who haven’t answered yet
+	event.Pending, _, err = findGuests(ctx, tx, GuestFilter{IDNotIn: guestIDs})
 	if err != nil {
 		return nil, err
 	}
@@ -75,14 +79,14 @@ func (s *EventService) FindEventByID(ctx context.Context, id int) (*Event, error
 }
 
 // FindEvents retrieves the list of events and attaches status for each of them.
-func (s *EventService) FindEvents(ctx context.Context) ([]*Event, int, error) {
+func (s *EventService) FindEvents(ctx context.Context, filter EventFilter) ([]*Event, int, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer tx.Rollback()
 
-	events, n, err := findEvents(ctx, tx)
+	events, n, err := findEvents(ctx, tx, filter)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -143,7 +147,36 @@ func (s *EventService) UpdateEvent(ctx context.Context, id int, upd EventUpdate)
 	return event, tx.Commit()
 }
 
-func findEvents(ctx context.Context, tx *sql.Tx) (_ []*Event, n int, err error) {
+func (s *EventService) Participate(ctx context.Context, part *Participation) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	err = participate(ctx, tx, part)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func findEvents(ctx context.Context, tx *sql.Tx, filter EventFilter) (_ []*Event, n int, err error) {
+	where, args := []string{"1 = 1"}, []interface{}{}
+	if filter.ID != nil {
+		where, args = append(where, "id = ?"), append(args, *filter.ID)
+	}
+
+	if filter.IDNotIn != nil {
+		var placeholder []string
+		for _, id := range filter.IDNotIn {
+			placeholder = append(placeholder, "?")
+			args = append(args, id)
+		}
+		where = append(where, fmt.Sprintf("id NOT IN (%s)", strings.Join(placeholder, ",")))
+	}
+
 	// at some point, we will want to have a date
 	// and order by date desc
 	rows, err := tx.QueryContext(ctx,
@@ -154,7 +187,9 @@ func findEvents(ctx context.Context, tx *sql.Tx) (_ []*Event, n int, err error) 
 			status,
 			COUNT(*) OVER()
 		FROM events
+		WHERE `+strings.Join(where, " AND ")+`
 		ORDER BY title`,
+		args...,
 	)
 	if err != nil {
 		return nil, 0, err

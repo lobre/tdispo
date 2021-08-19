@@ -72,7 +72,7 @@ func (app *application) createStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) findEvents(w http.ResponseWriter, r *http.Request) {
-	events, _, err := app.eventService.FindEvents(r.Context())
+	events, _, err := app.eventService.FindEvents(r.Context(), EventFilter{})
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -102,15 +102,8 @@ func (app *application) findEventByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allGuests, _, err := app.guestService.FindGuests(r.Context())
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
 	app.render(w, r, "event", &data{
-		Event:  event,
-		Guests: allGuests,
+		Event: event,
 	})
 }
 
@@ -221,7 +214,7 @@ func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) findGuests(w http.ResponseWriter, r *http.Request) {
-	guests, _, err := app.guestService.FindGuests(r.Context())
+	guests, _, err := app.guestService.FindGuests(r.Context(), GuestFilter{})
 	if err != nil {
 		app.serverError(w, r, err)
 		return

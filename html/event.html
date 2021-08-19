@@ -7,9 +7,9 @@
   <p>Statut : {{ .Event.Status.Label }}</p>
 
   <h2>{{ "Guests" | translate }}</h2>
-  {{ if .Event.Participations }}
+  {{ if .Event.Answered }}
     <ul>
-      {{ range .Event.Participations }}
+      {{ range .Event.Answered }}
         <li>{{ .Guest.Name }}</li>
       {{ end }}
     </ul>
@@ -18,39 +18,13 @@
   {{ end }}
 
   <h2>{{ "Yet to participate" | translate }}</h2>
-  {{ if .Event.YetToParticipate .Guests }}
-    <ul id="yetToParticipate" data-event-id="{{ .Event.ID }}">
-      {{ range .Event.YetToParticipate .Guests }}
-        <li>
-          {{ .Name }} <a class="participate" data-guest-id="{{ .ID }}">{{ "participate" | translate }}</a>
-        </li>
+  {{ if .Event.Pending }}
+    <ul>
+      {{ range .Event.Pending }}
+        <li>{{ .Name }}</li>
       {{ end }}
     </ul>
   {{ else }}
-    <p>{{ "Everyone participated" | translate }}</p>
+    <p>{{ "No guests" | translate }}</p>
   {{ end }}
-
-  <script>
-    const yetToParticipate = document.getElementById("yetToParticipate")
-    yetToParticipate.addEventListener( "click", function(event) {
-      const target = event.target;
-      if (target.matches("a.participate")) {
-        event.preventDefault();
-        participate(yetToParticipate.dataset.eventId, target.dataset.guestId);
-      }
-    })
-
-    async function participate(eventId, guestId) {
-      try {
-        const resp = await fetch(`/events/${eventId}/participate/${guestId}`, { method: "POST" })
-        if (!resp.ok) {
-          throw `server error: http code ${resp.status}`;
-        }
-
-        window.location.replace(`/events/${eventId}`);
-      } catch (error) {
-        console.log(error);
-      }
-    }
-  </script>
 {{ end }}
