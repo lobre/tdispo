@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"net/http"
-	"strconv"
 )
 
 func (app *application) deleteStatus(w http.ResponseWriter, r *http.Request) {
@@ -40,6 +39,40 @@ func (app *application) deleteStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (app *application) deleteGuest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		app.methodNotAllowed(w, r)
+		return
+	}
+
+	var req struct {
+		ID int `json:"id"`
+	}
+
+	err := app.readJSON(w, r, &req)
+	if err != nil {
+		app.badRequest(w, r, err)
+		return
+	}
+
+	if req.ID == 0 {
+		app.badRequest(w, r, errors.New("Missing id field in request."))
+		return
+	}
+
+	err = app.guestService.DeleteGuest(r.Context(), req.ID)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{}, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+}
+
 func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		app.methodNotAllowed(w, r)
@@ -55,34 +88,5 @@ func (app *application) deleteEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	err = app.eventService.DeleteEvent(r.Context(), id)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-}
-
-func (app *application) deleteGuest(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		app.methodNotAllowed(w, r)
-		return
-	}
-
-	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	err = app.guestService.DeleteGuest(r.Context(), id)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
+	// to implement
 }

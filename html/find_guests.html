@@ -5,64 +5,37 @@
 {{ define "main" }}
   <p>{{ "List of guests" | translate }}</p>
 
-  {{ if .Guests }}
-    <ul id="guests">
-      {{ range .Guests }}
+  <div x-data="guests">
+    <ul x-show="list.length">
+      <template x-for="guest in list">
         <li>
-          {{ .Name }}, <a href="mailto:{{ .Email }}">{{ .Email }}</a> (<a href="/guests/{{ .ID }}/edit">modifier</a>, <a href="" class="delete" data-guest-id="{{ .ID }}">{{ "delete" | translate }}</a>)
+          <span x-text="guest.name"></span>
+          <span x-text="guest.email"></span>
+          <a x-bind:href="editLink(guest.id)">({{ "edit" | translate }})</a>
+          <a href="" @click.prevent="await deleteGuest(guest.id)">({{ "delete" | translate }})</a>
         </li>
-      {{ end }}
+      </template>
     </ul>
-  {{ else }}
-    <p>{{ "No guests" | translate }}</p>
-  {{ end }}
+    <p x-show="!list.length">{{ "No guests" | translate }}</p>
+  </div>
 
   <a href="/guests/new">{{ "New guest" | translate }}</a>
 
   <script>
-    const guests = document.getElementById("guests")
-    guests.addEventListener("click", function(event) {
-      const target = event.target;
-      if (target.matches("a.delete")) {
-        event.preventDefault();
-        deleteGuest(target.dataset.guestId);
-      }
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('guests', () => ({
+        list: {{ .GuestsJS }},
+
+        editLink(id) {
+          return '/guests/' + id + '/edit'
+        },
+
+        async deleteGuest(id) {
+          await api('deleteGuest', { id: id })
+            .then(this.list = this.list.filter(guest => guest.id !== id))
+            .catch(err => console.log(err)) // use flash
+        }
+      }))
     })
-
-    async function deleteGuest(guestId) {
-      try {
-        const resp = await fetch(`/guests/${guestId}`, { method: "DELETE" })
-        if (!resp.ok) {
-          throw `server error: http code ${resp.status}`;
-        }
-
-        window.location.replace("/guests");
-      } catch (error) {
-        console.log(error);
-      }
-    }
-
-    // TODO: implement
-    async function api(endpoint, payload) {
-      try {
-        const resp = await fetch(`/api/${endpoint}`, { method: "POST" })
-        if (!resp.ok) {
-            // handle error in flash message
-            // throw error
-        }
-
-        // return data
-      } catch (error) {
-            // handle error in flash message
-            // throw error
-      } 
-    }
-
-    async function mySpecificAPICall() {
-          try {
-              data = await api("toto", { "id": 1 })
-          } catch (error) {
-          }
-    }
   </script>
 {{ end }}

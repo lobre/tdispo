@@ -3,41 +3,36 @@
 {{ define "title" }}{{ "List of events" | translate }}{{ end }}
 
 {{ define "main" }}
-  {{ if .Events }}
-    <ul id="events">
-      {{ range .Events }}
+  <div x-data="events">
+    <ul x-show="list.length">
+      <template x-for="event in list">
         <li>
-          <a href="/events/{{ .ID }}">{{ .Title }}</a> (<a href="/events/{{ .ID }}/edit">modifier</a>, <a href="" class="delete" data-event-id="{{ .ID }}">{{ "delete" | translate }}</a>)
+          <span x-text="event.title"></span>
+          <a x-bind:href="editLink(event.id)">({{ "edit" | translate }})</a>
+          <a href="" @click.prevent="await deleteEvent(guest.id)">({{ "delete" | translate }})</a>
         </li>
-      {{ end }}
+      </template>
     </ul>
-  {{ else }}
-    <p>{{ "No events" | translate }}</p>
-  {{ end }}
+    <p x-show="!list.length">{{ "No events" | translate }}</p>
+  </div>
 
   <a href="/events/new">{{ "New event" | translate }}</a>
 
   <script>
-    const events = document.getElementById("events")
-    events.addEventListener("click", function(event) {
-      const target = event.target;
-      if (target.matches("a.delete")) {
-        event.preventDefault();
-        deleteEvent(target.dataset.eventId);
-      }
-    })
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('events', () => ({
+        list: {{ .EventsJS }},
 
-    async function deleteEvent(eventId) {
-      try {
-        const resp = await fetch(`/events/${eventId}`, { method: "DELETE" })
-        if (!resp.ok) {
-          throw `server error: http code ${resp.status}`;
+        editLink(id) {
+          return '/events/' + id + '/edit'
+        },
+
+        async deleteEvent(id) {
+          await api('deleteEvent', { id: id })
+            .then(this.list = this.list.filter(event => event.id !== id))
+            .catch(err => console.log(err)) // use flash
         }
-
-        window.location.replace("/events");
-      } catch (error) {
-        console.log(error);
-      }
-    }
+      }))
+    })
   </script>
 {{ end }}

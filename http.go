@@ -20,8 +20,10 @@ type data struct {
 	StatusesJS template.JS
 	Event      *Event
 	Events     []*Event
+	EventsJS   template.JS
 	Guest      *Guest
 	Guests     []*Guest
+	GuestsJS   template.JS
 }
 
 type envelope map[string]interface{}

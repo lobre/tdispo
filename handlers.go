@@ -78,8 +78,14 @@ func (app *application) findEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	js, err := json.Marshal(events)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	app.render(w, r, "find_events", &data{
-		Events: events,
+		EventsJS: template.JS(js),
 	})
 }
 
@@ -221,8 +227,14 @@ func (app *application) findGuests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	js, err := json.Marshal(guests)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	app.render(w, r, "find_guests", &data{
-		Guests: guests,
+		GuestsJS: template.JS(js),
 	})
 }
 
