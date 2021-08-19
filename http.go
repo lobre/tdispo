@@ -24,6 +24,8 @@ type data struct {
 	Guest      *Guest
 	Guests     []*Guest
 	GuestsJS   template.JS
+	AnsweredJS template.JS
+	PendingJS  template.JS
 }
 
 type envelope map[string]interface{}

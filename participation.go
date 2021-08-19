@@ -7,10 +7,10 @@ import (
 
 type Participation struct {
 	GuestID int    `json:"-"`
-	Guest   *Guest `json:"guest"`
+	Guest   *Guest `json:"guest,omitempty"`
 
 	EventID int    `json:"-"`
-	Event   *Event `json:"event"`
+	Event   *Event `json:"event,omitempty"`
 
 	Assist int `json:"assist"`
 }

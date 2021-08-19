@@ -9,7 +9,7 @@
         <li>
           <a x-bind:href="showLink(event.id)" x-text="event.title"></a>
           <a x-bind:href="editLink(event.id)">({{ "edit" | translate }})</a>
-          <a href="" @click.prevent="await deleteEvent(guest.id)">({{ "delete" | translate }})</a>
+          <a href="" @click.prevent="deleteEvent(guest.id)">({{ "delete" | translate }})</a>
         </li>
       </template>
     </ul>
@@ -31,9 +31,9 @@
           return '/events/' + id + '/edit'
         },
 
-        async deleteEvent(id) {
-          await api('deleteEvent', { id: id })
-            .then(this.list = this.list.filter(event => event.id !== id))
+        deleteEvent(id) {
+          api('deleteEvent', { id: id })
+            .then(() => this.list = this.list.filter(event => event.id !== id))
             .catch(err => console.log(err)) // use flash
         }
       }))

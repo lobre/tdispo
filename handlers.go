@@ -102,8 +102,22 @@ func (app *application) findEventByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	answeredJS, err := json.Marshal(event.Answered)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	pendingJS, err := json.Marshal(event.Pending)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	app.render(w, r, "event", &data{
-		Event: event,
+		Event:      event,
+		AnsweredJS: template.JS(answeredJS),
+		PendingJS:  template.JS(pendingJS),
 	})
 }
 

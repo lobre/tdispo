@@ -12,7 +12,7 @@
           <span x-text="guest.name"></span>
           <span x-text="guest.email"></span>
           <a x-bind:href="editLink(guest.id)">({{ "edit" | translate }})</a>
-          <a href="" @click.prevent="await deleteGuest(guest.id)">({{ "delete" | translate }})</a>
+          <a href="" @click.prevent="deleteGuest(guest.id)">({{ "delete" | translate }})</a>
         </li>
       </template>
     </ul>
@@ -30,9 +30,9 @@
           return '/guests/' + id + '/edit'
         },
 
-        async deleteGuest(id) {
-          await api('deleteGuest', { id: id })
-            .then(this.list = this.list.filter(guest => guest.id !== id))
+        deleteGuest(id) {
+          api('deleteGuest', { id: id })
+            .then(() => this.list = this.list.filter(guest => guest.id !== id))
             .catch(err => console.log(err)) // use flash
         }
       }))

@@ -10,7 +10,7 @@
       <template x-for="status in list">
         <li>
           <span x-text="status.label"></span>
-          <a href="" @click.prevent="await deleteStatus(status.id)">({{ "delete" | translate }})</a>
+          <a href="" @click.prevent="deleteStatus(status.id)">({{ "delete" | translate }})</a>
         </li>
       </template>
     </ul>
@@ -24,9 +24,9 @@
       Alpine.data('statuses', () => ({
         list: {{ .StatusesJS }},
 
-        async deleteStatus(id) {
-          await api('deleteStatus', { id: id })
-            .then(this.list = this.list.filter(status => status.id !== id))
+        deleteStatus(id) {
+          api('deleteStatus', { id: id })
+            .then(() => this.list = this.list.filter(status => status.id !== id))
             .catch(err => console.log(err)) // use flash
         }
       }))

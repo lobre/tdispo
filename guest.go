@@ -14,11 +14,11 @@ type Guest struct {
 
 	// List of participations to answered events.
 	// This is only set when returning a single guest.
-	Answered []*Participation `json:"answered"`
+	Answered []*Participation `json:"-"`
 
 	// List of events to which the guest hasn’t answerd yet.
 	// This is only set when returning a single guest.
-	Pending []*Event `json:"pending"`
+	Pending []*Event `json:"-"`
 }
 
 type GuestFilter struct {
