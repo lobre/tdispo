@@ -16,7 +16,7 @@
     <p x-show="!list.length">{{ "No events" | translate }}</p>
   </div>
 
-  <a href="/events/new">{{ "New event" | translate }}</a>
+  <a href="/new">{{ "New event" | translate }}</a>
 
   <script>
     document.addEventListener('alpine:init', () => {
@@ -24,11 +24,11 @@
         list: {{ .EventsJS }},
 
         showLink(id) {
-          return '/events/' + id
+          return '/' + id
         },
 
         editLink(id) {
-          return '/events/' + id + '/edit'
+          return '/' + id + '/edit'
         },
 
         deleteEvent(id) {

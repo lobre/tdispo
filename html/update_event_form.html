@@ -3,7 +3,7 @@
 {{ define "title" }}{{ "Event" | translate }} - {{ .Event.Title }}{{ end }}
 
 {{ define "main" }}
-  <form action="/events/{{ .Event.ID }}/edit" method="post">
+  <form action="/{{ .Event.ID }}/edit" method="post">
     <div>
       <label for="title">{{ "Title" | translate }}</label>
       <input type="text" name="title" value="{{ .Event.Title }}" required />

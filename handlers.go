@@ -163,7 +163,7 @@ func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/events/%d", evt.ID), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/%d", evt.ID), http.StatusSeeOther)
 }
 
 func (app *application) updateEventForm(w http.ResponseWriter, r *http.Request) {
@@ -224,7 +224,7 @@ func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/events/%d", id), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/%d", id), http.StatusSeeOther)
 }
 
 func (app *application) findGuests(w http.ResponseWriter, r *http.Request) {
