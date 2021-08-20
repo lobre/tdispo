@@ -44,7 +44,7 @@ func main() {
 	var cfg config
 
 	flag.IntVar(&cfg.port, "port", 8080, "http server port")
-	flag.StringVar(&cfg.dsn, "dsn", "cocorico.db", "database datasource name")
+	flag.StringVar(&cfg.dsn, "dsn", "tdispo.db", "database datasource name")
 	flag.StringVar(&cfg.lang, "lang", "en", "language of the application")
 	flag.Parse()
 

@@ -1,6 +1,6 @@
-# Cocorico
+# TDispo
 
-Cocorico is a Doodle like web application to record participations to events.
+Tdispo is a Doodle like web application to record participations to events.
 
 ## Pitch
 

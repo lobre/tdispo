@@ -1,4 +1,4 @@
-module github.com/lobre/cocorico
+module github.com/lobre/tdispo
 
 go 1.16
 
