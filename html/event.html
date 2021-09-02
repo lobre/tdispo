@@ -6,7 +6,7 @@
   <p>{{ .Event.Desc | markdown }}</p>
   <p>Statut : {{ .Event.Status.Label }}</p>
 
-  <div x-data="participations">
+  <div x-data="participations" x-cloak>
     <h2>{{ "Guests" | translate }}</h2>
     <ul x-show="answered.length">
       <template x-for="participation in answered">

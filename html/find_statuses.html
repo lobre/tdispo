@@ -5,7 +5,7 @@
 {{ define "main" }}
   <p>{{ "List of statuses" | translate }}</p>
 
-  <div x-data="statuses">
+  <div x-data="statuses" x-cloak>
     <ul x-show="list.length">
       <template x-for="status in list">
         <li>

@@ -92,7 +92,7 @@ func (app *application) findEvents(w http.ResponseWriter, r *http.Request) {
 func (app *application) findEventByID(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
 	if err != nil {
-		app.serverError(w, r, err)
+		app.notFound(w, r)
 		return
 	}
 
@@ -147,7 +147,7 @@ func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 
 	statusID, err := strconv.Atoi(r.FormValue("status"))
 	if err != nil {
-		app.serverError(w, r, err)
+		app.badRequest(w, r, err)
 		return
 	}
 
@@ -169,7 +169,7 @@ func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 func (app *application) updateEventForm(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
 	if err != nil {
-		app.serverError(w, r, err)
+		app.notFound(w, r)
 		return
 	}
 
@@ -199,13 +199,13 @@ func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
 	if err != nil {
-		app.serverError(w, r, err)
+		app.notFound(w, r)
 		return
 	}
 
 	statusID, err := strconv.Atoi(r.FormValue("status"))
 	if err != nil {
-		app.serverError(w, r, err)
+		app.badRequest(w, r, err)
 		return
 	}
 
@@ -278,7 +278,7 @@ func (app *application) createGuest(w http.ResponseWriter, r *http.Request) {
 func (app *application) updateGuestForm(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
 	if err != nil {
-		app.serverError(w, r, err)
+		app.notFound(w, r)
 		return
 	}
 
@@ -301,7 +301,7 @@ func (app *application) updateGuest(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
 	if err != nil {
-		app.serverError(w, r, err)
+		app.notFound(w, r)
 		return
 	}
 

@@ -3,7 +3,7 @@
 {{ define "title" }}{{ "List of events" | translate }}{{ end }}
 
 {{ define "main" }}
-  <div x-data="events">
+  <div x-data="events" x-cloak>
     <ul x-show="list.length">
       <template x-for="event in list">
         <li>
