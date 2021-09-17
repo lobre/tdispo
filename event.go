@@ -9,20 +9,20 @@ import (
 )
 
 type Event struct {
-	ID    int    `json:"id"`
-	Title string `json:"title"`
-	Desc  string `json:"desc"`
+	ID    int
+	Title string
+	Desc  string
 
-	StatusID int     `json:"-"`
-	Status   *Status `json:"status"`
+	StatusID int
+	Status   *Status
 
 	// List of participations to answered events.
 	// This is only set when returning a single event.
-	Answered []*Participation `json:"-"`
+	Answered []*Participation
 
 	// List of pending guests that haven’t participated yet.
 	// This is only set when returning a single event.
-	Pending []*Guest `json:"-"`
+	Pending []*Guest
 }
 
 type EventFilter struct {

@@ -6,13 +6,13 @@ import (
 )
 
 type Participation struct {
-	GuestID int    `json:"-"`
-	Guest   *Guest `json:"guest,omitempty"`
+	GuestID int
+	Guest   *Guest
 
-	EventID int    `json:"-"`
-	Event   *Event `json:"event,omitempty"`
+	EventID int
+	Event   *Event
 
-	Assist int `json:"assist"`
+	Assist int
 }
 
 var AssistLabels = map[int]string{

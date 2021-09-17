@@ -11,17 +11,17 @@ import (
 )
 
 type Guest struct {
-	ID    int    `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	ID    int
+	Name  string
+	Email string
 
 	// List of participations to answered events.
 	// This is only set when returning a single guest.
-	Answered []*Participation `json:"-"`
+	Answered []*Participation
 
 	// List of events to which the guest hasn’t answerd yet.
 	// This is only set when returning a single guest.
-	Pending []*Event `json:"-"`
+	Pending []*Event
 }
 
 type GuestFilter struct {
