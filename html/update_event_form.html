@@ -4,24 +4,29 @@
 
 {{ define "main" }}
   <form action="/{{ .Event.ID }}/edit" method="post">
-    <div>
-      <label for="title">{{ "Title" | translate }}</label>
-      <input type="text" name="title" value="{{ .Event.Title }}" required />
-    </div>
-    <div>
-      <label for="desc">{{ "Description" | translate }}</label>
-      <textarea name="desc" rows="4" cols="50">{{ .Event.Desc }}</textarea>
-    </div>
-    <div>
-      <label for="status">{{ "Status" | translate }}</label>
-      <select name="status">
-        {{ range .Statuses }}
-          <option value="{{ .ID }}" {{ if eq .ID $.Event.StatusID }}selected="selected"{{ end }}>{{ .Label }}</option>
+    {{ with .Form }}
+      <div>
+        <label for="title">{{ "Title" | translate }}</label>
+        <input type="text" name="title" value='{{ .Get "title" }}' required />
+        {{ with .Error "title" }}
+          <span>{{ . | translate }}</span>
         {{ end }}
-      </select>
-    </div>
-    <div>
-      <input type="submit" value='{{ "Save" | translate }}' />
-    </div>
+      </div>
+      <div>
+        <label for="desc">{{ "Description" | translate }}</label>
+        <textarea name="desc" rows="4" cols="50">{{ .Get "desc" }}</textarea>
+      </div>
+      <div>
+        <label for="status">{{ "Status" | translate }}</label>
+        <select name="status">
+          {{ range $.Statuses }}
+            <option value="{{ .ID }}" {{ if eq .ID $.Event.StatusID }}selected="selected"{{ end }}>{{ .Label }}</option>
+          {{ end }}
+        </select>
+      </div>
+      <div>
+        <input type="submit" value='{{ "Save" | translate }}' />
+      </div>
+    {{ end }}
   </form>
 {{ end }}

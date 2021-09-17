@@ -1,0 +1,10 @@
+{{ template "base" . }}
+
+{{ define "title" }}{{ "Event" | translate }} - {{ .Event.Title }}{{ end }}
+
+{{ define "main" }}
+  <p>{{ .Event.Desc | markdown }}</p>
+  <p>Statut : {{ .Event.Status.Label }}</p>
+
+  {{ template "event_participations.html" . }}
+{{ end }}

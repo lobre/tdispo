@@ -1,0 +1,33 @@
+{{ define "base" }}
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <title>{{ template "title" . }} - Tdispo</title>
+      <script src="https://unpkg.com/alpinejs" defer></script>
+      <script src="https://unpkg.com/htmx.org" defer></script>
+      {{/* tell the browser to not fetch the favicon */}}
+      <link rel="icon" href="data:,"> 
+    </head>
+
+    <body {{ if .Boost }}hx-boost="true"{{ end }}>
+      {{ block "body" . }}
+        <header>
+          <h1><a href="/">TDispo</a></h1>
+        </header>
+
+        <nav>
+          <div>
+            <a href="/">{{ "Home" | translate }}</a>
+            <a href="/guests">{{ "Guests" | translate }}</a>
+            <a href="/status">{{ "Statuses" | translate }}</a>
+          </div>
+        </nav>
+
+        <main>
+          {{ template "main" . }}
+        </main>
+      {{ end }}
+    </body>
+  </html>
+{{ end }}

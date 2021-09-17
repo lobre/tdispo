@@ -15,11 +15,11 @@ type Participation struct {
 	Assist int `json:"assist"`
 }
 
-const (
-	AssistNo = iota
-	AssistYes
-	AssistMaybe
-)
+var AssistLabels = map[int]string{
+	0: "no",
+	1: "yes",
+	2: "if needed",
+}
 
 // findParticipationsByEvent fetches the participations related to a specific event.
 // For each participation, the guest is attached.

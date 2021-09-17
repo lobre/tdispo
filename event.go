@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -203,6 +204,9 @@ func findEvents(ctx context.Context, tx *sql.Tx, filter EventFilter) (_ []*Event
 
 		err = rows.Scan(&evt.ID, &evt.Title, &evt.Desc, &evt.StatusID, &n)
 		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, 0, ErrNoRecord
+			}
 			return nil, 0, err
 		}
 
@@ -220,7 +224,11 @@ func findEventByID(ctx context.Context, tx *sql.Tx, id int) (*Event, error) {
 	row := tx.QueryRowContext(ctx, `SELECT id, title, desc, status FROM events WHERE id = ?`, id)
 
 	var evt Event
-	if err := row.Scan(&evt.ID, &evt.Title, &evt.Desc, &evt.StatusID); err != nil {
+	err := row.Scan(&evt.ID, &evt.Title, &evt.Desc, &evt.StatusID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoRecord
+		}
 		return nil, err
 	}
 

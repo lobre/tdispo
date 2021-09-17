@@ -7,25 +7,28 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
-	"io/fs"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
-	"strings"
 	"time"
-
-	"github.com/russross/blackfriday"
 )
 
-//go:embed html/*.html migrations/*.sql translations/*.csv
+//go:embed html/*.html html/layouts/*.html html/partials/*.html
+//go:embed migrations/*.sql
+//go:embed translations/*.csv
 var assets embed.FS
 
+var (
+	ErrNoRecord       = errors.New("no record")
+	ErrDuplicateEmail = errors.New("duplicate email")
+)
+
 type config struct {
-	port int
-	dsn  string
-	lang string
+	port  int
+	dsn   string
+	lang  string
+	boost bool
 }
 
 type application struct {
@@ -46,6 +49,7 @@ func main() {
 	flag.IntVar(&cfg.port, "port", 8080, "http server port")
 	flag.StringVar(&cfg.dsn, "dsn", "tdispo.db", "database datasource name")
 	flag.StringVar(&cfg.lang, "lang", "en", "language of the application")
+	flag.BoolVar(&cfg.boost, "boost", false, "boost web requests as ajax")
 	flag.Parse()
 
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
@@ -116,46 +120,4 @@ func main() {
 	if err := db.Close(); err != nil {
 		logger.Fatal(err)
 	}
-}
-
-func (app *application) parseTemplates() error {
-	app.templates = make(map[string]*template.Template)
-
-	names, err := fs.Glob(assets, "html/*.html")
-	if err != nil {
-		return err
-	}
-
-	for _, name := range names {
-		base := filepath.Base(name)
-		k := strings.TrimSuffix(base, filepath.Ext(base))
-
-		if k == "base" {
-			continue
-		}
-
-		t := template.New(base).Funcs(template.FuncMap{
-			"markdown":  markdown,
-			"translate": app.translator.translate,
-		})
-
-		t, err = t.ParseFS(assets, name)
-		if err != nil {
-			return err
-		}
-
-		t, err = t.ParseFS(assets, "html/base.html")
-		if err != nil {
-			return err
-		}
-
-		app.templates[k] = t
-	}
-
-	return nil
-}
-
-func markdown(args ...interface{}) template.HTML {
-	s := blackfriday.MarkdownCommon([]byte(fmt.Sprintf("%s", args...)))
-	return template.HTML(s)
 }

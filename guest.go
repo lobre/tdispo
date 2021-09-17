@@ -3,8 +3,11 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/mattn/go-sqlite3"
 )
 
 type Guest struct {
@@ -161,6 +164,9 @@ func findGuests(ctx context.Context, tx *sql.Tx, filter GuestFilter) (_ []*Guest
 
 		err = rows.Scan(&guest.ID, &guest.Name, &guest.Email, &n)
 		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, 0, ErrNoRecord
+			}
 			return nil, 0, err
 		}
 
@@ -178,7 +184,11 @@ func findGuestByID(ctx context.Context, tx *sql.Tx, id int) (*Guest, error) {
 	row := tx.QueryRowContext(ctx, `SELECT id, name, email FROM guests WHERE id = ?`, id)
 
 	var guest Guest
-	if err := row.Scan(&guest.ID, &guest.Name, &guest.Email); err != nil {
+	err := row.Scan(&guest.ID, &guest.Name, &guest.Email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoRecord
+		}
 		return nil, err
 	}
 
@@ -192,6 +202,12 @@ func createGuest(ctx context.Context, tx *sql.Tx, guest *Guest) error {
 		guest.Email,
 	)
 	if err != nil {
+		var sqliteError sqlite3.Error
+		if errors.As(err, &sqliteError) {
+			if sqliteError.ExtendedCode == sqlite3.ErrConstraintUnique && strings.Contains(sqliteError.Error(), "guests.email") {
+				return ErrDuplicateEmail
+			}
+		}
 		return err
 	}
 

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 )
 
 type Status struct {
@@ -90,6 +91,9 @@ func findStatuses(ctx context.Context, tx *sql.Tx) (_ []*Status, n int, err erro
 
 		err = rows.Scan(&s.ID, &s.Label, &n)
 		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, 0, ErrNoRecord
+			}
 			return nil, 0, err
 		}
 
@@ -107,7 +111,11 @@ func findStatusByID(ctx context.Context, tx *sql.Tx, id int) (*Status, error) {
 	row := tx.QueryRowContext(ctx, `SELECT id, label FROM statuses WHERE id = ?`, id)
 
 	var status Status
-	if err := row.Scan(&status.ID, &status.Label); err != nil {
+	err := row.Scan(&status.ID, &status.Label)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoRecord
+		}
 		return nil, err
 	}
 

@@ -1,0 +1,29 @@
+<div hx-target="this" hx-swap="outerHTML">
+  <h2>{{ "Guests" | translate }}</h2>
+  {{ if .Event.Answered }} 
+    <ul>
+      {{ range .Event.Answered }}
+        <li>
+          <span>{{ .Guest.Name }}:</span>
+          <span>{{ index $.AssistLabels .Assist | translate }}</span>
+          <a href="" hx-post='/{{ $.Event.ID }}/removeParticipation' hx-vals='{ "guest": {{ .Guest.ID }} }'>({{ "delete" | translate }})</a>
+        </li>
+      {{ end }}
+    </ul>
+  {{ else }}
+    <p>{{ "No guests" | translate }}</p>
+  {{ end }}
+
+  <h2>{{ "Yet to participate" | translate }}</h2>
+  {{ if .Event.Pending }}
+    <ul>
+      {{ range .Event.Pending }}
+        <li>
+          <span>{{ .Name }}</span>
+        </li>
+      {{ end }}
+    </ul>
+  {{ else }}
+    <p>{{ "No guests" | translate }}</p>
+  {{ end }}
+</div>
