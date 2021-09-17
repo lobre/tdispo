@@ -1,4 +1,4 @@
-# TDispo
+# Tdispo
 
 Tdispo is a Doodle like web application to record participations to events.
 
