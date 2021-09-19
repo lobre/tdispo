@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+
+	"github.com/mattn/go-sqlite3"
 )
 
 type Status struct {
@@ -143,6 +145,12 @@ func createStatus(ctx context.Context, tx *sql.Tx, status *Status) error {
 func deleteStatus(ctx context.Context, tx *sql.Tx, id int) error {
 	_, err := tx.ExecContext(ctx, `DELETE FROM statuses WHERE id = ?`, id)
 	if err != nil {
+		var sqliteError sqlite3.Error
+		if errors.As(err, &sqliteError) {
+			if sqliteError.ExtendedCode == sqlite3.ErrConstraintForeignKey {
+				return ErrStatusUsed
+			}
+		}
 		return err
 	}
 

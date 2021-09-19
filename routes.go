@@ -8,7 +8,7 @@ import (
 )
 
 func (app *application) routes() http.Handler {
-	chain := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
+	chain := alice.New(app.recoverPanic, app.logRequest, secureHeaders, app.session.Enable)
 
 	mux := pat.New()
 
@@ -26,17 +26,12 @@ func (app *application) routes() http.Handler {
 	mux.Post("/guests/:id/edit", http.HandlerFunc(app.updateGuest))
 	mux.Del("/guests/:id", http.HandlerFunc(app.deleteGuest))
 
-	// authentication
-	mux.Get("/login", http.HandlerFunc(app.login))
-	mux.Get("/logout", http.HandlerFunc(app.logout))
-
 	// events
 	mux.Get("/", http.HandlerFunc(app.findEvents))
 	mux.Get("/new", http.HandlerFunc(app.createEventForm))
 	mux.Post("/new", http.HandlerFunc(app.createEvent))
 	mux.Get("/:id/edit", http.HandlerFunc(app.updateEventForm))
 	mux.Post("/:id/edit", http.HandlerFunc(app.updateEvent))
-	mux.Post("/:id/removeParticipation", http.HandlerFunc(app.removeParticipation))
 	mux.Get("/:id", http.HandlerFunc(app.findEventByID))
 	mux.Del("/:id", http.HandlerFunc(app.deleteEvent))
 

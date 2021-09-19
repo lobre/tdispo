@@ -12,18 +12,6 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	app.renderPage(w, r, "home.html", &templateData{})
 }
 
-// TODO: implement
-// function should set the cookie and redirect to home
-func (app *application) login(w http.ResponseWriter, r *http.Request) {
-	app.renderPage(w, r, "login.html", &templateData{})
-}
-
-// TODO: implement
-// function should unset the cookie and redirect to home
-func (app *application) logout(w http.ResponseWriter, r *http.Request) {
-	app.renderPage(w, r, "logout.html", &templateData{})
-}
-
 func (app *application) findStatuses(w http.ResponseWriter, r *http.Request) {
 	statuses, _, err := app.statusService.FindStatuses(r.Context())
 	if err != nil {
@@ -78,7 +66,9 @@ func (app *application) deleteStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = app.statusService.DeleteStatus(r.Context(), id)
-	if err != nil {
+	if err != nil && errors.Is(err, ErrStatusUsed) {
+		app.flash(r, "Can’t delete a status assigned to an existing event")
+	} else if err != nil {
 		app.serverError(w, err)
 		return
 	}
@@ -104,10 +94,6 @@ func (app *application) findEvents(w http.ResponseWriter, r *http.Request) {
 	app.renderPage(w, r, "events_list.html", &templateData{
 		Events: events,
 	})
-}
-
-func (app *application) removeParticipation(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "salut")
 }
 
 func (app *application) findEventByID(w http.ResponseWriter, r *http.Request) {
@@ -337,15 +323,13 @@ func (app *application) createGuest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = app.guestService.CreateGuest(r.Context(), &guest)
-	if err != nil {
-		if errors.Is(err, ErrDuplicateEmail) {
-			form.CustomError("email", "The email address already exists")
-			app.renderPage(w, r, "create_guest_form.html", &templateData{Form: form})
-			return
-		} else {
-			app.serverError(w, err)
-			return
-		}
+	if err != nil && errors.Is(err, ErrDuplicateEmail) {
+		form.CustomError("email", "The email address already exists")
+		app.renderPage(w, r, "create_guest_form.html", &templateData{Form: form})
+		return
+	} else if err != nil {
+		app.serverError(w, err)
+		return
 	}
 
 	http.Redirect(w, r, "/guests", http.StatusSeeOther)

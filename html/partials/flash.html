@@ -1,0 +1,5 @@
+{{ define "flash" }}
+  {{ with .Flash }}
+    <p id="flash" hx-oob-swap="true">{{ . }}</p>
+  {{ end }}
+{{ end }}

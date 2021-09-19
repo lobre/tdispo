@@ -8,7 +8,7 @@ CREATE TABLE events (
   id     INTEGER PRIMARY KEY,
   title  TEXT NOT NULL,
   desc   TEXT,
-  status INTEGER NOT NULL REFERENCES statuses (id) ON DELETE SET NULL
+  status INTEGER NOT NULL REFERENCES statuses (id)
 );
 
 CREATE TABLE guests (

@@ -12,6 +12,8 @@ import (
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/golangcollege/sessions"
 )
 
 //go:embed html/*.html html/layouts/*.html html/partials/*.html
@@ -22,13 +24,15 @@ var assets embed.FS
 var (
 	ErrNoRecord       = errors.New("no record")
 	ErrDuplicateEmail = errors.New("duplicate email")
+	ErrStatusUsed     = errors.New("status used")
 )
 
 type config struct {
-	port  int
-	dsn   string
-	lang  string
-	boost bool
+	port   int
+	dsn    string
+	lang   string
+	boost  bool
+	secret string
 }
 
 type application struct {
@@ -37,6 +41,7 @@ type application struct {
 
 	templates  map[string]*template.Template
 	translator *translator
+	session    *sessions.Session
 
 	statusService *StatusService
 	guestService  *GuestService
@@ -50,6 +55,7 @@ func main() {
 	flag.StringVar(&cfg.dsn, "dsn", "tdispo.db", "database datasource name")
 	flag.StringVar(&cfg.lang, "lang", "en", "language of the application")
 	flag.BoolVar(&cfg.boost, "boost", true, "boost web requests as ajax")
+	flag.StringVar(&cfg.secret, "secret", "0g6kFh15VxjIfRSDDoXxrK2DLivlX6xt", "session key for cookies encryption")
 	flag.Parse()
 
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
@@ -65,10 +71,14 @@ func main() {
 		logger.Fatal(err)
 	}
 
+	session := sessions.New([]byte(cfg.secret))
+	session.Lifetime = 12 * time.Hour
+
 	app := application{
 		config:     cfg,
 		logger:     logger,
 		translator: translator,
+		session:    session,
 
 		statusService: &StatusService{db: db},
 		guestService:  &GuestService{db: db},

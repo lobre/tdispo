@@ -68,6 +68,7 @@ func (app *application) addDefaultData(data *templateData, r *http.Request) *tem
 		data = &templateData{}
 	}
 	data.Boost = app.config.boost
+	data.Flash = app.session.PopString(r, "flash")
 	return data
 }
 
@@ -108,10 +109,19 @@ func (app *application) renderPage(w http.ResponseWriter, r *http.Request, name 
 // will only deliver the extracted "main" from the page.
 // This is useful to generate a partial containing the whole main section of a page.
 func (app *application) renderMain(w http.ResponseWriter, r *http.Request, name string, data *templateData) {
+	// render flash in case a message has been pushed
+	app.render(w, r, name, "flash", nil)
 	app.render(w, r, name, "main", data)
 }
 
 // The renderPartial helper will execute the template for a partial.
 func (app *application) renderPartial(w http.ResponseWriter, r *http.Request, name string, data *templateData) {
+	// render flash in case a message has been pushed
+	app.render(w, r, "partials", "flash", nil)
 	app.render(w, r, "partials", name, data)
+}
+
+// The flash helper will add a global flash message.
+func (app *application) flash(r *http.Request, msg string) {
+	app.session.Put(r, "flash", app.translator.translate(msg))
 }

@@ -14,6 +14,7 @@ import (
 type templateData struct {
 	Form         *Form
 	Boost        bool
+	Flash        string
 	Statuses     []*Status
 	Event        *Event
 	Events       []*Event
