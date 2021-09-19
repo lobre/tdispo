@@ -5,8 +5,7 @@
       <meta charset="utf-8" />
       <title>{{ template "title" . }} - Tdispo</title>
       <script src="https://unpkg.com/htmx.org" defer></script>
-      {{/* tell the browser to not fetch the favicon */}}
-      <link rel="icon" href="data:,"> 
+      <link rel="icon" href="data:,"> {{/* tell the browser to not fetch the favicon */}}
     </head>
 
     <body {{ if .Boost }}hx-boost="true"{{ end }}>
@@ -23,8 +22,9 @@
           </div>
         </nav>
 
+        {{ template "flash" . }}
+
         <main>
-          {{ template "flash" . }}
           {{ template "main" . }}
         </main>
       {{ end }}

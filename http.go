@@ -62,6 +62,11 @@ func (app *application) clientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 }
 
+// The flash helper will add a global flash message.
+func (app *application) flash(r *http.Request, msg string) {
+	app.session.Put(r, "flash", app.translator.translate(msg))
+}
+
 // The addDefaultData helper will automatically inject data that are common to all pages.
 func (app *application) addDefaultData(data *templateData, r *http.Request) *templateData {
 	if data == nil {
@@ -72,56 +77,51 @@ func (app *application) addDefaultData(data *templateData, r *http.Request) *tem
 	return data
 }
 
-// The render helper will execute a given template found in the map of templates at the given key.
-// Write the template to the buffer, instead of straight to the http.ResponseWriter.
-// This allows to deal with runtime errors in the rendering of the template.
-func (app *application) render(w http.ResponseWriter, r *http.Request, key string, name string, data *templateData) {
-
+// The render helper will execute one or multiple templates found in the map of templates at the given key.
+// It writes the templates to a buffer, instead of straight to the http.ResponseWriter.
+// This allows to deal with runtime errors in the rendering of templates.
+func (app *application) render(w http.ResponseWriter, r *http.Request, key string, names []string, data *templateData) {
 	buf := new(bytes.Buffer)
 
 	tmpl, ok := app.templates[key]
 	if !ok {
-		app.serverError(w, errors.New("template not found"))
+		app.serverError(w, errors.New("template key not found"))
 		return
 	}
 
-	err := tmpl.ExecuteTemplate(buf, name, app.addDefaultData(data, r))
-	if err != nil {
-		app.serverError(w, err)
-		return
+	data = app.addDefaultData(data, r)
+
+	for _, name := range names {
+		err := tmpl.ExecuteTemplate(buf, name, data)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
 	}
 
 	buf.WriteTo(w)
 }
 
 // The renderPage helper will execute the template of a full html page.
-// For htmx boosted request, it will only deliver the extracted "body"
-// from the page.
+// For htmx boosted requests, it will only deliver the extracted "body" from the page.
 func (app *application) renderPage(w http.ResponseWriter, r *http.Request, name string, data *templateData) {
 	if r.Header.Get("HX-Request") == "true" {
-		app.render(w, r, name, "body", data)
+		app.render(w, r, name, []string{"body"}, data)
 		return
 	}
-	app.render(w, r, name, name, data)
+	app.render(w, r, name, []string{name}, data)
 }
 
 // The renderMain helper will execute the template for a page and
 // will only deliver the extracted "main" from the page.
 // This is useful to generate a partial containing the whole main section of a page.
+// It will also render the flash template in case a message has been pushed.
 func (app *application) renderMain(w http.ResponseWriter, r *http.Request, name string, data *templateData) {
-	// render flash in case a message has been pushed
-	app.render(w, r, name, "flash", nil)
-	app.render(w, r, name, "main", data)
+	app.render(w, r, name, []string{"flash", "main"}, data)
 }
 
 // The renderPartial helper will execute the template for a partial.
+// It will also render the flash template in case a message has been pushed.
 func (app *application) renderPartial(w http.ResponseWriter, r *http.Request, name string, data *templateData) {
-	// render flash in case a message has been pushed
-	app.render(w, r, "partials", "flash", nil)
-	app.render(w, r, "partials", name, data)
-}
-
-// The flash helper will add a global flash message.
-func (app *application) flash(r *http.Request, msg string) {
-	app.session.Put(r, "flash", app.translator.translate(msg))
+	app.render(w, r, "partials", []string{"flash", name}, data)
 }
