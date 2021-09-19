@@ -49,7 +49,7 @@ func main() {
 	flag.IntVar(&cfg.port, "port", 8080, "http server port")
 	flag.StringVar(&cfg.dsn, "dsn", "tdispo.db", "database datasource name")
 	flag.StringVar(&cfg.lang, "lang", "en", "language of the application")
-	flag.BoolVar(&cfg.boost, "boost", false, "boost web requests as ajax")
+	flag.BoolVar(&cfg.boost, "boost", true, "boost web requests as ajax")
 	flag.Parse()
 
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
