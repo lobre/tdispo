@@ -1,5 +1,5 @@
 {{ define "flash" }}
-  <div id="flash" hx-swap-oob="true">
+  <div id="flash" {{ if .Partial }}hx-swap-oob="true"{{ end }}>
     {{ with .Flash }}
       <p>{{ . }}</p>
     {{ end }}

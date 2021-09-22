@@ -8,7 +8,7 @@
       <link rel="icon" href="data:,"> {{/* tell the browser to not fetch the favicon */}}
     </head>
 
-    <body {{ if .Boost }}hx-boost="true"{{ end }}>
+    <body hx-boost="true">
       {{ block "body" . }}
         <header>
           <h1><a href="/">Tdispo</a></h1>

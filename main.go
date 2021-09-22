@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/golangcollege/sessions"
+	"github.com/russross/blackfriday"
 )
 
 //go:embed html/*.html html/layouts/*.html html/partials/*.html
@@ -28,18 +29,19 @@ var (
 )
 
 type config struct {
-	port   int
-	dsn    string
-	lang   string
-	boost  bool
-	secret string
+	port       int
+	dsn        string
+	lang       string
+	sessionKey string
 }
 
 type application struct {
 	config config
 	logger *log.Logger
 
-	templates  map[string]*template.Template
+	pages    map[string]*template.Template
+	partials *template.Template
+
 	translator *translator
 	session    *sessions.Session
 
@@ -54,8 +56,7 @@ func main() {
 	flag.IntVar(&cfg.port, "port", 8080, "http server port")
 	flag.StringVar(&cfg.dsn, "dsn", "tdispo.db", "database datasource name")
 	flag.StringVar(&cfg.lang, "lang", "en", "language of the application")
-	flag.BoolVar(&cfg.boost, "boost", true, "boost web requests as ajax")
-	flag.StringVar(&cfg.secret, "secret", "0g6kFh15VxjIfRSDDoXxrK2DLivlX6xt", "session key for cookies encryption")
+	flag.StringVar(&cfg.sessionKey, "session-key", "0g6kFh15VxjIfRSDDoXxrK2DLivlX6xt", "session key for cookies encryption")
 	flag.Parse()
 
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
@@ -71,7 +72,7 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	session := sessions.New([]byte(cfg.secret))
+	session := sessions.New([]byte(cfg.sessionKey))
 	session.Lifetime = 12 * time.Hour
 
 	app := application{
@@ -85,7 +86,12 @@ func main() {
 		eventService:  &EventService{db: db},
 	}
 
-	err = app.parseTemplates()
+	funcs := template.FuncMap{
+		"markdown":  markdown,
+		"translate": app.translator.translate,
+	}
+
+	err = app.parseTemplates(assets, "html", funcs)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -130,4 +136,9 @@ func main() {
 	if err := db.Close(); err != nil {
 		logger.Fatal(err)
 	}
+}
+
+func markdown(args ...interface{}) template.HTML {
+	s := blackfriday.MarkdownCommon([]byte(fmt.Sprintf("%s", args...)))
+	return template.HTML(s)
 }
