@@ -3,8 +3,6 @@
 {{ define "title" }}{{ "Configuration of guests" | translate }}{{ end }}
 
 {{ define "main" }}
-  <p>{{ "List of guests" | translate }}</p>
-
   {{ if .Guests }}
     <ul>
       {{ range .Guests }}

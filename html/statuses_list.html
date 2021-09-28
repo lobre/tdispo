@@ -3,8 +3,6 @@
 {{ define "title" }}{{ "Configuration of statuses" | translate }}{{ end }}
 
 {{ define "main" }}
-  <p>{{ "List of statuses" | translate }}</p>
-
   {{ if .Statuses }}
     <ul>
       {{ range .Statuses }}

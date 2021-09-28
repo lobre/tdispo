@@ -275,7 +275,7 @@ func (app *application) deleteEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.renderPage(w, r, "guests_list.html", &templateData{
+	app.renderMain(w, r, "events_list.html", &templateData{
 		Events: events,
 	})
 }
