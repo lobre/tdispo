@@ -8,10 +8,6 @@ import (
 	"strconv"
 )
 
-func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	app.renderPage(w, r, "home.html", &templateData{})
-}
-
 func (app *application) findStatuses(w http.ResponseWriter, r *http.Request) {
 	statuses, _, err := app.statusService.FindStatuses(r.Context())
 	if err != nil {
@@ -431,5 +427,57 @@ func (app *application) deleteGuest(w http.ResponseWriter, r *http.Request) {
 
 	app.renderMain(w, r, "guests_list.html", &templateData{
 		Guests: guests,
+	})
+}
+
+func (app *application) participate(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	err = r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	form := NewForm(r.PostForm)
+	form.Required("guest", "assist")
+	form.IsInteger("guest", "assist")
+
+	if !form.Valid() {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	guestID, _ := strconv.Atoi(form.Get("guest"))
+	assist, _ := strconv.Atoi(form.Get("assist"))
+
+	err = app.eventService.Participate(r.Context(), &Participation{
+		EventID: id,
+		GuestID: guestID,
+		Assist:  assist,
+	})
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	event, err := app.eventService.FindEventByID(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, ErrNoRecord) {
+			http.NotFound(w, r)
+			return
+		} else {
+			app.serverError(w, err)
+			return
+		}
+	}
+
+	app.renderPartial(w, r, "event_participations.html", &templateData{
+		Event:        event,
+		AssistLabels: AssistLabels,
 	})
 }

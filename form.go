@@ -5,6 +5,7 @@ import (
 	"net/mail"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 )
@@ -105,9 +106,19 @@ func (f *Form) MatchesPattern(field string, pattern *regexp.Regexp) {
 
 // IsEmail checks that a specific field in the form is a correct email.
 func (f *Form) IsEmail(field string) {
-	_, err := mail.ParseAddress(field)
-	if err != nil {
+	value := f.Get(field)
+	if _, err := mail.ParseAddress(value); err != nil {
 		f.CustomError(field, "This field is not a valid email")
+	}
+}
+
+// IsInteger checks that a specific field in the form is an integer.
+func (f *Form) IsInteger(fields ...string) {
+	for _, field := range fields {
+		value := f.Get(field)
+		if _, err := strconv.Atoi(value); err != nil {
+			f.CustomError(field, "This field is not a valid integer")
+		}
 	}
 }
 

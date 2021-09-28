@@ -15,13 +15,8 @@ type Guest struct {
 	Name  string
 	Email string
 
-	// List of participations to answered events.
 	// This is only set when returning a single guest.
-	Answered []*Participation
-
-	// List of events to which the guest hasn’t answerd yet.
-	// This is only set when returning a single guest.
-	Pending []*Event
+	Participations []*Participation
 }
 
 type GuestFilter struct {
@@ -52,20 +47,29 @@ func (s *GuestService) FindGuestByID(ctx context.Context, id int) (*Guest, error
 	}
 
 	// attach answered participations
-	guest.Answered, _, err = findParticipationsByGuest(ctx, tx, guest.ID)
+	guest.Participations, _, err = findParticipationsByGuest(ctx, tx, guest.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	var eventIDs []int
-	for _, part := range guest.Answered {
+	for _, part := range guest.Participations {
 		eventIDs = append(eventIDs, part.EventID)
 	}
 
 	// attach events to which the guest hasn’t answered yet
-	guest.Pending, _, err = findEvents(ctx, tx, EventFilter{IDNotIn: eventIDs})
+	pending, _, err := findEvents(ctx, tx, EventFilter{IDNotIn: eventIDs})
 	if err != nil {
 		return nil, err
+	}
+
+	// Add participations with assist that equals no for pending events
+	for _, event := range pending {
+		guest.Participations = append(guest.Participations, &Participation{
+			Guest:  guest,
+			Event:  event,
+			Assist: 0,
+		})
 	}
 
 	return guest, nil

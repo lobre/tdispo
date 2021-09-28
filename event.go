@@ -16,13 +16,8 @@ type Event struct {
 	StatusID int
 	Status   *Status
 
-	// List of participations to answered events.
 	// This is only set when returning a single event.
-	Answered []*Participation
-
-	// List of pending guests that haven’t participated yet.
-	// This is only set when returning a single event.
-	Pending []*Guest
+	Participations []*Participation
 }
 
 type EventFilter struct {
@@ -60,20 +55,29 @@ func (s *EventService) FindEventByID(ctx context.Context, id int) (*Event, error
 	}
 
 	// attach participations for this event
-	event.Answered, _, err = findParticipationsByEvent(ctx, tx, event.ID)
+	event.Participations, _, err = findParticipationsByEvent(ctx, tx, event.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	var guestIDs []int
-	for _, part := range event.Answered {
+	for _, part := range event.Participations {
 		guestIDs = append(guestIDs, part.GuestID)
 	}
 
 	// attach guests who haven’t answered yet
-	event.Pending, _, err = findGuests(ctx, tx, GuestFilter{IDNotIn: guestIDs})
+	pending, _, err := findGuests(ctx, tx, GuestFilter{IDNotIn: guestIDs})
 	if err != nil {
 		return nil, err
+	}
+
+	// Add participations with assist that equals no for pending guests
+	for _, guest := range pending {
+		event.Participations = append(event.Participations, &Participation{
+			Guest:  guest,
+			Event:  event,
+			Assist: 0,
+		})
 	}
 
 	return event, nil

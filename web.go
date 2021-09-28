@@ -92,9 +92,9 @@ func (app *application) renderPage(w http.ResponseWriter, r *http.Request, name 
 
 	data = app.addDefaultData(data, r)
 
-	buf := new(bytes.Buffer)
+	var buf bytes.Buffer
 
-	err := tmpl.ExecuteTemplate(buf, name, data)
+	err := tmpl.ExecuteTemplate(&buf, name, data)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -121,16 +121,16 @@ func (app *application) renderMain(w http.ResponseWriter, r *http.Request, name 
 	data = app.addDefaultData(data, r)
 	data.Partial = true
 
-	buf := new(bytes.Buffer)
+	var buf bytes.Buffer
 
-	err := tmpl.ExecuteTemplate(buf, "main", data)
+	err := tmpl.ExecuteTemplate(&buf, "main", data)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
 	if data.Flash != "" {
-		err := tmpl.ExecuteTemplate(buf, "flash", data)
+		err := tmpl.ExecuteTemplate(&buf, "flash", data)
 		if err != nil {
 			app.serverError(w, err)
 			return
@@ -150,16 +150,16 @@ func (app *application) renderPartial(w http.ResponseWriter, r *http.Request, na
 	data = app.addDefaultData(data, r)
 	data.Partial = true
 
-	buf := new(bytes.Buffer)
+	var buf bytes.Buffer
 
-	err := app.partials.ExecuteTemplate(buf, name, data)
+	err := app.partials.ExecuteTemplate(&buf, name, data)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
 	if data.Flash != "" {
-		err := app.partials.ExecuteTemplate(buf, "flash", data)
+		err := app.partials.ExecuteTemplate(&buf, "flash", data)
 		if err != nil {
 			app.serverError(w, err)
 			return

@@ -32,6 +32,7 @@ func (app *application) routes() http.Handler {
 	mux.Post("/new", http.HandlerFunc(app.createEvent))
 	mux.Get("/:id/edit", http.HandlerFunc(app.updateEventForm))
 	mux.Post("/:id/edit", http.HandlerFunc(app.updateEvent))
+	mux.Put("/:id/participation", http.HandlerFunc(app.participate))
 	mux.Get("/:id", http.HandlerFunc(app.findEventByID))
 	mux.Del("/:id", http.HandlerFunc(app.deleteEvent))
 

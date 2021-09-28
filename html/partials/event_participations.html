@@ -1,25 +1,22 @@
 <div hx-target="this" hx-swap="outerHTML">
   <h2>{{ "Guests" | translate }}</h2>
-  {{ if .Event.Answered }} 
+  {{ if .Event.Participations }} 
     <ul>
-      {{ range .Event.Answered }}
+      {{ range $part := .Event.Participations }}
         <li>
-          <span>{{ .Guest.Name }}:</span>
-          <span>{{ index $.AssistLabels .Assist | translate }}</span>
-          <a href="" hx-post='/{{ $.Event.ID }}/removeParticipation' hx-vals='{ "guest": {{ .Guest.ID }} }'>({{ "delete" | translate }})</a>
-        </li>
-      {{ end }}
-    </ul>
-  {{ else }}
-    <p>{{ "No guests" | translate }}</p>
-  {{ end }}
-
-  <h2>{{ "Yet to participate" | translate }}</h2>
-  {{ if .Event.Pending }}
-    <ul>
-      {{ range .Event.Pending }}
-        <li>
-          <span>{{ .Name }}</span>
+          <span>{{ $part.Guest.Name }}:</span>
+          {{ range $id, $label := $.AssistLabels }}
+            <a href="" 
+              hx-put='/{{ $.Event.ID }}/participation' 
+              hx-vals='{ "guest": {{ $part.Guest.ID }}, "assist": {{ $id }} }'
+              hx-confirm='{{ "Are you sure?" | translate }}'>
+              {{ if eq $part.Assist $id }}
+                <strong>{{ $label | translate }}</strong>
+              {{ else }}
+                {{ $label | translate }}
+              {{ end }}
+            </a>
+          {{ end }}
         </li>
       {{ end }}
     </ul>
