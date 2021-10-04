@@ -3,11 +3,20 @@
   <head>
     <meta charset="utf-8" />
     <title>{{ template "title" . }} - Tdispo</title>
-    <script src="https://unpkg.com/htmx.org" defer></script>
+    <script src="//unpkg.com/htmx.org@1.6.0"></script>
+    <script src="//unpkg.com/alpinejs@3.x.x" defer></script>
     <link rel="icon" href="data:,"> {{/* tell the browser to not fetch the favicon */}}
   </head>
 
   <body hx-boost="true">
+    <script defer>
+      document.body.addEventListener('htmx:beforeSwap', function(event) {
+        if ([422, 409].includes(event.detail.xhr.status)) {
+          event.detail.shouldSwap = true
+        }
+      })
+    </script>
+
     {{ template "layouts/header" . }}
     {{ template "layouts/nav" . }}
     {{ template "layouts/flash" . }}

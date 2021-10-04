@@ -41,6 +41,7 @@ func (app *application) createStatus(w http.ResponseWriter, r *http.Request) {
 	form.Required("label")
 
 	if !form.Valid() {
+		w.WriteHeader(http.StatusUnprocessableEntity)
 		if err := app.views.Render(w, r, "statuses/create_form", &templateData{Form: form}); err != nil {
 			app.serverError(w, err)
 		}
@@ -69,6 +70,7 @@ func (app *application) deleteStatus(w http.ResponseWriter, r *http.Request) {
 
 	err = app.statusService.DeleteStatus(r.Context(), id)
 	if err != nil && errors.Is(err, ErrStatusUsed) {
+		w.WriteHeader(http.StatusConflict)
 		app.session.Put(r, "flash", "Can’t delete a status assigned to an existing event")
 	} else if err != nil {
 		app.serverError(w, err)
@@ -154,6 +156,7 @@ func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 	form.Required("title")
 
 	if !form.Valid() {
+		w.WriteHeader(http.StatusUnprocessableEntity)
 		if err := app.views.Render(w, r, "events/create_form", &templateData{Form: form}); err != nil {
 			app.serverError(w, err)
 		}
@@ -241,6 +244,7 @@ func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		w.WriteHeader(http.StatusUnprocessableEntity)
 		if err := app.views.Render(w, r, "events/update_form", &templateData{
 			Form:     form,
 			Event:    evt,
@@ -335,6 +339,7 @@ func (app *application) createGuest(w http.ResponseWriter, r *http.Request) {
 	form.Required("name", "email")
 
 	if !form.Valid() {
+		w.WriteHeader(http.StatusUnprocessableEntity)
 		if err := app.views.Render(w, r, "guests/create_form", &templateData{Form: form}); err != nil {
 			app.serverError(w, err)
 		}
@@ -349,9 +354,12 @@ func (app *application) createGuest(w http.ResponseWriter, r *http.Request) {
 	err = app.guestService.CreateGuest(r.Context(), &guest)
 	if err != nil && errors.Is(err, ErrDuplicateEmail) {
 		form.CustomError("email", "The email address already exists")
+
+		w.WriteHeader(http.StatusConflict)
 		if err := app.views.Render(w, r, "guests/create_form", &templateData{Form: form}); err != nil {
 			app.serverError(w, err)
 		}
+
 		return
 	} else if err != nil {
 		app.serverError(w, err)
@@ -413,6 +421,7 @@ func (app *application) updateGuest(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		w.WriteHeader(http.StatusUnprocessableEntity)
 		if err := app.views.Render(w, r, "guests/update_form", &templateData{
 			Form:  form,
 			Guest: guest,
