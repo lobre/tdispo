@@ -9,14 +9,6 @@
   </head>
 
   <body hx-boost="true">
-    <script defer>
-      document.body.addEventListener('htmx:beforeSwap', function(event) {
-        if ([422, 409].includes(event.detail.xhr.status)) {
-          event.detail.shouldSwap = true
-        }
-      })
-    </script>
-
     {{ template "layouts/header" . }}
     {{ template "layouts/nav" . }}
     {{ template "layouts/flash" . }}
@@ -24,5 +16,27 @@
     <main>
       {{ template "main" . }}
     </main>
+
+    <script>
+      document.body.addEventListener('htmx:beforeSwap', function(event) {
+        var status = event.detail.xhr.status
+
+        // allow to swap on certain http codes when
+        // the error is rendered from the server 
+        if ([422, 409].includes(status)) {
+          event.detail.shouldSwap = true
+        }
+
+        // flash if other error
+        if (!event.detail.shouldSwap && status >= 400 && status < 600) {
+          document.getElementById("flash").innerHTML = '<p>{{ "An error has occurred" | translate }}</p>'
+        }
+      })
+
+      // inject csrf token in htmx requests
+      document.body.addEventListener('htmx:configRequest', function(event) {
+        event.detail.headers['X-CSRF-Token'] = '{{ .CSRFToken }}';
+      })
+    </script>
   </body>
 </html>

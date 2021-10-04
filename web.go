@@ -1,12 +1,17 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/justinas/nosurf"
+)
 
 // templateData contains all kinds of objects
 // that can be returned in a template.
 type templateData struct {
-	Flash string
-	Form  *Form
+	Flash     string
+	Form      *Form
+	CSRFToken string
 
 	AssistText map[int]string
 	Event      *Event
@@ -22,6 +27,7 @@ func (app *application) addDefaultData(r *http.Request, data interface{}) interf
 	if td == nil {
 		td = &templateData{}
 	}
+	td.CSRFToken = nosurf.Token(r)
 	td.Flash = app.session.PopString(r, "flash")
 	return td
 }

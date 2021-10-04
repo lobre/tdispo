@@ -13,6 +13,7 @@ func (app *application) routes() http.Handler {
 		app.logRequest,
 		secureHeaders,
 		app.session.Enable,
+		injectCSRFCookie,
 		app.setBoosted,
 	)
 

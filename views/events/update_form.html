@@ -1,6 +1,7 @@
 {{ define "title" }}{{ "Event" | translate }} - {{ .Event.Title }}{{ end }}
 
 <form action="/{{ .Event.ID }}/edit" method="post">
+  <input type="hidden" name="csrf_token" value="{{ .CSRFToken }}">
   {{ with .Form }}
     <div>
       <label for="title">{{ "Title" | translate }}</label>

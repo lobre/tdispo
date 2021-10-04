@@ -1,6 +1,7 @@
 {{ define "title" }}{{ "Guest" | translate }} - {{ .Guest.Name }}{{ end }}
 
 <form action="/guests/{{ .Guest.ID }}/edit" method="post">
+  <input type="hidden" name="csrf_token" value="{{ .CSRFToken }}">
   {{ with .Form }}
     <div>
       <label for="name">{{ "Name" | translate }}</label>

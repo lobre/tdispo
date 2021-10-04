@@ -16,6 +16,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/justinas/nosurf"
 )
 
 type contextKey int
@@ -225,17 +227,6 @@ func (app *application) logRequest(next http.Handler) http.Handler {
 	})
 }
 
-// secureHeaders is a middleware that injects headers in the response
-// to prevent XSS and Clickjacking attacks.
-func secureHeaders(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("X-XSS-Protection", "1; mode=block")
-		w.Header().Set("X-Frame-Options", "deny")
-
-		next.ServeHTTP(w, r)
-	})
-}
-
 // recoverPanic gracefully handles any panic that happens in the current go routine.
 // By default, panics don't shut the entire application (only the current go routine),
 // but if one arise, the server will return an empty response. This middleware is taking
@@ -253,6 +244,32 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// secureHeaders is a middleware that injects headers in the response
+// to prevent XSS and Clickjacking attacks.
+func secureHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("X-Frame-Options", "deny")
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// injectCSRFCookie injects an encrypted CSRF token in a cookie. That same token
+// is used as a hidden field in forms (from nosurf.Token()).
+// On the form submission, the server checks that these two values match.
+// So directly trying to post a request to our secured endpoint without this parameter would fail.
+// The only way to submit the form is from our frontend.
+func injectCSRFCookie(next http.Handler) http.Handler {
+	csrfHandler := nosurf.New(next)
+	csrfHandler.SetBaseCookie(http.Cookie{
+		HttpOnly: true,
+		Path:     "/",
+	})
+
+	return csrfHandler
 }
 
 // The serverError helper writes an error message and stack trace to the errorLog,
