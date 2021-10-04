@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{ template "title" . }} - Tdispo</title>
+    <script src="https://unpkg.com/htmx.org" defer></script>
+    <link rel="icon" href="data:,"> {{/* tell the browser to not fetch the favicon */}}
+  </head>
+
+  <body hx-boost="true">
+    {{ template "layouts/header" . }}
+    {{ template "layouts/nav" . }}
+    {{ template "layouts/flash" . }}
+
+    <main>
+      {{ template "main" . }}
+    </main>
+  </body>
+</html>

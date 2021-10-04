@@ -17,7 +17,10 @@ import (
 	"github.com/russross/blackfriday"
 )
 
-//go:embed html/*.html html/layouts/*.html html/partials/*.html
+//go:embed views/layouts/*.html
+//go:embed views/events/*.html
+//go:embed views/guests/*.html
+//go:embed views/statuses/*.html
 //go:embed migrations/*.sql
 //go:embed translations/*.csv
 var assets embed.FS
@@ -39,8 +42,7 @@ type application struct {
 	config config
 	logger *log.Logger
 
-	pages    map[string]*template.Template
-	partials *template.Template
+	views map[string]view
 
 	translator *translator
 	session    *sessions.Session
@@ -91,7 +93,7 @@ func main() {
 		"translate": app.translator.translate,
 	}
 
-	err = app.parseTemplates(assets, "html", funcs)
+	app.views, err = parseViews(assets, "views", funcs)
 	if err != nil {
 		logger.Fatal(err)
 	}

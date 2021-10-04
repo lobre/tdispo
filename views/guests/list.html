@@ -1,0 +1,23 @@
+{{ define "title" }}{{ "Configuration of guests" | translate }}{{ end }}
+
+{{ if .Guests }}
+  <ul>
+    {{ range .Guests }}
+      <li>
+        <span>{{ .Name }}</span>
+        <span>{{ .Email }}</span>
+        <a href="/guests/{{ .ID }}/edit">({{ "edit" | translate }})</a>
+        <a href=""
+          hx-delete="/guests/{{ .ID }}"
+          hx-confirm='{{ "Are you sure?" | translate }}'
+          hx-target="main">
+          ({{ "delete" | translate }})
+        </a>
+      </li>
+    {{ end }}
+  </ul>
+{{ else }}
+  <p>{{ "No guests" | translate }}</p>
+{{ end }}
+
+<a href="/guests/new">{{ "New guest" | translate }}</a>

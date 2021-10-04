@@ -15,13 +15,13 @@ func (app *application) findStatuses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.renderPage(w, r, "statuses_list.html", &templateData{
+	app.render(w, r, "statuses/list", &templateData{
 		Statuses: statuses,
 	})
 }
 
 func (app *application) createStatusForm(w http.ResponseWriter, r *http.Request) {
-	app.renderPage(w, r, "create_status_form.html", &templateData{
+	app.render(w, r, "statuses/create_form", &templateData{
 		Form: NewForm(nil),
 	})
 }
@@ -37,7 +37,7 @@ func (app *application) createStatus(w http.ResponseWriter, r *http.Request) {
 	form.Required("label")
 
 	if !form.Valid() {
-		app.renderPage(w, r, "create_status_form.html", &templateData{Form: form})
+		app.render(w, r, "statuses/create_form", &templateData{Form: form})
 		return
 	}
 
@@ -75,7 +75,7 @@ func (app *application) deleteStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.renderMain(w, r, "statuses_list.html", &templateData{
+	app.render(w, withLayout(r, "partial"), "statuses/list", &templateData{
 		Statuses: statuses,
 	})
 }
@@ -87,7 +87,7 @@ func (app *application) findEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.renderPage(w, r, "events_list.html", &templateData{
+	app.render(w, r, "events/list", &templateData{
 		Events: events,
 	})
 }
@@ -110,7 +110,7 @@ func (app *application) findEventByID(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	app.renderPage(w, r, "event_details.html", &templateData{
+	app.render(w, r, "events/details", &templateData{
 		Event:        event,
 		AssistLabels: AssistLabels,
 	})
@@ -123,7 +123,7 @@ func (app *application) createEventForm(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	app.renderPage(w, r, "create_event_form.html", &templateData{
+	app.render(w, r, "events/create_form", &templateData{
 		Form:     NewForm(nil),
 		Statuses: statuses,
 	})
@@ -140,7 +140,7 @@ func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 	form.Required("title")
 
 	if !form.Valid() {
-		app.renderPage(w, r, "create_event_form.html", &templateData{Form: form})
+		app.render(w, r, "events/create_form", &templateData{Form: form})
 		return
 	}
 
@@ -184,7 +184,7 @@ func (app *application) updateEventForm(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	app.renderPage(w, r, "update_event_form.html", &templateData{
+	app.render(w, r, "events/update_form", &templateData{
 		Form: NewForm(url.Values{
 			"title": []string{evt.Title},
 			"desc":  []string{evt.Desc},
@@ -223,7 +223,7 @@ func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		app.renderPage(w, r, "update_event_form.html", &templateData{
+		app.render(w, r, "events/update_form", &templateData{
 			Form:     form,
 			Event:    evt,
 			Statuses: statuses,
@@ -275,7 +275,7 @@ func (app *application) deleteEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.renderMain(w, r, "events_list.html", &templateData{
+	app.render(w, withLayout(r, "partial"), "events/list", &templateData{
 		Events: events,
 	})
 }
@@ -287,13 +287,13 @@ func (app *application) findGuests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.renderPage(w, r, "guests_list.html", &templateData{
+	app.render(w, r, "guests/list", &templateData{
 		Guests: guests,
 	})
 }
 
 func (app *application) createGuestForm(w http.ResponseWriter, r *http.Request) {
-	app.renderPage(w, r, "create_guest_form.html", &templateData{
+	app.render(w, r, "guests/create_form", &templateData{
 		Form: NewForm(nil),
 	})
 }
@@ -309,7 +309,7 @@ func (app *application) createGuest(w http.ResponseWriter, r *http.Request) {
 	form.Required("name", "email")
 
 	if !form.Valid() {
-		app.renderPage(w, r, "create_guest_form.html", &templateData{Form: form})
+		app.render(w, r, "guests/create_form", &templateData{Form: form})
 		return
 	}
 
@@ -321,7 +321,7 @@ func (app *application) createGuest(w http.ResponseWriter, r *http.Request) {
 	err = app.guestService.CreateGuest(r.Context(), &guest)
 	if err != nil && errors.Is(err, ErrDuplicateEmail) {
 		form.CustomError("email", "The email address already exists")
-		app.renderPage(w, r, "create_guest_form.html", &templateData{Form: form})
+		app.render(w, r, "guests/create_form", &templateData{Form: form})
 		return
 	} else if err != nil {
 		app.serverError(w, err)
@@ -349,7 +349,7 @@ func (app *application) updateGuestForm(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	app.renderPage(w, r, "update_guest_form.html", &templateData{
+	app.render(w, r, "guests/update_form", &templateData{
 		Form: NewForm(url.Values{
 			"name":  []string{guest.Name},
 			"email": []string{guest.Email},
@@ -381,7 +381,7 @@ func (app *application) updateGuest(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		app.renderPage(w, r, "update_guest_form.html", &templateData{
+		app.render(w, r, "guests/update_form", &templateData{
 			Form:  form,
 			Guest: guest,
 		})
@@ -425,7 +425,7 @@ func (app *application) deleteGuest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.renderMain(w, r, "guests_list.html", &templateData{
+	app.render(w, withLayout(r, "partial"), "guests/list", &templateData{
 		Guests: guests,
 	})
 }
@@ -476,7 +476,7 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	app.renderPartial(w, r, "event_participations.html", &templateData{
+	app.render(w, r, "events/participations", &templateData{
 		Event:        event,
 		AssistLabels: AssistLabels,
 	})

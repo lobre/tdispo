@@ -8,7 +8,13 @@ import (
 )
 
 func (app *application) routes() http.Handler {
-	chain := alice.New(app.recoverPanic, app.logRequest, secureHeaders, app.session.Enable)
+	chain := alice.New(
+		app.recoverPanic,
+		app.logRequest,
+		secureHeaders,
+		app.session.Enable,
+		app.setBoosted,
+	)
 
 	mux := pat.New()
 

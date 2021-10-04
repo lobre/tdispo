@@ -1,0 +1,16 @@
+{{ define "title" }}{{ "Add a status" | translate }}{{ end }}
+
+<form action="/status/new" method="post">
+  {{ with .Form }}
+    <div>
+      <label for="label">{{ "Label" | translate }}</label>
+      <input type="text" name="label" value='{{ .Get "label" }}' required />
+      {{ with .Error "label" }}
+        <span>{{ . | translate }}</span>
+      {{ end }}
+    </div>
+    <div>
+      <input type="submit" value='{{ "Create" | translate }}' />
+    </div>
+  {{ end }}
+</form>
