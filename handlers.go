@@ -111,8 +111,8 @@ func (app *application) findEventByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.render(w, r, "events/details", &templateData{
-		Event:        event,
-		AssistLabels: AssistLabels,
+		Event:      event,
+		AssistText: AssistText,
 	})
 }
 
@@ -477,7 +477,7 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.render(w, r, "events/participations", &templateData{
-		Event:        event,
-		AssistLabels: AssistLabels,
+		Event:      event,
+		AssistText: AssistText,
 	})
 }

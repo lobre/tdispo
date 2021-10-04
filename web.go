@@ -30,12 +30,12 @@ type templateData struct {
 	Flash string
 	Form  *Form
 
-	AssistLabels map[int]string
-	Event        *Event
-	Events       []*Event
-	Guest        *Guest
-	Guests       []*Guest
-	Statuses     []*Status
+	AssistText map[int]string
+	Event      *Event
+	Events     []*Event
+	Guest      *Guest
+	Guests     []*Guest
+	Statuses   []*Status
 }
 
 type view struct {

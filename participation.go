@@ -5,6 +5,18 @@ import (
 	"database/sql"
 )
 
+const (
+	AssistNo       = 0
+	AssistYes      = 1
+	AssistIfNeeded = 2
+)
+
+var AssistText = map[int]string{
+	AssistNo:       "no",
+	AssistYes:      "yes",
+	AssistIfNeeded: "if needed",
+}
+
 type Participation struct {
 	GuestID int
 	Guest   *Guest
@@ -13,12 +25,6 @@ type Participation struct {
 	Event   *Event
 
 	Assist int
-}
-
-var AssistLabels = map[int]string{
-	0: "no",
-	1: "yes",
-	2: "if needed",
 }
 
 // findParticipationsByEvent fetches the participations related to a specific event.
