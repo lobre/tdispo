@@ -32,7 +32,7 @@ func (app *application) addDefaultData(r *http.Request, data interface{}) interf
 func (app *application) setBoosted(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("HX-Boosted") == "true" {
-			r = withLayout(r, "boosted")
+			r = WithLayout(r, "boosted")
 		}
 		next.ServeHTTP(w, r)
 	})

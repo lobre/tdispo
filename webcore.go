@@ -197,22 +197,22 @@ func parseTemplate(fsys fs.FS, funcs template.FuncMap, path string, associated [
 	return tmpl, nil
 }
 
-// The withLayout helper returns a shallow copy of the request but
+// The WithLayout helper returns a shallow copy of the request but
 // with the layout applied on the context.
-func withLayout(r *http.Request, layout string) *http.Request {
+func WithLayout(r *http.Request, layout string) *http.Request {
 	ctx := context.WithValue(r.Context(), contextKeyLayout, layout)
 	return r.WithContext(ctx)
 }
 
-// The applyLayout middleware applies a specific layout for the rendering of the view.
+// The ApplyLayout middleware applies a specific layout for the rendering of the view.
 // It returns a function which has the correct signature to be used with alice, but it can
 // also be used without.
 //
 // https://pkg.go.dev/github.com/justinas/alice#Constructor
-func applyLayout(layout string) func(http.Handler) http.Handler {
+func ApplyLayout(layout string) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			h.ServeHTTP(w, withLayout(r, layout))
+			h.ServeHTTP(w, WithLayout(r, layout))
 		})
 	}
 }

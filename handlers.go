@@ -81,7 +81,7 @@ func (app *application) deleteStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := app.views.Render(w, withLayout(r, "partial"), "statuses/list", &templateData{
+	if err := app.views.Render(w, WithLayout(r, "partial"), "statuses/list", &templateData{
 		Statuses: statuses,
 	}); err != nil {
 		app.serverError(w, err)
@@ -295,7 +295,7 @@ func (app *application) deleteEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := app.views.Render(w, withLayout(r, "partial"), "events/list", &templateData{
+	if err := app.views.Render(w, WithLayout(r, "partial"), "events/list", &templateData{
 		Events: events,
 	}); err != nil {
 		app.serverError(w, err)
@@ -459,7 +459,7 @@ func (app *application) deleteGuest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := app.views.Render(w, withLayout(r, "partial"), "guests/list", &templateData{
+	if err := app.views.Render(w, WithLayout(r, "partial"), "guests/list", &templateData{
 		Guests: guests,
 	}); err != nil {
 		app.serverError(w, err)
