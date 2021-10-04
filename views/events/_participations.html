@@ -5,7 +5,7 @@
       {{ range $part := .Event.Participations }}
         <li>
           <span>{{ $part.Guest.Name }}:</span>
-          {{ range $id, $label := $.AssistLabels }}
+          {{ range $id, $label := $.AssistText }}
             <a href="" 
               hx-put='/{{ $.Event.ID }}/participation' 
               hx-vals='{ "guest": {{ $part.Guest.ID }}, "assist": {{ $id }} }'
