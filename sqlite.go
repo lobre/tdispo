@@ -26,7 +26,6 @@ func NewDB(dns string) *DB {
 	}
 }
 
-// TODO: set limits such as SetMaxOpenConns for security taken from config.
 func (db *DB) Open() (err error) {
 	if db.DSN == "" {
 		return fmt.Errorf("dsn required")

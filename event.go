@@ -29,7 +29,7 @@ type EventFilter struct {
 type EventUpdate struct {
 	Title    *string
 	Desc     *string
-	StatusID *int // TODO: see if we need the full object
+	StatusID *int
 }
 
 type EventService struct {
