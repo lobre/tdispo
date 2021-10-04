@@ -15,15 +15,19 @@ func (app *application) findStatuses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.render(w, r, "statuses/list", &templateData{
+	if err := app.views.Render(w, r, "statuses/list", &templateData{
 		Statuses: statuses,
-	})
+	}); err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *application) createStatusForm(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "statuses/create_form", &templateData{
+	if err := app.views.Render(w, r, "statuses/create_form", &templateData{
 		Form: NewForm(nil),
-	})
+	}); err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *application) createStatus(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +41,9 @@ func (app *application) createStatus(w http.ResponseWriter, r *http.Request) {
 	form.Required("label")
 
 	if !form.Valid() {
-		app.render(w, r, "statuses/create_form", &templateData{Form: form})
+		if err := app.views.Render(w, r, "statuses/create_form", &templateData{Form: form}); err != nil {
+			app.serverError(w, err)
+		}
 		return
 	}
 
@@ -63,7 +69,7 @@ func (app *application) deleteStatus(w http.ResponseWriter, r *http.Request) {
 
 	err = app.statusService.DeleteStatus(r.Context(), id)
 	if err != nil && errors.Is(err, ErrStatusUsed) {
-		app.flash(r, "Can’t delete a status assigned to an existing event")
+		app.session.Put(r, "flash", "Can’t delete a status assigned to an existing event")
 	} else if err != nil {
 		app.serverError(w, err)
 		return
@@ -75,9 +81,11 @@ func (app *application) deleteStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.render(w, withLayout(r, "partial"), "statuses/list", &templateData{
+	if err := app.views.Render(w, withLayout(r, "partial"), "statuses/list", &templateData{
 		Statuses: statuses,
-	})
+	}); err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *application) findEvents(w http.ResponseWriter, r *http.Request) {
@@ -87,9 +95,11 @@ func (app *application) findEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.render(w, r, "events/list", &templateData{
+	if err := app.views.Render(w, r, "events/list", &templateData{
 		Events: events,
-	})
+	}); err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *application) findEventByID(w http.ResponseWriter, r *http.Request) {
@@ -110,10 +120,12 @@ func (app *application) findEventByID(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	app.render(w, r, "events/details", &templateData{
+	if err := app.views.Render(w, r, "events/details", &templateData{
 		Event:      event,
 		AssistText: AssistText,
-	})
+	}); err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *application) createEventForm(w http.ResponseWriter, r *http.Request) {
@@ -123,10 +135,12 @@ func (app *application) createEventForm(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	app.render(w, r, "events/create_form", &templateData{
+	if err := app.views.Render(w, r, "events/create_form", &templateData{
 		Form:     NewForm(nil),
 		Statuses: statuses,
-	})
+	}); err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
@@ -140,7 +154,9 @@ func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 	form.Required("title")
 
 	if !form.Valid() {
-		app.render(w, r, "events/create_form", &templateData{Form: form})
+		if err := app.views.Render(w, r, "events/create_form", &templateData{Form: form}); err != nil {
+			app.serverError(w, err)
+		}
 		return
 	}
 
@@ -184,14 +200,16 @@ func (app *application) updateEventForm(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	app.render(w, r, "events/update_form", &templateData{
+	if err := app.views.Render(w, r, "events/update_form", &templateData{
 		Form: NewForm(url.Values{
 			"title": []string{evt.Title},
 			"desc":  []string{evt.Desc},
 		}),
 		Event:    evt,
 		Statuses: statuses,
-	})
+	}); err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
@@ -223,11 +241,13 @@ func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		app.render(w, r, "events/update_form", &templateData{
+		if err := app.views.Render(w, r, "events/update_form", &templateData{
 			Form:     form,
 			Event:    evt,
 			Statuses: statuses,
-		})
+		}); err != nil {
+			app.serverError(w, err)
+		}
 
 		return
 	}
@@ -275,9 +295,11 @@ func (app *application) deleteEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.render(w, withLayout(r, "partial"), "events/list", &templateData{
+	if err := app.views.Render(w, withLayout(r, "partial"), "events/list", &templateData{
 		Events: events,
-	})
+	}); err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *application) findGuests(w http.ResponseWriter, r *http.Request) {
@@ -287,15 +309,19 @@ func (app *application) findGuests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.render(w, r, "guests/list", &templateData{
+	if err := app.views.Render(w, r, "guests/list", &templateData{
 		Guests: guests,
-	})
+	}); err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *application) createGuestForm(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "guests/create_form", &templateData{
+	if err := app.views.Render(w, r, "guests/create_form", &templateData{
 		Form: NewForm(nil),
-	})
+	}); err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *application) createGuest(w http.ResponseWriter, r *http.Request) {
@@ -309,7 +335,9 @@ func (app *application) createGuest(w http.ResponseWriter, r *http.Request) {
 	form.Required("name", "email")
 
 	if !form.Valid() {
-		app.render(w, r, "guests/create_form", &templateData{Form: form})
+		if err := app.views.Render(w, r, "guests/create_form", &templateData{Form: form}); err != nil {
+			app.serverError(w, err)
+		}
 		return
 	}
 
@@ -321,7 +349,9 @@ func (app *application) createGuest(w http.ResponseWriter, r *http.Request) {
 	err = app.guestService.CreateGuest(r.Context(), &guest)
 	if err != nil && errors.Is(err, ErrDuplicateEmail) {
 		form.CustomError("email", "The email address already exists")
-		app.render(w, r, "guests/create_form", &templateData{Form: form})
+		if err := app.views.Render(w, r, "guests/create_form", &templateData{Form: form}); err != nil {
+			app.serverError(w, err)
+		}
 		return
 	} else if err != nil {
 		app.serverError(w, err)
@@ -349,13 +379,15 @@ func (app *application) updateGuestForm(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	app.render(w, r, "guests/update_form", &templateData{
+	if err := app.views.Render(w, r, "guests/update_form", &templateData{
 		Form: NewForm(url.Values{
 			"name":  []string{guest.Name},
 			"email": []string{guest.Email},
 		}),
 		Guest: guest,
-	})
+	}); err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *application) updateGuest(w http.ResponseWriter, r *http.Request) {
@@ -381,10 +413,12 @@ func (app *application) updateGuest(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		app.render(w, r, "guests/update_form", &templateData{
+		if err := app.views.Render(w, r, "guests/update_form", &templateData{
 			Form:  form,
 			Guest: guest,
-		})
+		}); err != nil {
+			app.serverError(w, err)
+		}
 
 		return
 	}
@@ -425,9 +459,11 @@ func (app *application) deleteGuest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.render(w, withLayout(r, "partial"), "guests/list", &templateData{
+	if err := app.views.Render(w, withLayout(r, "partial"), "guests/list", &templateData{
 		Guests: guests,
-	})
+	}); err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *application) participate(w http.ResponseWriter, r *http.Request) {
@@ -476,8 +512,10 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	app.render(w, r, "events/participations", &templateData{
+	if err := app.views.Render(w, r, "events/participations", &templateData{
 		Event:      event,
 		AssistText: AssistText,
-	})
+	}); err != nil {
+		app.serverError(w, err)
+	}
 }

@@ -8,13 +8,13 @@ import (
 	"os"
 )
 
-type translator struct {
+type Translator struct {
 	index   map[string]string
 	csvPath string
 }
 
-func newTranslator(csvPath string) (*translator, error) {
-	tr := translator{
+func NewTranslator(csvPath string) (*Translator, error) {
+	tr := Translator{
 		csvPath: csvPath,
 	}
 
@@ -47,7 +47,7 @@ func newTranslator(csvPath string) (*translator, error) {
 	return &tr, nil
 }
 
-func (tr *translator) translate(input string) string {
+func (tr *Translator) Translate(input string) string {
 	if output, ok := tr.index[input]; ok {
 		return output
 	}

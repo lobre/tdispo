@@ -42,9 +42,8 @@ type application struct {
 	config config
 	logger *log.Logger
 
-	views map[string]view
-
-	translator *translator
+	views      *Views
+	translator *Translator
 	session    *sessions.Session
 
 	statusService *StatusService
@@ -68,8 +67,7 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	transFile := fmt.Sprintf("translations/%s.csv", cfg.lang)
-	translator, err := newTranslator(transFile)
+	translator, err := NewTranslator(fmt.Sprintf("translations/%s.csv", cfg.lang))
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -90,10 +88,12 @@ func main() {
 
 	funcs := template.FuncMap{
 		"markdown":  markdown,
-		"translate": app.translator.translate,
+		"translate": app.translator.Translate,
 	}
 
-	app.views, err = parseViews(assets, "views", funcs)
+	app.views = &Views{DefaultData: app.addDefaultData}
+
+	err = app.views.Parse(assets, "views", funcs)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -140,6 +140,7 @@ func main() {
 	}
 }
 
+// The markdown function will convert an input into markdown.
 func markdown(args ...interface{}) template.HTML {
 	s := blackfriday.MarkdownCommon([]byte(fmt.Sprintf("%s", args...)))
 	return template.HTML(s)
