@@ -1,0 +1,12 @@
+{{ define "title" }}{{ "Who am I?" | translate }}{{ end }}
+
+{{ if .Guests }}
+  <p>{{ "Who am I?" | translate }}</p>
+  <ul>
+    {{ range .Guests }}
+      <li><a hx-post="/iam/{{ .ID }}" hx-target="body">{{ .Name }}</a></li>
+    {{ end }}
+  </ul>
+{{ else }}
+  <p>{{ "No guests" | translate }}</p>
+{{ end }}

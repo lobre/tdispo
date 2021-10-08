@@ -1,8 +1,11 @@
 <nav>
   <div>
-    <a href="/">{{ "Home" | translate }}</a>
-    <a href="/guests">{{ "Guests" | translate }}</a>
-    <a href="/status">{{ "Statuses" | translate }}</a>
+    <a href="/">{{ "Events" | translate }}</a>
+    <a href="/whoami">{{ "Who am I?" | translate }}</a>
+    {{ if .IsAdmin }}
+      <a href="/guests">{{ "Guests" | translate }}</a>
+      <a href="/status">{{ "Statuses" | translate }}</a>
+      <a href="/logout">{{ "Logout" | translate }}</a>
+    {{ end }}
   </div>
 </nav>
-

@@ -5,17 +5,21 @@
       {{ range $part := .Event.Participations }}
         <li>
           <span>{{ $part.Guest.Name }}:</span>
-          {{ range $id, $label := $.AssistText }}
-            <a href="" 
-              hx-put='/{{ $.Event.ID }}/participation' 
-              hx-vals='{ "guest": {{ $part.Guest.ID }}, "assist": {{ $id }} }'
-              hx-confirm='{{ "Are you sure?" | translate }}'>
-              {{ if eq $part.Assist $id }}
-                <strong>{{ $label | translate }}</strong>
-              {{ else }}
-                {{ $label | translate }}
-              {{ end }}
-            </a>
+          {{ if or $.IsAdmin (eq $part.Guest.ID $.CurrentGuest.ID) }}
+            {{ range $id, $label := $.AssistText }}
+              <a href="" 
+                hx-put='/{{ $.Event.ID }}/participation' 
+                hx-vals='{ "guest": {{ $part.Guest.ID }}, "assist": {{ $id }} }'
+                hx-confirm='{{ "Are you sure?" | translate }}'>
+                {{ if eq $part.Assist $id }}
+                  <strong>{{ $label | translate }}</strong>
+                {{ else }}
+                  {{ $label | translate }}
+                {{ end }}
+              </a>
+            {{ end }}
+          {{ else }}
+            <span>{{ index $.AssistText $part.Assist | translate }}</span>
           {{ end }}
         </li>
       {{ end }}

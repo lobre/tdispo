@@ -20,10 +20,10 @@ import (
 	"github.com/justinas/nosurf"
 )
 
-type contextKey int
+type contextKey string
 
 const (
-	contextKeyLayout contextKey = iota
+	contextKeyLayout contextKey = contextKey("layout")
 
 	defaultLayout        = "base"
 	defaultLayoutPartial = "partial"

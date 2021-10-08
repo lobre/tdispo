@@ -77,17 +77,7 @@ func (app *application) deleteStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statuses, _, err := app.statusService.FindStatuses(r.Context())
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
-	if err := app.views.Render(w, WithLayout(r, "partial"), "statuses/list", &templateData{
-		Statuses: statuses,
-	}); err != nil {
-		app.serverError(w, err)
-	}
+	http.Redirect(w, r, "/status", http.StatusSeeOther)
 }
 
 func (app *application) findEvents(w http.ResponseWriter, r *http.Request) {
@@ -293,17 +283,7 @@ func (app *application) deleteEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	events, _, err := app.eventService.FindEvents(r.Context(), EventFilter{})
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
-	if err := app.views.Render(w, WithLayout(r, "partial"), "events/list", &templateData{
-		Events: events,
-	}); err != nil {
-		app.serverError(w, err)
-	}
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (app *application) findGuests(w http.ResponseWriter, r *http.Request) {
@@ -462,17 +442,7 @@ func (app *application) deleteGuest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	guests, _, err := app.guestService.FindGuests(r.Context(), GuestFilter{})
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
-	if err := app.views.Render(w, WithLayout(r, "partial"), "guests/list", &templateData{
-		Guests: guests,
-	}); err != nil {
-		app.serverError(w, err)
-	}
+	http.Redirect(w, r, "/guests", http.StatusSeeOther)
 }
 
 func (app *application) participate(w http.ResponseWriter, r *http.Request) {
@@ -527,4 +497,52 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		app.serverError(w, err)
 	}
+}
+
+func (app *application) whoami(w http.ResponseWriter, r *http.Request) {
+	guests, _, err := app.guestService.FindGuests(r.Context(), GuestFilter{})
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	if err := app.views.Render(w, r, "guests/whoami", &templateData{
+		Guests: guests,
+	}); err != nil {
+		app.serverError(w, err)
+	}
+}
+
+func (app *application) iam(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	app.session.Put(r, "guest", id)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+
+	// events, _, err := app.eventService.FindEvents(r.Context(), EventFilter{})
+	// if err != nil {
+	// 	app.serverError(w, err)
+	// 	return
+	// }
+
+	// w.Header().Set("HX-Push", "/")
+	// if err := app.views.Render(w, WithLayout(r, "partial"), "events/list", &templateData{
+	// 	Events: events,
+	// }); err != nil {
+	// 	app.serverError(w, err)
+	// }
+}
+
+func (app *application) login(w http.ResponseWriter, r *http.Request) {
+	app.session.Put(r, "isAdmin", true)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (app *application) logout(w http.ResponseWriter, r *http.Request) {
+	app.session.Remove(r, "isAdmin")
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

@@ -5,10 +5,10 @@
     {{ range .Statuses }}
       <li>
         <span>{{ .Label }}</span>
-        <a href=""
-          hx-delete="/status/{{ .ID }}"
-          hx-confirm='{{ "Are you sure?" | translate }}'
-          hx-target="main">
+        <a href="" 
+          hx-target="body" 
+          hx-delete="/status/{{ .ID }}" 
+          hx-confirm='{{ "Are you sure?" | translate }}'>
           ({{ "delete" | translate }})
         </a>
       </li>

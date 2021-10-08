@@ -1,17 +1,19 @@
 {{ define "title" }}{{ "List of events" | translate }}{{ end }}
 
 {{ if .Events }}
-  <ul>
+  <ul >
     {{ range .Events }}
       <li>
         <a href="/{{ .ID }}">{{ .Title }}</a>
-        <a href="/{{ .ID }}/edit">({{ "edit" | translate }})</a>
-        <a href=""
-          hx-delete="/{{ .ID }}"
-          hx-confirm='{{ "Are you sure?" | translate }}'
-          hx-target="main">
-          ({{ "delete" | translate }})
-        </a>
+        {{ if $.IsAdmin }}
+          <a href="/{{ .ID }}/edit">({{ "edit" | translate }})</a>
+          <a href="" 
+            hx-target="body" 
+            hx-delete="/{{ .ID }}" 
+            hx-confirm='{{ "Are you sure?" | translate }}'>
+            ({{ "delete" | translate }})
+          </a>
+        {{ end }}
       </li>
     {{ end }}
   </ul>
@@ -19,4 +21,4 @@
   <p>{{ "No events" | translate }}</p>
 {{ end }}
 
-<a href="/new">{{ "New event" | translate }}</a>
+{{ if .IsAdmin }}<a href="/new">{{ "New event" | translate }}</a>{{ end }}

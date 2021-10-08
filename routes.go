@@ -8,40 +8,42 @@ import (
 )
 
 func (app *application) routes() http.Handler {
-	chain := alice.New(
-		app.recoverPanic,
-		app.logRequest,
-		secureHeaders,
-		app.session.Enable,
-		injectCSRFCookie,
-		app.setBoosted,
-	)
+	stdChain := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
+	dynChain := alice.New(app.session.Enable, injectCSRFCookie, app.recognizeGuest)
 
 	mux := pat.New()
 
+	mux.Get("/static/", http.FileServer(http.FS(assets)))
+
+	// cookie authentication
+	mux.Get("/whoami", dynChain.ThenFunc(app.whoami))
+	mux.Post("/iam/:id", dynChain.ThenFunc(app.iam))
+	mux.Get("/login", dynChain.ThenFunc(app.login))
+	mux.Get("/logout", dynChain.Append(app.requireAdmin).ThenFunc(app.logout))
+
 	// status
-	mux.Get("/status", http.HandlerFunc(app.findStatuses))
-	mux.Get("/status/new", http.HandlerFunc(app.createStatusForm))
-	mux.Post("/status/new", http.HandlerFunc(app.createStatus))
-	mux.Del("/status/:id", http.HandlerFunc(app.deleteStatus))
+	mux.Get("/status", dynChain.Append(app.requireAdmin).ThenFunc(app.findStatuses))
+	mux.Get("/status/new", dynChain.Append(app.requireAdmin).ThenFunc(app.createStatusForm))
+	mux.Post("/status/new", dynChain.Append(app.requireAdmin).ThenFunc(app.createStatus))
+	mux.Del("/status/:id", dynChain.Append(app.requireAdmin).ThenFunc(app.deleteStatus))
 
 	// guests
-	mux.Get("/guests", http.HandlerFunc(app.findGuests))
-	mux.Get("/guests/new", http.HandlerFunc(app.createGuestForm))
-	mux.Post("/guests/new", http.HandlerFunc(app.createGuest))
-	mux.Get("/guests/:id/edit", http.HandlerFunc(app.updateGuestForm))
-	mux.Post("/guests/:id/edit", http.HandlerFunc(app.updateGuest))
-	mux.Del("/guests/:id", http.HandlerFunc(app.deleteGuest))
+	mux.Get("/guests", dynChain.Append(app.requireAdmin).ThenFunc(app.findGuests))
+	mux.Get("/guests/new", dynChain.Append(app.requireAdmin).ThenFunc(app.createGuestForm))
+	mux.Post("/guests/new", dynChain.Append(app.requireAdmin).ThenFunc(app.createGuest))
+	mux.Get("/guests/:id/edit", dynChain.Append(app.requireAdmin).ThenFunc(app.updateGuestForm))
+	mux.Post("/guests/:id/edit", dynChain.Append(app.requireAdmin).ThenFunc(app.updateGuest))
+	mux.Del("/guests/:id", dynChain.Append(app.requireAdmin).ThenFunc(app.deleteGuest))
 
 	// events
-	mux.Get("/", http.HandlerFunc(app.findEvents))
-	mux.Get("/new", http.HandlerFunc(app.createEventForm))
-	mux.Post("/new", http.HandlerFunc(app.createEvent))
-	mux.Get("/:id/edit", http.HandlerFunc(app.updateEventForm))
-	mux.Post("/:id/edit", http.HandlerFunc(app.updateEvent))
-	mux.Put("/:id/participation", http.HandlerFunc(app.participate))
-	mux.Get("/:id", http.HandlerFunc(app.findEventByID))
-	mux.Del("/:id", http.HandlerFunc(app.deleteEvent))
+	mux.Get("/", dynChain.Append(requireRecognition).ThenFunc(app.findEvents))
+	mux.Get("/new", dynChain.Append(app.requireAdmin).ThenFunc(app.createEventForm))
+	mux.Post("/new", dynChain.Append(app.requireAdmin).ThenFunc(app.createEvent))
+	mux.Get("/:id/edit", dynChain.Append(app.requireAdmin).ThenFunc(app.updateEventForm))
+	mux.Post("/:id/edit", dynChain.Append(app.requireAdmin).ThenFunc(app.updateEvent))
+	mux.Put("/:id/participation", dynChain.Append(requireRecognition).ThenFunc(app.participate))
+	mux.Get("/:id", dynChain.Append(requireRecognition).ThenFunc(app.findEventByID))
+	mux.Del("/:id", dynChain.Append(app.requireAdmin).ThenFunc(app.deleteEvent))
 
-	return chain.Then(mux)
+	return stdChain.Then(mux)
 }

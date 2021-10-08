@@ -23,6 +23,7 @@ import (
 //go:embed views/statuses/*.html
 //go:embed migrations/*.sql
 //go:embed translations/*.csv
+//go:embed static
 var assets embed.FS
 
 var (
