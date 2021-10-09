@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -79,6 +80,8 @@ func (s *EventService) FindEventByID(ctx context.Context, id int) (*Event, error
 			Assist: 0,
 		})
 	}
+
+	sort.Sort(ByGuestName(event.Participations))
 
 	return event, nil
 }

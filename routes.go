@@ -16,10 +16,10 @@ func (app *application) routes() http.Handler {
 	mux.Get("/static/", http.FileServer(http.FS(assets)))
 
 	// cookie authentication
-	mux.Get("/whoami", dynChain.ThenFunc(app.whoami))
+	mux.Get("/whoareyou", dynChain.ThenFunc(app.whoareyou))
 	mux.Post("/iam/:id", dynChain.ThenFunc(app.iam))
-	mux.Get("/login", dynChain.ThenFunc(app.login))
-	mux.Get("/logout", dynChain.Append(app.requireAdmin).ThenFunc(app.logout))
+	mux.Get("/admin", dynChain.ThenFunc(app.admin))
+	mux.Get("/noadmin", dynChain.Append(app.requireAdmin).ThenFunc(app.noadmin))
 
 	// status
 	mux.Get("/status", dynChain.Append(app.requireAdmin).ThenFunc(app.findStatuses))

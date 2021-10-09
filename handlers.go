@@ -112,9 +112,14 @@ func (app *application) findEventByID(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var currentParticipation *Participation
+	// extract participation from current guest to be able to display it first
+	currentParticipation, event.Participations = extractParticipation(currentGuest(r), event.Participations)
+
 	if err := app.views.Render(w, r, "events/details", &templateData{
-		Event:      event,
-		AssistText: AssistText,
+		Event:                event,
+		CurrentParticipation: currentParticipation,
+		AssistText:           AssistText,
 	}); err != nil {
 		app.serverError(w, err)
 	}
@@ -491,22 +496,27 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var currentParticipation *Participation
+	// extract participation from current guest to be able to display it first
+	currentParticipation, event.Participations = extractParticipation(currentGuest(r), event.Participations)
+
 	if err := app.views.Render(w, r, "events/participations", &templateData{
-		Event:      event,
-		AssistText: AssistText,
+		Event:                event,
+		CurrentParticipation: currentParticipation,
+		AssistText:           AssistText,
 	}); err != nil {
 		app.serverError(w, err)
 	}
 }
 
-func (app *application) whoami(w http.ResponseWriter, r *http.Request) {
+func (app *application) whoareyou(w http.ResponseWriter, r *http.Request) {
 	guests, _, err := app.guestService.FindGuests(r.Context(), GuestFilter{})
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	if err := app.views.Render(w, r, "guests/whoami", &templateData{
+	if err := app.views.Render(w, r, "guests/whoareyou", &templateData{
 		Guests: guests,
 	}); err != nil {
 		app.serverError(w, err)
@@ -522,27 +532,14 @@ func (app *application) iam(w http.ResponseWriter, r *http.Request) {
 
 	app.session.Put(r, "guest", id)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
-
-	// events, _, err := app.eventService.FindEvents(r.Context(), EventFilter{})
-	// if err != nil {
-	// 	app.serverError(w, err)
-	// 	return
-	// }
-
-	// w.Header().Set("HX-Push", "/")
-	// if err := app.views.Render(w, WithLayout(r, "partial"), "events/list", &templateData{
-	// 	Events: events,
-	// }); err != nil {
-	// 	app.serverError(w, err)
-	// }
 }
 
-func (app *application) login(w http.ResponseWriter, r *http.Request) {
+func (app *application) admin(w http.ResponseWriter, r *http.Request) {
 	app.session.Put(r, "isAdmin", true)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func (app *application) logout(w http.ResponseWriter, r *http.Request) {
+func (app *application) noadmin(w http.ResponseWriter, r *http.Request) {
 	app.session.Remove(r, "isAdmin")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

@@ -19,12 +19,13 @@ type templateData struct {
 	IsAdmin      bool
 	CurrentGuest *Guest
 
-	AssistText map[int]string
-	Event      *Event
-	Events     []*Event
-	Guest      *Guest
-	Guests     []*Guest
-	Statuses   []*Status
+	AssistText           map[int]string
+	Event                *Event
+	Events               []*Event
+	Guest                *Guest
+	Guests               []*Guest
+	Statuses             []*Status
+	CurrentParticipation *Participation
 }
 
 // The addDefaultDat automatically injects data that are common to all pages.
@@ -63,13 +64,13 @@ func (app *application) recognizeGuest(next http.Handler) http.Handler {
 	})
 }
 
-// The requireRecognition middleware redirects the user to the /whoami
+// The requireRecognition middleware redirects the user to the /whoareyou
 // page if he isn’t recognized.
 func requireRecognition(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if currentGuest(r) == nil {
 			w.Header().Set("HX-Redirect", "/")
-			http.Redirect(w, r, "/whoami", http.StatusSeeOther)
+			http.Redirect(w, r, "/whoareyou", http.StatusSeeOther)
 			return
 		}
 
