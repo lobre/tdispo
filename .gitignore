@@ -2,3 +2,4 @@ tdispo
 tdispo.db
 tdispo.db-shm
 tdispo.db-wal
+.env
