@@ -1,5 +1,5 @@
-<div id="flash" hx-swap-oob="true">
-  {{ with .Flash }}
+{{ with .Flash }}
+  <div id="flash" hx-swap-oob="true">
     <p>{{ . | translate }}</p>
-  {{ end }}
-</div>
+  </div>
+{{ end }}
