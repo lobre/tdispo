@@ -12,6 +12,7 @@ import (
 type Status struct {
 	ID    int
 	Label string
+	Color string
 }
 
 type StatusService struct {
@@ -78,6 +79,7 @@ func findStatuses(ctx context.Context, tx *sql.Tx) (_ []*Status, n int, err erro
 		`SELECT 
 			id,
 			label,
+			color,
 			COUNT(*) OVER()
 		FROM statuses
 		ORDER BY label`,
@@ -92,7 +94,7 @@ func findStatuses(ctx context.Context, tx *sql.Tx) (_ []*Status, n int, err erro
 	for rows.Next() {
 		var s Status
 
-		err = rows.Scan(&s.ID, &s.Label, &n)
+		err = rows.Scan(&s.ID, &s.Label, &s.Color, &n)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				return nil, 0, ErrNoRecord
@@ -111,10 +113,10 @@ func findStatuses(ctx context.Context, tx *sql.Tx) (_ []*Status, n int, err erro
 }
 
 func findStatusByID(ctx context.Context, tx *sql.Tx, id int) (*Status, error) {
-	row := tx.QueryRowContext(ctx, `SELECT id, label FROM statuses WHERE id = ?`, id)
+	row := tx.QueryRowContext(ctx, `SELECT id, label, color FROM statuses WHERE id = ?`, id)
 
 	var status Status
-	err := row.Scan(&status.ID, &status.Label)
+	err := row.Scan(&status.ID, &status.Label, &status.Color)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
@@ -127,8 +129,9 @@ func findStatusByID(ctx context.Context, tx *sql.Tx, id int) (*Status, error) {
 
 func createStatus(ctx context.Context, tx *sql.Tx, status *Status) error {
 	res, err := tx.ExecContext(ctx,
-		`INSERT INTO statuses (label) VALUES (?)`,
+		`INSERT INTO statuses (label, color) VALUES (?, ?)`,
 		status.Label,
+		status.Color,
 	)
 	if err != nil {
 		return err

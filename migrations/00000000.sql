@@ -1,7 +1,7 @@
 CREATE TABLE statuses (
   id    INTEGER PRIMARY KEY,
   label TEXT NOT NULL,
-  color TEXT -- hex format such as #ff0044
+  color TEXT NOT NULL -- hex format such as #ff0044
 );
 
 CREATE TABLE events (

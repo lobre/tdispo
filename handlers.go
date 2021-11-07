@@ -40,7 +40,7 @@ func (app *application) createStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := webapp.NewForm(r.PostForm)
-	form.Required("label")
+	form.Required("label", "color")
 
 	if !form.Valid() {
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -52,6 +52,7 @@ func (app *application) createStatus(w http.ResponseWriter, r *http.Request) {
 
 	s := Status{
 		Label: form.Get("label"),
+		Color: form.Get("color"),
 	}
 
 	err = app.statusService.CreateStatus(r.Context(), &s)

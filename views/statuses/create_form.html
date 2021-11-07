@@ -11,6 +11,13 @@
       {{ end }}
     </div>
     <div>
+      <label for="color">{{ "Color" | translate }}</label>
+      <input type="color" name="color" value='{{ .Get "color" }}' required />
+      {{ with .Error "color" }}
+        <span>{{ . | translate }}</span>
+      {{ end }}
+    </div>
+    <div>
       <input type="submit" value='{{ "Create" | translate }}' />
     </div>
   {{ end }}
