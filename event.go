@@ -74,12 +74,12 @@ func (s *EventService) FindEventByID(ctx context.Context, id int) (*Event, error
 		return nil, err
 	}
 
-	// Add participations with assist that equals no for pending guests
+	// Add participations with attend that equals no answer for pending guests
 	for _, guest := range pending {
 		event.Participations = append(event.Participations, &Participation{
 			Guest:  guest,
 			Event:  event,
-			Assist: 0,
+			Attend: AttendNoAnswer,
 		})
 	}
 

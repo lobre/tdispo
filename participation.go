@@ -6,15 +6,17 @@ import (
 )
 
 const (
-	AssistNo       = 0
-	AssistYes      = 1
-	AssistIfNeeded = 2
+	AttendNoAnswer int = iota
+	AttendNo
+	AttendYes
+	AttendIfNeeded
 )
 
-var AssistText = map[int]string{
-	AssistNo:       "no",
-	AssistYes:      "yes",
-	AssistIfNeeded: "if needed",
+var AttendText = map[int]string{
+	AttendNoAnswer: "no answer",
+	AttendNo:       "no",
+	AttendYes:      "yes",
+	AttendIfNeeded: "if needed",
 }
 
 type Participation struct {
@@ -24,7 +26,7 @@ type Participation struct {
 	EventID int
 	Event   *Event
 
-	Assist int
+	Attend int
 }
 
 // findParticipationsByEvent fetches the participations related to a specific event.
@@ -34,7 +36,7 @@ func findParticipationsByEvent(ctx context.Context, tx *sql.Tx, id int) (_ []*Pa
 		`SELECT
 			guest_id,
 			event_id,
-			assist,
+			attend,
 			COUNT(*) OVER()
 		FROM participations
 		WHERE event_id = ?`,
@@ -50,7 +52,7 @@ func findParticipationsByEvent(ctx context.Context, tx *sql.Tx, id int) (_ []*Pa
 	for rows.Next() {
 		var part Participation
 
-		err = rows.Scan(&part.GuestID, &part.EventID, &part.Assist, &n)
+		err = rows.Scan(&part.GuestID, &part.EventID, &part.Attend, &n)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -78,7 +80,7 @@ func findParticipationsByGuest(ctx context.Context, tx *sql.Tx, id int) (_ []*Pa
 		`SELECT
 			guest_id,
 			event_id,
-			assist,
+			attend,
 			COUNT(*) OVER()
 		FROM participations
 		WHERE guest_id = ?`,
@@ -94,7 +96,7 @@ func findParticipationsByGuest(ctx context.Context, tx *sql.Tx, id int) (_ []*Pa
 	for rows.Next() {
 		var part Participation
 
-		err = rows.Scan(&part.GuestID, &part.EventID, &part.Assist, &n)
+		err = rows.Scan(&part.GuestID, &part.EventID, &part.Attend, &n)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -117,10 +119,10 @@ func findParticipationsByGuest(ctx context.Context, tx *sql.Tx, id int) (_ []*Pa
 
 func participate(ctx context.Context, tx *sql.Tx, part *Participation) error {
 	_, err := tx.ExecContext(ctx,
-		`INSERT OR REPLACE INTO participations (guest_id, event_id, assist) VALUES (?, ?, ?)`,
+		`INSERT OR REPLACE INTO participations (guest_id, event_id, attend) VALUES (?, ?, ?)`,
 		part.GuestID,
 		part.EventID,
-		part.Assist,
+		part.Attend,
 	)
 	if err != nil {
 		return err

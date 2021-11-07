@@ -24,7 +24,7 @@ type templateData struct {
 	IsAdmin      bool
 	CurrentGuest *Guest
 
-	AssistText           map[int]string
+	AttendText           map[int]string
 	Event                *Event
 	Events               []*Event
 	Guest                *Guest

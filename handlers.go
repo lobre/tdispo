@@ -122,7 +122,7 @@ func (app *application) findEventByID(w http.ResponseWriter, r *http.Request) {
 	if err := app.Render(w, r, "events/details", &templateData{
 		Event:                event,
 		CurrentParticipation: currentParticipation,
-		AssistText:           AssistText,
+		AttendText:           AttendText,
 	}); err != nil {
 		app.ServerError(w, err)
 	}
@@ -467,8 +467,8 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := webapp.NewForm(r.PostForm)
-	form.Required("guest", "assist")
-	form.IsInteger("guest", "assist")
+	form.Required("guest", "attend")
+	form.IsInteger("guest", "attend")
 
 	if !form.Valid() {
 		app.ClientError(w, http.StatusBadRequest)
@@ -476,12 +476,12 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	guestID, _ := strconv.Atoi(form.Get("guest"))
-	assist, _ := strconv.Atoi(form.Get("assist"))
+	attend, _ := strconv.Atoi(form.Get("attend"))
 
 	err = app.eventService.Participate(r.Context(), &Participation{
 		EventID: id,
 		GuestID: guestID,
-		Assist:  assist,
+		Attend:  attend,
 	})
 	if err != nil {
 		app.ServerError(w, err)
@@ -506,7 +506,7 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 	if err := app.Render(w, r, "events/participations", &templateData{
 		Event:                event,
 		CurrentParticipation: currentParticipation,
-		AssistText:           AssistText,
+		AttendText:           AttendText,
 	}); err != nil {
 		app.ServerError(w, err)
 	}

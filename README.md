@@ -10,4 +10,4 @@ A status has a name and a color. Administrators can define them.
 
 A static list of guests is managed by administrators. A guest has a name and an email address. A guest can participate to an event.
 
-Participations connect guests to events. A participation tells whether the guest will assist or not.
+Participations connect guests to events. A participation tells whether the guest will attend or not.
