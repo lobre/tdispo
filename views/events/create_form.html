@@ -1,8 +1,8 @@
 {{ define "title" }}{{ "Add an event" | translate }}{{ end }}
 
 <form action="/new" method="post">
-  <input type="hidden" name="csrf_token" value="{{ .CSRFToken }}">
-  {{ with .Form }}
+  <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
+  {{ with $.Form }}
     <div>
       <label for="title">{{ "Title" | translate }}</label>
       <input type="text" name="title" value='{{ .Get "title" }}' required />

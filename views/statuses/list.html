@@ -1,8 +1,8 @@
 {{ define "title" }}{{ "Configuration of statuses" | translate }}{{ end }}
 
-{{ if .Statuses }}
+{{ if $.Statuses }}
   <ul>
-    {{ range .Statuses }}
+    {{ range $.Statuses }}
       <li>
         <span>{{ .Label }}</span>
         <span style="height: 8px; width: 8px; border-radius: 50%; display: inline-block; background-color: {{ .Color }};"></span>

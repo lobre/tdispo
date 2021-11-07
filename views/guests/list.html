@@ -1,8 +1,8 @@
 {{ define "title" }}{{ "Configuration of guests" | translate }}{{ end }}
 
-{{ if .Guests }}
+{{ if $.Guests }}
   <ul>
-    {{ range .Guests }}
+    {{ range $.Guests }}
       <li>
         <span>{{ .Name }}</span>
         <span>{{ .Email }}</span>

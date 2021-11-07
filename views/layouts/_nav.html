@@ -1,7 +1,7 @@
 <nav>
   <div>
     <a href="/">{{ "Events" | translate }}</a>
-    {{ if .IsAdmin }}
+    {{ if $.IsAdmin }}
       <a href="/guests">{{ "Guests" | translate }}</a>
       <a href="/status">{{ "Statuses" | translate }}</a>
       <a href="/noadmin">{{ "Quit admin mode" | translate }}</a>
@@ -9,8 +9,8 @@
     <a href="/whoareyou">{{ "Who are you?" | translate }}</a>
   </div>
   <div>
-    {{ if .CurrentGuest }}
-      <span>{{ "You are logged in as" | translate }} {{ .CurrentGuest.Name }}</span>
+    {{ if $.CurrentGuest }}
+      <span>{{ "You are logged in as" | translate }} {{ $.CurrentGuest.Name }}</span>
     {{ end }}
   </div>
 </nav>

@@ -1,8 +1,8 @@
 {{ define "title" }}{{ "List of events" | translate }}{{ end }}
 
-{{ if .Events }}
+{{ if $.Events }}
   <ul >
-    {{ range .Events }}
+    {{ range $.Events }}
       <li>
         <a href="/{{ .ID }}">{{ .Title }}</a>
         <span>- {{ .Status.Label}}</span>
@@ -23,4 +23,4 @@
   <p>{{ "No events" | translate }}</p>
 {{ end }}
 
-{{ if .IsAdmin }}<a href="/new">{{ "New event" | translate }}</a>{{ end }}
+{{ if $.IsAdmin }}<a href="/new">{{ "New event" | translate }}</a>{{ end }}

@@ -1,9 +1,9 @@
 {{ define "title" }}{{ "Who are you?" | translate }}{{ end }}
 
 <p>{{ "Who are you?" | translate }}</p>
-{{ if .Guests }}
+{{ if $.Guests }}
   <ul>
-    {{ range .Guests }}
+    {{ range $.Guests }}
       <li><a hx-post="/iam/{{ .ID }}" hx-target="body">{{ .Name }}</a></li>
     {{ end }}
   </ul>

@@ -35,7 +35,7 @@
 
       // inject csrf token in htmx requests
       document.body.addEventListener('htmx:configRequest', function(event) {
-        event.detail.headers['X-CSRF-Token'] = '{{ .CSRFToken }}';
+        event.detail.headers['X-CSRF-Token'] = '{{ $.CSRFToken }}';
       })
     </script>
   </body>

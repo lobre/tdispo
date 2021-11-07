@@ -1,8 +1,8 @@
-{{ define "title" }}{{ "Guest" | translate }} - {{ .Guest.Name }}{{ end }}
+{{ define "title" }}{{ "Guest" | translate }} - {{ $.Guest.Name }}{{ end }}
 
-<form action="/guests/{{ .Guest.ID }}/edit" method="post">
-  <input type="hidden" name="csrf_token" value="{{ .CSRFToken }}">
-  {{ with .Form }}
+<form action="/guests/{{ $.Guest.ID }}/edit" method="post">
+  <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
+  {{ with $.Form }}
     <div>
       <label for="name">{{ "Name" | translate }}</label>
       <input type="text" name="name" value='{{ .Get "name" }}' required />

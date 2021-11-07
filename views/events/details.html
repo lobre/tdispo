@@ -1,12 +1,12 @@
-{{ define "title" }}{{ "Event" | translate }} - {{ .Event.Title }}{{ end }}
+{{ define "title" }}{{ "Event" | translate }} - {{ $.Event.Title }}{{ end }}
 
-{{ if .Event.Desc }}
-  <p>{{ .Event.Desc | markdown }}</p>
+{{ if $.Event.Desc }}
+  <p>{{ $.Event.Desc | markdown }}</p>
 {{ end }}
 
 <p>
-  Statut : {{ .Event.Status.Label }}
-  <span style="height: 8px; width: 8px; border-radius: 50%; display: inline-block; background-color: {{ .Event.Status.Color }};"></span>
+  Statut : {{ $.Event.Status.Label }}
+  <span style="height: 8px; width: 8px; border-radius: 50%; display: inline-block; background-color: {{ $.Event.Status.Color }};"></span>
 </p>
 
 {{ template "events/participations" . }}

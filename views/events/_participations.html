@@ -1,10 +1,10 @@
 <div hx-target="this" hx-swap="outerHTML">
   <h2>{{ "Guests" | translate }}</h2>
-  {{ if or .Event.Participations .CurrentParticipation }} 
+  {{ if or $.Event.Participations $.CurrentParticipation }} 
     <ul>
-      {{ if .CurrentParticipation }}
+      {{ if $.CurrentParticipation }}
         <li>
-          <span>{{ .CurrentParticipation.Guest.Name }}:</span>
+          <span>{{ $.CurrentParticipation.Guest.Name }}:</span>
           {{ range $id, $label := .AssistText }}
             <a href="" 
               hx-put='/{{ $.Event.ID }}/participation' 
@@ -20,7 +20,7 @@
         </li>
       {{ end }}
 
-      {{ range $part := .Event.Participations }}
+      {{ range $part := $.Event.Participations }}
         <li>
           <span>{{ $part.Guest.Name }}:</span>
           {{ if or $.IsAdmin (eq $part.Guest.ID $.CurrentGuest.ID) }}
