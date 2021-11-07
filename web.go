@@ -33,7 +33,7 @@ type templateData struct {
 	CurrentParticipation *Participation
 }
 
-// The addDefaultDat automatically injects data that are common to all pages.
+// addDefaultData automatically injects data that are common to all pages.
 func (app *application) addDefaultData(r *http.Request, data interface{}) interface{} {
 	td := data.(*templateData)
 	if td == nil {
@@ -46,7 +46,7 @@ func (app *application) addDefaultData(r *http.Request, data interface{}) interf
 	return td
 }
 
-// The recognizeGuest middleware checks if a guest exists in the session,
+// recognizeGuest is a middleware that checks if a guest exists in the session,
 // then verifies it is a valid guest. If so, it adds this info to the
 // request context.
 func (app *application) recognizeGuest(next http.Handler) http.Handler {
@@ -69,7 +69,7 @@ func (app *application) recognizeGuest(next http.Handler) http.Handler {
 	})
 }
 
-// The requireRecognition middleware redirects the user to the /whoareyou
+// requireRecognition is a middleware that redirects the user to the /whoareyou
 // page if he isn’t recognized.
 func requireRecognition(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -84,8 +84,8 @@ func requireRecognition(next http.Handler) http.Handler {
 	})
 }
 
-// The currentGuest function returns the currently
-// recognized guest. If not recognized, it returns nil.
+// currentGuest returns the currently recognized guest.
+// If not recognized, it returns nil.
 func currentGuest(r *http.Request) *Guest {
 	guest, ok := r.Context().Value(contextKeyCurrentGuest).(*Guest)
 	if !ok {
@@ -100,7 +100,7 @@ func (app *application) isAdmin(r *http.Request) bool {
 	return app.session.GetBool(r, "isAdmin")
 }
 
-// The requireAdmin middleware redirects the user to the homepage
+// requireAdmin is a middleware that redirects the user to the homepage
 // page if he is not admin.
 func (app *application) requireAdmin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
