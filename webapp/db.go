@@ -1,4 +1,4 @@
-package main
+package webapp
 
 import (
 	"context"
@@ -14,31 +14,36 @@ import (
 
 // DB represents the database connection.
 type DB struct {
-	db *sql.DB
-
-	// Datasource name.
-	DSN string
+	db   *sql.DB
+	dsn  string // data source name
+	fsys fs.FS  // filesystem for migration files
 }
 
-func NewDB(dns string) *DB {
+// NewDB creates a new DB taking a data source name
+// and a filesystem for migration files.
+func NewDB(dns string, fsys fs.FS) *DB {
 	return &DB{
-		DSN: dns,
+		dsn:  dns,
+		fsys: fsys,
 	}
 }
 
+// Open opens a sqlite database specified by the data source name.
+// It also enables WAL mode and foreign keys check, and finally execute
+// pending SQL migrations.
 func (db *DB) Open() (err error) {
-	if db.DSN == "" {
+	if db.dsn == "" {
 		return fmt.Errorf("dsn required")
 	}
 
 	// Create parent directory
-	if db.DSN != ":memory:" {
-		if err := os.MkdirAll(filepath.Dir(db.DSN), 0700); err != nil {
+	if db.dsn != ":memory:" {
+		if err := os.MkdirAll(filepath.Dir(db.dsn), 0700); err != nil {
 			return err
 		}
 	}
 
-	if db.db, err = sql.Open("sqlite3", db.DSN); err != nil {
+	if db.db, err = sql.Open("sqlite3", db.dsn); err != nil {
 		return err
 	}
 
@@ -67,7 +72,7 @@ func (db *DB) migrate() error {
 		return fmt.Errorf("cannot create migrations table: %w", err)
 	}
 
-	names, err := fs.Glob(assets, "migrations/*.sql")
+	names, err := fs.Glob(db.fsys, "migrations/*.sql")
 	if err != nil {
 		return err
 	}
@@ -99,7 +104,7 @@ func (db *DB) migrateFile(name string) error {
 	}
 
 	// Read and execute migration file.
-	if buf, err := fs.ReadFile(assets, name); err != nil {
+	if buf, err := fs.ReadFile(db.fsys, name); err != nil {
 		return err
 	} else if _, err := tx.Exec(string(buf)); err != nil {
 		return err

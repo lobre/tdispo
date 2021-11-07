@@ -1,19 +1,18 @@
 package main
 
 import (
-	"context"
 	"embed"
 	"errors"
 	"flag"
 	"fmt"
 	"html/template"
-	"log"
+	"io"
 	"net/http"
 	"os"
-	"os/signal"
 	"time"
 
 	"github.com/golangcollege/sessions"
+	"github.com/lobre/tdispo/webapp"
 	"github.com/russross/blackfriday"
 )
 
@@ -40,10 +39,10 @@ type config struct {
 }
 
 type application struct {
-	config config
-	logger *log.Logger
+	webapp.Core
 
-	views      *Views
+	config config
+
 	translator *Translator
 	session    *sessions.Session
 
@@ -53,24 +52,34 @@ type application struct {
 }
 
 func main() {
+	if err := run(os.Args, os.Stdout); err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(1)
+	}
+}
+
+func run(args []string, stdout io.Writer) error {
 	var cfg config
 
-	flag.IntVar(&cfg.port, "port", 8080, "http server port")
-	flag.StringVar(&cfg.dsn, "dsn", "tdispo.db", "database datasource name")
-	flag.StringVar(&cfg.lang, "lang", "en", "language of the application")
-	flag.StringVar(&cfg.sessionKey, "session-key", "0g6kFh15VxjIfRSDDoXxrK2DLivlX6xt", "session key for cookies encryption")
-	flag.Parse()
+	flagSet := flag.NewFlagSet(args[0], flag.ExitOnError)
 
-	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	flagSet.IntVar(&cfg.port, "port", 8080, "http server port")
+	flagSet.StringVar(&cfg.dsn, "dsn", "tdispo.db", "database data source name")
+	flagSet.StringVar(&cfg.lang, "lang", "en", "language of the application")
+	flagSet.StringVar(&cfg.sessionKey, "session-key", "0g6kFh15VxjIfRSDDoXxrK2DLivlX6xt", "session key for cookies encryption")
 
-	db := NewDB(cfg.dsn)
+	if err := flagSet.Parse(args[1:]); err != nil {
+		return err
+	}
+
+	db := webapp.NewDB(cfg.dsn, assets)
 	if err := db.Open(); err != nil {
-		logger.Fatal(err)
+		return err
 	}
 
 	translator, err := NewTranslator(fmt.Sprintf("translations/%s.csv", cfg.lang))
 	if err != nil {
-		logger.Fatal(err)
+		return err
 	}
 
 	session := sessions.New([]byte(cfg.sessionKey))
@@ -78,7 +87,6 @@ func main() {
 
 	app := application{
 		config:     cfg,
-		logger:     logger,
 		translator: translator,
 		session:    session,
 
@@ -92,11 +100,9 @@ func main() {
 		"translate": app.translator.Translate,
 	}
 
-	app.views = &Views{DefaultData: app.addDefaultData}
-
-	err = app.views.Parse(assets, "views", funcs)
+	err = app.ParseViews(assets, "views", funcs, app.addDefaultData)
 	if err != nil {
-		logger.Fatal(err)
+		return err
 	}
 
 	srv := &http.Server{
@@ -107,38 +113,11 @@ func main() {
 		WriteTimeout: 30 * time.Second,
 	}
 
-	shutdown := make(chan error)
-
-	go func() {
-		stop := make(chan os.Signal, 1)
-		signal.Notify(stop, os.Interrupt)
-		<-stop
-
-		logger.Println("shutting down server")
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		shutdown <- srv.Shutdown(ctx)
-	}()
-
-	logger.Printf("starting server on port %d\n", cfg.port)
-
-	err = srv.ListenAndServe()
-	if !errors.Is(err, http.ErrServerClosed) {
-		logger.Fatal(err)
+	if err := webapp.Run(srv); err != nil {
+		return err
 	}
 
-	err = <-shutdown
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	logger.Println("server stopped")
-
-	if err := db.Close(); err != nil {
-		logger.Fatal(err)
-	}
+	return db.Close()
 }
 
 // The markdown function will convert an input into markdown.

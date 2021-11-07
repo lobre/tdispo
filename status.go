@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/lobre/tdispo/webapp"
 	"github.com/mattn/go-sqlite3"
 )
 
@@ -14,7 +15,7 @@ type Status struct {
 }
 
 type StatusService struct {
-	db *DB
+	db *webapp.DB
 }
 
 func (s *StatusService) FindStatusByID(ctx context.Context, id int) (*Status, error) {

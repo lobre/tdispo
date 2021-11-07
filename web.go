@@ -6,15 +6,20 @@ import (
 	"net/http"
 
 	"github.com/justinas/nosurf"
+	"github.com/lobre/tdispo/webapp"
 )
 
-const contextKeyCurrentGuest = contextKey("currentGuest")
+type contextKey int
+
+const (
+	contextKeyCurrentGuest contextKey = iota
+)
 
 // templateData contains all kinds of objects
 // that can be returned in a template.
 type templateData struct {
 	Flash        string
-	Form         *Form
+	Form         *webapp.Form
 	CSRFToken    string
 	IsAdmin      bool
 	CurrentGuest *Guest
@@ -55,7 +60,7 @@ func (app *application) recognizeGuest(next http.Handler) http.Handler {
 		if errors.Is(err, ErrNoRecord) {
 			app.session.Remove(r, "guest")
 		} else if err != nil {
-			app.serverError(w, err)
+			app.ServerError(w, err)
 			return
 		}
 

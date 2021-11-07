@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/lobre/tdispo/webapp"
 	"github.com/mattn/go-sqlite3"
 )
 
@@ -31,7 +32,7 @@ type GuestUpdate struct {
 }
 
 type GuestService struct {
-	db *DB
+	db *webapp.DB
 }
 
 func (s *GuestService) FindGuestByID(ctx context.Context, id int) (*Guest, error) {
@@ -146,7 +147,7 @@ func findGuests(ctx context.Context, tx *sql.Tx, filter GuestFilter) (_ []*Guest
 	}
 
 	rows, err := tx.QueryContext(ctx,
-		`SELECT 
+		`SELECT
 			id,
 			name,
 			email,

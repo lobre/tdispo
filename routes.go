@@ -5,11 +5,12 @@ import (
 
 	"github.com/bmizerany/pat"
 	"github.com/justinas/alice"
+	"github.com/lobre/tdispo/webapp"
 )
 
 func (app *application) routes() http.Handler {
-	stdChain := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
-	dynChain := alice.New(app.session.Enable, injectCSRFCookie, app.recognizeGuest)
+	stdChain := alice.New(app.RecoverPanic, app.LogRequest, webapp.SecureHeaders)
+	dynChain := alice.New(app.session.Enable, webapp.InjectCSRFCookie, app.recognizeGuest)
 
 	mux := pat.New()
 

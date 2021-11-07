@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/lobre/tdispo/webapp"
 )
 
 type Event struct {
@@ -34,7 +36,7 @@ type EventUpdate struct {
 }
 
 type EventService struct {
-	db *DB
+	db *webapp.DB
 }
 
 // FindEventByID retrieves an event and attaches participations and status.
