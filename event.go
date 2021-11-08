@@ -7,14 +7,16 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/lobre/tdispo/webapp"
 )
 
 type Event struct {
-	ID    int
-	Title string
-	Desc  string
+	ID          int
+	Title       string
+	OccursAt    time.Time
+	Description string
 
 	StatusID int
 	Status   *Status
@@ -30,9 +32,10 @@ type EventFilter struct {
 
 // EventUpdate represents a set of fields to be updated via UpdateEvent
 type EventUpdate struct {
-	Title    *string
-	Desc     *string
-	StatusID *int
+	Title       *string
+	OccursAt    *time.Time
+	Description *string
+	StatusID    *int
 }
 
 type EventService struct {
@@ -193,7 +196,8 @@ func findEvents(ctx context.Context, tx *sql.Tx, filter EventFilter) (_ []*Event
 		`SELECT
 			id,
 			title,
-			desc,
+			occurs_at,
+			description,
 			status,
 			COUNT(*) OVER()
 		FROM events
@@ -211,7 +215,7 @@ func findEvents(ctx context.Context, tx *sql.Tx, filter EventFilter) (_ []*Event
 	for rows.Next() {
 		var evt Event
 
-		err = rows.Scan(&evt.ID, &evt.Title, &evt.Desc, &evt.StatusID, &n)
+		err = rows.Scan(&evt.ID, &evt.Title, &evt.OccursAt, &evt.Description, &evt.StatusID, &n)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				return nil, 0, ErrNoRecord
@@ -230,10 +234,10 @@ func findEvents(ctx context.Context, tx *sql.Tx, filter EventFilter) (_ []*Event
 }
 
 func findEventByID(ctx context.Context, tx *sql.Tx, id int) (*Event, error) {
-	row := tx.QueryRowContext(ctx, `SELECT id, title, desc, status FROM events WHERE id = ?`, id)
+	row := tx.QueryRowContext(ctx, `SELECT id, title, occurs_at, description, status FROM events WHERE id = ?`, id)
 
 	var evt Event
-	err := row.Scan(&evt.ID, &evt.Title, &evt.Desc, &evt.StatusID)
+	err := row.Scan(&evt.ID, &evt.Title, &evt.OccursAt, &evt.Description, &evt.StatusID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
@@ -246,9 +250,10 @@ func findEventByID(ctx context.Context, tx *sql.Tx, id int) (*Event, error) {
 
 func createEvent(ctx context.Context, tx *sql.Tx, event *Event) error {
 	res, err := tx.ExecContext(ctx,
-		`INSERT INTO events (title, desc, status) VALUES (?, ?, ?)`,
+		`INSERT INTO events (title, occurs_at, description, status) VALUES (?, ?, ?, ?)`,
 		event.Title,
-		event.Desc,
+		event.OccursAt,
+		event.Description,
 		event.StatusID,
 	)
 	if err != nil {
@@ -274,8 +279,12 @@ func updateEvent(ctx context.Context, tx *sql.Tx, id int, upd EventUpdate) (*Eve
 		event.Title = *upd.Title
 	}
 
-	if upd.Desc != nil {
-		event.Desc = *upd.Desc
+	if upd.OccursAt != nil {
+		event.OccursAt = *upd.OccursAt
+	}
+
+	if upd.Description != nil {
+		event.Description = *upd.Description
 	}
 
 	if upd.StatusID != nil {
@@ -283,9 +292,10 @@ func updateEvent(ctx context.Context, tx *sql.Tx, id int, upd EventUpdate) (*Eve
 	}
 
 	_, err = tx.ExecContext(ctx,
-		`UPDATE events SET title = ?, desc = ?, status = ? WHERE id = ?`,
+		`UPDATE events SET title = ?, occurs_at = ?, description = ?, status = ? WHERE id = ?`,
 		event.Title,
-		event.Desc,
+		event.OccursAt,
+		event.Description,
 		event.StatusID,
 		id,
 	)

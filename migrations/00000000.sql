@@ -5,10 +5,11 @@ CREATE TABLE statuses (
 );
 
 CREATE TABLE events (
-  id     INTEGER PRIMARY KEY,
-  title  TEXT NOT NULL,
-  desc   TEXT,
-  status INTEGER NOT NULL REFERENCES statuses (id)
+  id          INTEGER PRIMARY KEY,
+  title       TEXT NOT NULL,
+  occurs_at   DATETIME NOT NULL,
+  description TEXT,
+  status      INTEGER NOT NULL REFERENCES statuses (id)
 );
 
 CREATE TABLE guests (

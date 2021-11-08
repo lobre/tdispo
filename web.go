@@ -11,9 +11,7 @@ import (
 
 type contextKey int
 
-const (
-	contextKeyCurrentGuest contextKey = iota
-)
+const contextKeyCurrentGuest contextKey = iota
 
 // templateData contains all kinds of objects
 // that can be returned in a template.

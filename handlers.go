@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/lobre/tdispo/webapp"
 )
@@ -151,7 +152,9 @@ func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := webapp.NewForm(r.PostForm)
-	form.Required("title")
+	form.Required("title", "status")
+	form.IsDate("date")
+	form.IsTime("time")
 
 	if !form.Valid() {
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -167,10 +170,17 @@ func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	date, err := time.Parse(layoutDatetime, fmt.Sprintf("%s %s", form.Get("date"), form.Get("time")))
+	if err != nil {
+		app.ClientError(w, http.StatusBadRequest)
+		return
+	}
+
 	evt := Event{
-		Title:    form.Get("title"),
-		Desc:     form.Get("desc"),
-		StatusID: statusID,
+		Title:       form.Get("title"),
+		OccursAt:    date,
+		Description: form.Get("description"),
+		StatusID:    statusID,
 	}
 
 	err = app.eventService.CreateEvent(r.Context(), &evt)
@@ -203,8 +213,10 @@ func (app *application) updateEventForm(w http.ResponseWriter, r *http.Request) 
 
 	if err := app.Render(w, r, "events/update_form", &templateData{
 		Form: webapp.NewForm(url.Values{
-			"title": []string{evt.Title},
-			"desc":  []string{evt.Desc},
+			"title":       []string{evt.Title},
+			"date":        []string{evt.OccursAt.Format(layoutDate)},
+			"time":        []string{evt.OccursAt.Format(layoutTime)},
+			"description": []string{evt.Description},
 		}),
 		Event:    evt,
 		Statuses: statuses,
@@ -227,7 +239,9 @@ func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := webapp.NewForm(r.PostForm)
-	form.Required("title")
+	form.Required("title", "status")
+	form.IsDate("date")
+	form.IsTime("time")
 
 	if !form.Valid() {
 		evt, err := app.eventService.FindEventByID(r.Context(), id)
@@ -260,13 +274,20 @@ func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	date, err := time.Parse(layoutDatetime, fmt.Sprintf("%s %s", form.Get("date"), form.Get("time")))
+	if err != nil {
+		app.ClientError(w, http.StatusBadRequest)
+		return
+	}
+
 	title := form.Get("title")
-	desc := form.Get("desc")
+	description := form.Get("description")
 
 	upd := EventUpdate{
-		Title:    &title,
-		Desc:     &desc,
-		StatusID: &statusID,
+		Title:       &title,
+		OccursAt:    &date,
+		Description: &description,
+		StatusID:    &statusID,
 	}
 
 	_, err = app.eventService.UpdateEvent(r.Context(), id, upd)

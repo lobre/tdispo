@@ -1,12 +1,14 @@
 {{ define "title" }}{{ "Event" | translate }} - {{ $.Event.Title }}{{ end }}
 
-{{ if $.Event.Desc }}
-  <p>{{ $.Event.Desc | markdown }}</p>
-{{ end }}
+<h2>{{ $.Event.Title }} - {{ $.Event.OccursAt | humanDate }}</h2>
 
 <p>
   Statut : {{ $.Event.Status.Label }}
   <span style="height: 8px; width: 8px; border-radius: 50%; display: inline-block; background-color: {{ $.Event.Status.Color }};"></span>
 </p>
+
+{{ if $.Event.Description }}
+  <p>{{ $.Event.Description | markdown }}</p>
+{{ end }}
 
 {{ template "events/participations" . }}

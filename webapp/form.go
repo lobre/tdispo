@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -109,6 +110,22 @@ func (f *Form) IsEmail(field string) {
 	value := f.Get(field)
 	if _, err := mail.ParseAddress(value); err != nil {
 		f.CustomError(field, "This field is not a valid email")
+	}
+}
+
+// IsDate checks that a specific field in the form is a correct date.
+func (f *Form) IsDate(field string) {
+	value := f.Get(field)
+	if _, err := time.Parse("2006-01-02", value); err != nil {
+		f.CustomError(field, "This field is not a valid date")
+	}
+}
+
+// IsTime checks that a specific field in the form is a correct time.
+func (f *Form) IsTime(field string) {
+	value := f.Get(field)
+	if _, err := time.Parse("15:04", value); err != nil {
+		f.CustomError(field, "This field is not a valid time")
 	}
 }
 

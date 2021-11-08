@@ -11,8 +11,22 @@
       {{ end }}
     </div>
     <div>
-      <label for="desc">{{ "Description" | translate }}</label>
-      <textarea name="desc" rows="4" cols="50">{{ .Get "desc" }}</textarea>
+      <label for="date">{{ "Date" | translate }}</label>
+      <input type="date" name="date" value='{{ .Get "date" }}' required />
+      {{ with .Error "date" }}
+        <span>{{ . | translate }}</span>
+      {{ end }}
+    </div>
+    <div>
+      <label for="time">{{ "Time" | translate }}</label>
+      <input type="time" name="time" value='{{ .Get "time" }}' required />
+      {{ with .Error "time" }}
+        <span>{{ . | translate }}</span>
+      {{ end }}
+    </div>
+    <div>
+      <label for="description">{{ "Description" | translate }}</label>
+      <textarea name="description" rows="4" cols="50">{{ .Get "description" }}</textarea>
     </div>
     <div>
       <label for="status">{{ "Status" | translate }}</label>
@@ -21,6 +35,9 @@
           <option value="{{ .ID }}" {{ if eq .ID $.Event.StatusID }}selected="selected"{{ end }}>{{ .Label }}</option>
         {{ end }}
       </select>
+      {{ with .Error "status" }}
+        <span>{{ . | translate }}</span>
+      {{ end }}
     </div>
     <div>
       <input type="submit" value='{{ "Save" | translate }}' />

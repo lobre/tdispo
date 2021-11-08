@@ -16,6 +16,12 @@ import (
 	"github.com/russross/blackfriday"
 )
 
+const (
+	layoutDatetime = "2006-01-02 15:04"
+	layoutDate     = "2006-01-02"
+	layoutTime     = "15:04"
+)
+
 //go:embed views/layouts/*.html
 //go:embed views/events/*.html
 //go:embed views/guests/*.html
@@ -98,6 +104,7 @@ func run(args []string, stdout io.Writer) error {
 	funcs := template.FuncMap{
 		"markdown":  markdown,
 		"translate": app.translator.Translate,
+		"humanDate": humanDate,
 	}
 
 	err = app.ParseViews(assets, "views", funcs, app.addDefaultData)
@@ -124,4 +131,10 @@ func run(args []string, stdout io.Writer) error {
 func markdown(args ...interface{}) template.HTML {
 	s := blackfriday.MarkdownCommon([]byte(fmt.Sprintf("%s", args...)))
 	return template.HTML(s)
+}
+
+// humanDate returns a nicely formatted string representation
+// of a time.Time object.
+func humanDate(t time.Time) string {
+	return t.Format("02 Jan 2006 at 15:04")
 }
