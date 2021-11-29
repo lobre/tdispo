@@ -533,6 +533,26 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (app *application) search(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query().Get("q")
+	if q == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	events, _, err := app.eventService.FindEvents(r.Context(), EventFilter{Title: &q})
+	if err != nil {
+		app.ServerError(w, err)
+		return
+	}
+
+	if err := app.Render(w, r, "events/list_items", &templateData{
+		Events: events,
+	}); err != nil {
+		app.ServerError(w, err)
+	}
+}
+
 func (app *application) whoareyou(w http.ResponseWriter, r *http.Request) {
 	guests, _, err := app.guestService.FindGuests(r.Context(), GuestFilter{})
 	if err != nil {

@@ -28,6 +28,7 @@ type Event struct {
 type EventFilter struct {
 	ID      *int
 	IDNotIn []int
+	Title   *string
 }
 
 // EventUpdate represents a set of fields to be updated via UpdateEvent
@@ -188,6 +189,10 @@ func findEvents(ctx context.Context, tx *sql.Tx, filter EventFilter) (_ []*Event
 			args = append(args, id)
 		}
 		where = append(where, fmt.Sprintf("id NOT IN (%s)", strings.Join(placeholder, ",")))
+	}
+
+	if filter.Title != nil {
+		where, args = append(where, "title LIKE ?"), append(args, "%"+*filter.Title+"%")
 	}
 
 	// at some point, we will want to have a date

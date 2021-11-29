@@ -1,23 +1,9 @@
 {{ define "title" }}{{ "List of events" | translate }}{{ end }}
 
 {{ if $.Events }}
-  <ul >
-    {{ range $.Events }}
-      <li>
-        <a href="/{{ .ID }}">{{ .Title }}</a>
-        <span>- {{ .Status.Label}}</span>
-        <span style="height: 8px; width: 8px; border-radius: 50%; display: inline-block; background-color: {{ .Status.Color }};"></span>
-        {{ if $.IsAdmin }}
-          <a href="/{{ .ID }}/edit">({{ "edit" | translate }})</a>
-          <a href="" 
-            hx-target="body" 
-            hx-delete="/{{ .ID }}" 
-            hx-confirm='{{ "Are you sure?" | translate }}'>
-            ({{ "delete" | translate }})
-          </a>
-        {{ end }}
-      </li>
-    {{ end }}
+  <input type="text" name="q" placeholder='{{ "Search" | translate }}' hx-get="/search" hx-trigger="keyup changed delay:500ms" hx-target="#events">
+  <ul id="events">
+    {{ template "events/list_items" . }}
   </ul>
 {{ else }}
   <p>{{ "No events" | translate }}</p>

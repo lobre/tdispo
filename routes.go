@@ -38,6 +38,7 @@ func (app *application) routes() http.Handler {
 
 	// events
 	mux.Get("/", dynChain.Append(requireRecognition).ThenFunc(app.findEvents))
+	mux.Get("/search", dynChain.Append(requireRecognition).ThenFunc(app.search))
 	mux.Get("/new", dynChain.Append(app.requireAdmin).ThenFunc(app.createEventForm))
 	mux.Post("/new", dynChain.Append(app.requireAdmin).ThenFunc(app.createEvent))
 	mux.Get("/:id/edit", dynChain.Append(app.requireAdmin).ThenFunc(app.updateEventForm))
