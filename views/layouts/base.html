@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <title>{{ template "title" . }} - Tdispo</title>
-    <script src="https://unpkg.com/htmx.org@1.6.0"></script>
+    <script src="https://unpkg.com/htmx.org@1.x.x"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x" defer></script>
     <link rel="icon" href="/static/favicon.ico">
     {{ block "head"  . }}{{ end }}
@@ -26,12 +26,12 @@
         // the error is rendered from the server 
         if ([422, 409].includes(status)) {
           event.detail.shouldSwap = true
+          event.detail.isError = false;
         }
+      })
 
-        // flash if other error
-        if (!event.detail.shouldSwap && status >= 400 && status < 600) {
+      document.body.addEventListener('htmx:responseError', function(event) {
           document.getElementById("flash").innerHTML = '<p>{{ "An error has occurred" | translate }}</p>'
-        }
       })
 
       // inject csrf token in htmx requests

@@ -1,7 +1,14 @@
 {{ define "title" }}{{ "List of events" | translate }}{{ end }}
 
 {{ if $.Events }}
-  <input type="text" name="q" placeholder='{{ "Search" | translate }}' hx-get="/search" hx-trigger="keyup changed delay:500ms" hx-target="#events">
+  <input type="search" 
+    name="q" 
+    autocomplete="off" 
+    placeholder='{{ "Search" | translate }}' 
+    hx-get="/search" 
+    hx-trigger="keyup changed delay:500ms" 
+    hx-target="#events">
+
   <ul id="events">
     {{ template "events/list_items" . }}
   </ul>

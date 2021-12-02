@@ -534,13 +534,14 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) search(w http.ResponseWriter, r *http.Request) {
+	var filter EventFilter
+
 	q := r.URL.Query().Get("q")
-	if q == "" {
-		http.NotFound(w, r)
-		return
+	if q != "" {
+		filter.Title = &q
 	}
 
-	events, _, err := app.eventService.FindEvents(r.Context(), EventFilter{Title: &q})
+	events, _, err := app.eventService.FindEvents(r.Context(), filter)
 	if err != nil {
 		app.ServerError(w, err)
 		return
