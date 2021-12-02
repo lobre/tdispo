@@ -13,7 +13,6 @@ import (
 
 	"github.com/golangcollege/sessions"
 	"github.com/lobre/tdispo/webapp"
-	"github.com/russross/blackfriday"
 )
 
 const (
@@ -102,9 +101,9 @@ func run(args []string, stdout io.Writer) error {
 	}
 
 	funcs := template.FuncMap{
-		"markdown":  markdown,
-		"translate": app.translator.Translate,
 		"humanDate": humanDate,
+		"rawHTML":   rawHTML,
+		"translate": app.translator.Translate,
 	}
 
 	err = app.ParseViews(assets, "views", funcs, app.addDefaultData)
@@ -127,9 +126,8 @@ func run(args []string, stdout io.Writer) error {
 	return db.Close()
 }
 
-// The markdown function will convert an input into markdown.
-func markdown(args ...interface{}) template.HTML {
-	s := blackfriday.MarkdownCommon([]byte(fmt.Sprintf("%s", args...)))
+// rawHTML returns a verbatim unescaped HTML from a string
+func rawHTML(s string) template.HTML {
 	return template.HTML(s)
 }
 

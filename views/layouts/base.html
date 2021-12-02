@@ -3,9 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <title>{{ template "title" . }} - Tdispo</title>
-    <script src="//unpkg.com/htmx.org@1.6.0"></script>
-    <script src="//unpkg.com/alpinejs@3.x.x" defer></script>
+    <script src="https://unpkg.com/htmx.org@1.6.0"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x" defer></script>
     <link rel="icon" href="/static/favicon.ico">
+    {{ block "head"  . }}{{ end }}
   </head>
 
   <body hx-boost="true">

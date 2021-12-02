@@ -1,5 +1,14 @@
 {{ define "title" }}{{ "Event" | translate }} - {{ $.Event.Title }}{{ end }}
 
+{{ define "head" }}
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/trix/1.3.1/trix.min.css">
+  <style>
+    trix-toolbar .trix-button-group--file-tools { display: none; }
+    trix-toolbar .trix-button-group--history-tools { display: none; }
+  </style>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/trix/1.3.1/trix.min.js"></script>
+{{ end }}
+
 <form action="/{{ $.Event.ID }}/edit" method="post">
   <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
   {{ with $.Form }}
@@ -26,7 +35,8 @@
     </div>
     <div>
       <label for="description">{{ "Description" | translate }}</label>
-      <textarea name="description" rows="4" cols="50">{{ .Get "description" }}</textarea>
+      <input id="description" type="hidden" name="description" value='{{ .Get "description" }}'>
+      <trix-editor input="description"></trix-editor>
     </div>
     <div>
       <label for="status">{{ "Status" | translate }}</label>
