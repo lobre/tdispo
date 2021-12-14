@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/golangcollege/sessions"
-	"github.com/lobre/tdispo/webapp"
+	"github.com/lobre/tdispo/bow"
 )
 
 const (
@@ -22,6 +22,7 @@ const (
 )
 
 //go:embed views/layouts/*.html
+//go:embed views/turbo/*.html
 //go:embed views/events/*.html
 //go:embed views/guests/*.html
 //go:embed views/statuses/*.html
@@ -44,12 +45,11 @@ type config struct {
 }
 
 type application struct {
-	webapp.Core
-
 	config config
 
 	translator *Translator
 	session    *sessions.Session
+	views      bow.Views
 
 	statusService *StatusService
 	guestService  *GuestService
@@ -77,7 +77,7 @@ func run(args []string, stdout io.Writer) error {
 		return err
 	}
 
-	db := webapp.NewDB(cfg.dsn, assets)
+	db := bow.NewDB(cfg.dsn, assets)
 	if err := db.Open(); err != nil {
 		return err
 	}
@@ -102,11 +102,11 @@ func run(args []string, stdout io.Writer) error {
 
 	funcs := template.FuncMap{
 		"humanDate": humanDate,
-		"rawHTML":   rawHTML,
+		"safe":      safe,
 		"translate": app.translator.Translate,
 	}
 
-	err = app.ParseViews(assets, "views", funcs, app.addDefaultData)
+	err = app.views.Parse(assets, "views", funcs, app.addDefaultData)
 	if err != nil {
 		return err
 	}
@@ -119,15 +119,15 @@ func run(args []string, stdout io.Writer) error {
 		WriteTimeout: 30 * time.Second,
 	}
 
-	if err := webapp.Run(srv); err != nil {
+	if err := bow.Run(srv); err != nil {
 		return err
 	}
 
 	return db.Close()
 }
 
-// rawHTML returns a verbatim unescaped HTML from a string
-func rawHTML(s string) template.HTML {
+// safe returns a verbatim unescaped HTML from a string
+func safe(s string) template.HTML {
 	return template.HTML(s)
 }
 

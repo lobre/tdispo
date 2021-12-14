@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/justinas/nosurf"
-	"github.com/lobre/tdispo/webapp"
+	"github.com/lobre/tdispo/bow"
 )
 
 type contextKey int
@@ -16,11 +16,14 @@ const contextKeyCurrentGuest contextKey = iota
 // templateData contains all kinds of objects
 // that can be returned in a template.
 type templateData struct {
-	Flash        string
-	Form         *webapp.Form
+	Results []string
+
 	CSRFToken    string
-	IsAdmin      bool
 	CurrentGuest *Guest
+	Flash        string
+	Form         *bow.Form
+	IsAdmin      bool
+	Lang         string
 
 	AttendText           map[int]string
 	Event                *Event
@@ -33,14 +36,20 @@ type templateData struct {
 
 // addDefaultData automatically injects data that are common to all pages.
 func (app *application) addDefaultData(r *http.Request, data interface{}) interface{} {
-	td := data.(*templateData)
-	if td == nil {
+	td, ok := data.(*templateData)
+	if data == nil {
 		td = &templateData{}
+	} else if !ok {
+		// not a templateData so we don’t inject anything
+		return data
 	}
+
+	td.Lang = app.config.lang
 	td.CSRFToken = nosurf.Token(r)
 	td.Flash = app.session.PopString(r, "flash")
 	td.CurrentGuest = currentGuest(r)
 	td.IsAdmin = app.isAdmin(r)
+
 	return td
 }
 
@@ -58,7 +67,7 @@ func (app *application) recognizeGuest(next http.Handler) http.Handler {
 		if errors.Is(err, ErrNoRecord) {
 			app.session.Remove(r, "guest")
 		} else if err != nil {
-			app.ServerError(w, err)
+			bow.ServerError(w, err)
 			return
 		}
 

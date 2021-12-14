@@ -1,0 +1,23 @@
+{{ define "title" }}Turbo index{{ end }}
+
+<h1>Turbo Frame example</h1>
+
+<section>
+  <h2>section</h2>
+  <form action="/turbo/stream" method="post">
+    <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
+    <input type="submit" value="add message">
+  </form>
+  <div id="msg">
+    <p>initial message</p>
+  </div>
+</section>
+
+<turbo-frame id="results">
+  <p>Use the following button to replace the frame</p>
+  <a href="/turbo/results">link to results</a>
+  <form action="/turbo/search" method="post">
+    <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
+    <input type="submit" value="swap">
+  </form>
+</turbo-frame>

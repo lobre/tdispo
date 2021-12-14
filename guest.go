@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lobre/tdispo/webapp"
+	"github.com/lobre/tdispo/bow"
 	"github.com/mattn/go-sqlite3"
 )
 
@@ -32,7 +32,7 @@ type GuestUpdate struct {
 }
 
 type GuestService struct {
-	db *webapp.DB
+	db *bow.DB
 }
 
 func (s *GuestService) FindGuestByID(ctx context.Context, id int) (*Guest, error) {

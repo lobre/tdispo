@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lobre/tdispo/webapp"
+	"github.com/lobre/tdispo/bow"
 )
 
 type Event struct {
@@ -40,7 +40,7 @@ type EventUpdate struct {
 }
 
 type EventService struct {
-	db *webapp.DB
+	db *bow.DB
 }
 
 // FindEventByID retrieves an event and attaches participations and status.

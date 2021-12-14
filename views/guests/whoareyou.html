@@ -4,7 +4,9 @@
 {{ if $.Guests }}
   <ul>
     {{ range $.Guests }}
-      <li><a hx-post="/iam/{{ .ID }}" hx-target="body">{{ .Name }}</a></li>
+      <li>
+        <a href="/iam/{{ .ID }}" data-turbo-method="post">{{ .Name }}</a>
+      </li>
     {{ end }}
   </ul>
 {{ else }}

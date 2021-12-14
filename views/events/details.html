@@ -7,6 +7,6 @@
   <span style="height: 8px; width: 8px; border-radius: 50%; display: inline-block; background-color: {{ $.Event.Status.Color }};"></span>
 </p>
 
-{{ if $.Event.Description }}{{ $.Event.Description | rawHTML }}{{ end }}
+{{ if $.Event.Description }}{{ $.Event.Description | safe }}{{ end }}
 
 {{ template "events/participations" . }}

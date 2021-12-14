@@ -1,15 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ $.Lang }}">
   <head>
     <meta charset="utf-8" />
     <title>{{ template "title" . }} - Tdispo</title>
-    <script src="https://unpkg.com/htmx.org@1.x.x"></script>
-    <script src="https://unpkg.com/alpinejs@3.x.x" defer></script>
+    <link rel="stylesheet" href="https://unpkg.com/tailwindcss@2.x.x/dist/base.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/tailwindcss@2.x.x/dist/components.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/@tailwindcss/typography@0.4.x/dist/typography.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/tailwindcss@2.x.x/dist/utilities.min.css" />
+    <script src="https://unpkg.com/@hotwired/turbo@7.x.x/dist/turbo.es2017-umd.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpine-turbo-drive-adapter@1.1.x/dist/alpine-turbo-drive-adapter.js" defer></script>
     <link rel="icon" href="/static/favicon.ico">
+    <meta name="csrf-token" content="{{ $.CSRFToken }}" />
     {{ block "head"  . }}{{ end }}
   </head>
 
-  <body hx-boost="true">
+  <body hx-boost="true" class="prose">
     {{ template "layouts/header" . }}
     {{ template "layouts/nav" . }}
     {{ template "layouts/flash" . }}

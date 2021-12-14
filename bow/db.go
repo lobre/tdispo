@@ -1,4 +1,4 @@
-package webapp
+package bow
 
 import (
 	"context"
