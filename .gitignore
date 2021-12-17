@@ -2,4 +2,5 @@ tdispo
 tdispo.db
 tdispo.db-shm
 tdispo.db-wal
+static/style.css
 .env
