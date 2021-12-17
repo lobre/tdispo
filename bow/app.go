@@ -19,17 +19,19 @@ import (
 var Logger = log.New(os.Stdout, "", log.Ldate|log.Ltime)
 
 // StdChain contains a chain of middleware that can be applied to all routes.
+// It gracefully handles panics to avoid spinning down the whole app.
+// It logs requests and add default secure headers.
 var StdChain = alice.New(
-	RecoverPanic,
-	LogRequest,
-	SecureHeaders,
+	recoverPanic,
+	logRequest,
+	secureHeaders,
 )
 
 // DynChain contains a chain of middleware that can be applied to all dynamic routes.
-// This chain does not affect static resources.
+// It injects a CSRF cookie and optimizes responses for turbo frames by skipping the rendering of the layout.
 var DynChain = alice.New(
-	InjectCSRFCookie,
-	OptimizeTurboFrame,
+	injectCSRFCookie,
+	optimizeTurboFrame,
 )
 
 // ServerError writes an error message and stack trace to the errorLog,
@@ -48,19 +50,19 @@ func ClientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 }
 
-// LogRequest is a middleware that logs the request to the application logger.
-func LogRequest(next http.Handler) http.Handler {
+// logRequest is a middleware that logs the request to the application logger.
+func logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		Logger.Printf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
 		next.ServeHTTP(w, r)
 	})
 }
 
-// RecoverPanic gracefully handles any panic that happens in the current go routine.
+// recoverPanic gracefully handles any panic that happens in the current go routine.
 // By default, panics don't shut the entire application (only the current go routine),
 // but if one arise, the server will return an empty response. This middleware is taking
 // care of recovering the panic and sending a regular 500 server error.
-func RecoverPanic(next http.Handler) http.Handler {
+func recoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -75,9 +77,9 @@ func RecoverPanic(next http.Handler) http.Handler {
 	})
 }
 
-// SecureHeaders is a middleware that injects headers in the response
+// secureHeaders is a middleware that injects headers in the response
 // to prevent XSS and Clickjacking attacks.
-func SecureHeaders(next http.Handler) http.Handler {
+func secureHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-XSS-Protection", "1; mode=block")
 		w.Header().Set("X-Frame-Options", "deny")
@@ -86,12 +88,12 @@ func SecureHeaders(next http.Handler) http.Handler {
 	})
 }
 
-// InjectCSRFCookie injects an encrypted CSRF token in a cookie. That same token
+// injectCSRFCookie injects an encrypted CSRF token in a cookie. That same token
 // is used as a hidden field in forms (from nosurf.Token()).
 // On the form submission, the server checks that these two values match.
 // So directly trying to post a request to our secured endpoint without this parameter would fail.
 // The only way to submit the form is from our frontend.
-func InjectCSRFCookie(next http.Handler) http.Handler {
+func injectCSRFCookie(next http.Handler) http.Handler {
 	csrfHandler := nosurf.New(next)
 	csrfHandler.SetBaseCookie(http.Cookie{
 		HttpOnly: true,

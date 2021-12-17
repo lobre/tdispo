@@ -22,9 +22,9 @@ const (
 	streamMime string = "text/vnd.turbo-stream.html"
 )
 
-// OptimizeTurboFrame is a middleware that optimizes so that
+// optimizeTurboFrame is a middleware that optimizes so that
 // the layout is stripped from the response for turbo frame requests.
-func OptimizeTurboFrame(next http.Handler) http.Handler {
+func optimizeTurboFrame(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Turbo-Frame") != "" {
 			r = StripLayout(r)
