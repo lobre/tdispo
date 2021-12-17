@@ -1,18 +1,18 @@
 BINARY_NAME=tdispo
 
-.PHONY: all tailwindcss install build run
+.PHONY: all tailwindcss build run install
 
-all: run
+all: tailwindcss build run
 
 tailwindcss:
 	tailwindcss --input ./tailwind.css --output ./static/style.css --minify
 
-install:
-	go install
-
-build: tailwindcss
+build:
 	go build -o ${BINARY_NAME}
 
-run: build
+run:
 	./${BINARY_NAME}
+
+install:
+	go install
 
