@@ -7,17 +7,17 @@
     <title>{{ template "title" . }} - Tdispo</title>
 
     <script src="https://unpkg.com/@hotwired/turbo@7.x.x/dist/turbo.es2017-umd.js"></script>
+    <!--<script src="https://cdn.jsdelivr.net/npm/alpine-turbo-drive-adapter@1.1.x/dist/alpine-turbo-drive-adapter.js" defer></script>-->
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/alpine-turbo-drive-adapter@1.1.x/dist/alpine-turbo-drive-adapter.js" defer></script>
 
     <link rel="icon" href="/static/favicon.ico">
-    <link href="static/style.css" rel="stylesheet">
+    <link href="static/tailwind.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/@tailwindcss/typography@0.4.x/dist/typography.min.css" />
 
     {{ block "head"  . }}{{ end }}
   </head>
 
-  <body hx-boost="true" class="prose">
+  <body class="prose">
     {{ template "layouts/header" . }}
     {{ template "layouts/nav" . }}
     {{ template "layouts/flash" . }}
@@ -25,27 +25,5 @@
     <main>
       {{ template "main" . }}
     </main>
-
-    <script>
-      document.body.addEventListener('htmx:beforeSwap', function(event) {
-        var status = event.detail.xhr.status
-
-        // allow to swap on certain http codes when
-        // the error is rendered from the server 
-        if ([422, 409].includes(status)) {
-          event.detail.shouldSwap = true
-          event.detail.isError = false;
-        }
-      })
-
-      document.body.addEventListener('htmx:responseError', function(event) {
-          document.getElementById("flash").innerHTML = '<p>{{ "An error has occurred" | translate }}</p>'
-      })
-
-      // inject csrf token in htmx requests
-      document.body.addEventListener('htmx:configRequest', function(event) {
-        event.detail.headers['X-CSRF-Token'] = '{{ $.CSRFToken }}';
-      })
-    </script>
   </body>
 </html>

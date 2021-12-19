@@ -6,12 +6,7 @@
       <li>
         <span>{{ .Label }}</span>
         <span style="height: 8px; width: 8px; border-radius: 50%; display: inline-block; background-color: {{ .Color }};"></span>
-        <a href="" 
-          hx-target="body" 
-          hx-delete="/status/{{ .ID }}" 
-          hx-confirm='{{ "Are you sure?" | translate }}'>
-          ({{ "delete" | translate }})
-        </a>
+        <a href="/status/{{ .ID }}" data-turbo-method="delete" data-turbo-confirm='{{ "Are you sure?" | translate }}'>({{ "delete" | translate }})</a>
       </li>
     {{ end }}
   </ul>

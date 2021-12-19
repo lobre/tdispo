@@ -50,7 +50,6 @@ func (app *application) recognizeGuest(next http.Handler) http.Handler {
 func requireRecognition(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if currentGuest(r) == nil {
-			w.Header().Set("HX-Redirect", "/")
 			http.Redirect(w, r, "/whoareyou", http.StatusSeeOther)
 			return
 		}

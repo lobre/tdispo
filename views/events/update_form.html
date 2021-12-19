@@ -1,6 +1,6 @@
 {{ define "title" }}{{ "Event" | translate }} - {{ $.Event.Title }}{{ end }}
 
-{{ template "events/load_trix" . }}
+{{ define "head" }}{{ template "events/trix" . }}{{ end }}
 
 <form action="/{{ $.Event.ID }}/edit" method="post">
   <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
@@ -35,7 +35,7 @@
       <label for="status">{{ "Status" | translate }}</label>
       <select name="status">
         {{ range $.Statuses }}
-          <option value="{{ .ID }}" {{ if eq .ID $.Event.StatusID }}selected="selected"{{ end }}>{{ .Label }}</option>
+          <option value="{{ .ID }}" {{ if eq .ID $.Event.StatusID }} selected="selected" {{ end }}>{{ .Label }}</option>
         {{ end }}
       </select>
       {{ with .Error "status" }}

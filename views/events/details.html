@@ -3,10 +3,63 @@
 <h2>{{ $.Event.Title }} - {{ $.Event.OccursAt | humanDate }}</h2>
 
 <p>
-  Statut : {{ $.Event.Status.Label }}
+  {{ "Status" | translate }} {{ $.Event.Status.Label }}
   <span style="height: 8px; width: 8px; border-radius: 50%; display: inline-block; background-color: {{ $.Event.Status.Color }};"></span>
 </p>
 
 {{ if $.Event.Description }}{{ $.Event.Description | safe }}{{ end }}
 
-{{ template "events/participations" . }}
+<turbo-frame id="participations">
+  <h2>{{ "Guests" | translate }}</h2>
+  {{ if or $.Event.Participations $.CurrentParticipation }} 
+    <ul>
+      {{ if $.CurrentParticipation }}
+        <li>
+          <span>{{ $.CurrentParticipation.Guest.Name }}</span>
+          <form method="put" action='/{{ $.Event.ID }}/participation/{{ $.CurrentParticipation.Guest.ID }}' 
+            x-data @change="$el.requestSubmit()"
+            class="inline">
+
+            <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
+
+            {{ range $id, $label := $.AttendText }}
+              <input type="radio" name="attend" value="{{ $id }}" {{ if eq $.CurrentParticipation.Attend $id }} checked {{ end }}>
+              <label>{{ $label }}</label> 
+            {{ end }}
+
+            <noscript>
+              <input type="submit" value='{{ "Update" | translate }}'>
+            </noscript>
+          </form>
+        </li>
+      {{ end }}
+
+      {{ range $part := $.Event.Participations }}
+        <li>
+          <span>{{ $part.Guest.Name }}:</span>
+          <form method="put" action='/{{ $.Event.ID }}/participation/{{ $part.Guest.ID }}' 
+            x-data @change="$el.requestSubmit()"
+            class="inline">
+
+            <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
+
+            {{ range $id, $label := $.AttendText }}
+              <input type="radio" name="attend" value="{{ $id }}" 
+                {{ if eq $part.Attend $id }} checked {{ end }} 
+                {{ if and (not $.IsAdmin) (ne $part.Guest.ID $.CurrentGuest.ID) }} disabled {{ end }}>
+              <label>{{ $label }}</label> 
+            {{ end }}
+
+            {{ if or $.IsAdmin (eq $part.Guest.ID $.CurrentGuest.ID) }}
+              <noscript>
+                <input type="submit" value='{{ "Update" | translate }}'>
+              </noscript>
+            {{ end }}
+          </form>
+        </li>
+      {{ end }}
+    </ul>
+  {{ else }}
+    <p>{{ "No guests" | translate }}</p>
+  {{ end }}
+</turbo-frame>

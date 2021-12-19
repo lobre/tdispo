@@ -5,7 +5,7 @@ BINARY_NAME=tdispo
 all: run
 
 tailwindcss:
-	tailwindcss --input ./tailwind.css --output ./static/style.css --minify
+	tailwindcss --input ./tailwind.css --output ./static/tailwind.css --minify
 
 build: tailwindcss
 	go build -o ${BINARY_NAME}

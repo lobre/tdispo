@@ -36,12 +36,11 @@ func (app *application) routes() http.Handler {
 
 	// events
 	mux.Get("/", chain.Append(requireRecognition).ThenFunc(app.findEvents))
-	mux.Get("/search", chain.Append(requireRecognition).ThenFunc(app.search))
 	mux.Get("/new", chain.Append(app.requireAdmin).ThenFunc(app.createEventForm))
 	mux.Post("/new", chain.Append(app.requireAdmin).ThenFunc(app.createEvent))
+	mux.Put("/:event/participation/:guest", chain.Append(requireRecognition).ThenFunc(app.participate))
 	mux.Get("/:id/edit", chain.Append(app.requireAdmin).ThenFunc(app.updateEventForm))
 	mux.Post("/:id/edit", chain.Append(app.requireAdmin).ThenFunc(app.updateEvent))
-	mux.Put("/:id/participation", chain.Append(requireRecognition).ThenFunc(app.participate))
 	mux.Get("/:id", chain.Append(requireRecognition).ThenFunc(app.findEventByID))
 	mux.Del("/:id", chain.Append(app.requireAdmin).ThenFunc(app.deleteEvent))
 

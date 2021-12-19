@@ -7,12 +7,7 @@
         <span>{{ .Name }}</span>
         <span>{{ .Email }}</span>
         <a href="/guests/{{ .ID }}/edit">({{ "edit" | translate }})</a>
-        <a href="" 
-          hx-target="body"
-          hx-delete="/guests/{{ .ID }}"
-          hx-confirm='{{ "Are you sure?" | translate }}'>
-          ({{ "delete" | translate }})
-        </a>
+        <a href="/guests/{{ .ID }}" data-turbo-method="delete" data-turbo-confirm='{{ "Are you sure?" | translate }}'>({{ "delete" | translate }})</a>
       </li>
     {{ end }}
   </ul>

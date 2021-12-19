@@ -81,13 +81,23 @@ func (app *application) deleteStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) findEvents(w http.ResponseWriter, r *http.Request) {
-	events, _, err := app.eventService.FindEvents(r.Context(), EventFilter{})
+	var filter EventFilter
+
+	q := r.URL.Query().Get("q")
+	if q != "" {
+		filter.Title = &q
+	}
+
+	events, _, err := app.eventService.FindEvents(r.Context(), filter)
 	if err != nil {
 		bow.ServerError(w, err)
 		return
 	}
 
 	app.views.Render(w, r, "events/list", map[string]interface{}{
+		"Form": bow.NewForm(url.Values{
+			"q": []string{q},
+		}),
 		"Events": events,
 	})
 }
@@ -453,9 +463,20 @@ func (app *application) deleteGuest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) participate(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
+	eventID, err := strconv.Atoi(r.URL.Query().Get(":event"))
 	if err != nil {
 		http.NotFound(w, r)
+		return
+	}
+
+	guestID, err := strconv.Atoi(r.URL.Query().Get(":guest"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	if currentGuest(r).ID != guestID && !app.isAdmin(r) {
+		bow.ClientError(w, http.StatusForbidden)
 		return
 	}
 
@@ -466,19 +487,18 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := bow.NewForm(r.PostForm)
-	form.Required("guest", "attend")
-	form.IsInteger("guest", "attend")
+	form.Required("attend")
+	form.IsInteger("attend")
 
 	if !form.Valid() {
 		bow.ClientError(w, http.StatusBadRequest)
 		return
 	}
 
-	guestID, _ := strconv.Atoi(form.Get("guest"))
 	attend, _ := strconv.Atoi(form.Get("attend"))
 
 	err = app.eventService.Participate(r.Context(), &Participation{
-		EventID: id,
+		EventID: eventID,
 		GuestID: guestID,
 		Attend:  attend,
 	})
@@ -487,7 +507,7 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event, err := app.eventService.FindEventByID(r.Context(), id)
+	event, err := app.eventService.FindEventByID(r.Context(), eventID)
 	if err != nil {
 		if errors.Is(err, ErrNoRecord) {
 			http.NotFound(w, r)
@@ -502,29 +522,10 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 	// extract participation from current guest to be able to display it first
 	currentParticipation, event.Participations = extractParticipation(currentGuest(r), event.Participations)
 
-	app.views.Render(w, r, "events/participations", map[string]interface{}{
+	app.views.Render(w, r, "events/details", map[string]interface{}{
 		"Event":                event,
 		"CurrentParticipation": currentParticipation,
 		"AttendText":           AttendText,
-	})
-}
-
-func (app *application) search(w http.ResponseWriter, r *http.Request) {
-	var filter EventFilter
-
-	q := r.URL.Query().Get("q")
-	if q != "" {
-		filter.Title = &q
-	}
-
-	events, _, err := app.eventService.FindEvents(r.Context(), filter)
-	if err != nil {
-		bow.ServerError(w, err)
-		return
-	}
-
-	app.views.Render(w, r, "events/list_items", map[string]interface{}{
-		"Events": events,
 	})
 }
 
