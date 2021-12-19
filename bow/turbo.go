@@ -42,11 +42,11 @@ func AcceptsStream(r *http.Request) bool {
 
 // RenderStream renders a partial view and wraps it in a turbo stream tag.
 // It also sets the appropriate Content-Type header on the response.
-func (views *Views) RenderStream(action StreamAction, target string, w http.ResponseWriter, r *http.Request, name string, data map[string]interface{}) error {
+func (views *Views) RenderStream(action StreamAction, target string, w http.ResponseWriter, r *http.Request, name string, data map[string]interface{}) {
 	w.Header().Set("Content-Type", streamMime)
 
-	if views.hydrate != nil {
-		views.hydrate(r, data)
+	if data == nil {
+		data = make(map[string]interface{})
 	}
 
 	var buf bytes.Buffer
@@ -54,11 +54,13 @@ func (views *Views) RenderStream(action StreamAction, target string, w http.Resp
 	if action != ActionRemove {
 		partial := views.partials.Lookup(name)
 		if partial == nil {
-			return fmt.Errorf("partial %s not found", name)
+			ServerError(w, fmt.Errorf("partial %s not found", name))
+			return
 		}
 
 		if err := renderBuffered(&buf, views.partials, name, data); err != nil {
-			return err
+			ServerError(w, err)
+			return
 		}
 	}
 
@@ -76,5 +78,7 @@ func (views *Views) RenderStream(action StreamAction, target string, w http.Resp
 		Content template.HTML
 	}{action, target, template.HTML(buf.String())}
 
-	return renderBuffered(w, tmpl, "stream", stream)
+	if err := renderBuffered(w, tmpl, "stream", stream); err != nil {
+		ServerError(w, err)
+	}
 }

@@ -22,7 +22,6 @@ const (
 )
 
 //go:embed views/layouts/*.html
-//go:embed views/turbo/*.html
 //go:embed views/events/*.html
 //go:embed views/guests/*.html
 //go:embed views/statuses/*.html
@@ -102,7 +101,6 @@ func run(args []string, stdout io.Writer) error {
 
 	funcs := template.FuncMap{
 		"humanDate": humanDate,
-		"safe":      safe,
 		"translate": app.translator.Translate,
 	}
 
@@ -124,11 +122,6 @@ func run(args []string, stdout io.Writer) error {
 	}
 
 	return db.Close()
-}
-
-// safe returns a verbatim unescaped HTML from a string
-func safe(s string) template.HTML {
-	return template.HTML(s)
 }
 
 // humanDate returns a nicely formatted string representation

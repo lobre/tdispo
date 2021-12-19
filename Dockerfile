@@ -1,21 +1,27 @@
-FROM node:alpine as tailwindcss
-RUN apk add make
-RUN npm --global config set user root && npm --global install tailwindcss
-RUN mkdir /app /app/static
-COPY Makefile tailwind.css tailwind.config.js /app/
-COPY views /app/views
-WORKDIR /app
-RUN make tailwindcss
+FROM node:alpine as node
+FROM golang:alpine as builder
 
-FROM golang:alpine as go
+# gather npm and node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm
+COPY --from=node /usr/local/bin/node /usr/local/bin/
+RUN apk upgrade --no-cache -U && \
+  apk add --no-cache binutils libstdc++ && \
+  strip /usr/local/bin/node && \
+  apk del binutils
+
+# install build deps
 RUN apk add make build-base
+RUN npm --global config set user root && npm --global install tailwindcss
+
+# build application
 COPY . /go/src/app
-COPY --from=tailwindcss /app/static/style.css /go/src/app/static/
 WORKDIR /go/src/app
 RUN --mount=type=cache,target=/root/.cache/go-build make install
 
+# final image
 FROM alpine
-COPY --from=go /go/bin/tdispo /usr/local/bin/
+COPY --from=builder /go/bin/tdispo /usr/local/bin/
 EXPOSE 8080
 VOLUME /root
 ENTRYPOINT [ "tdispo" ]

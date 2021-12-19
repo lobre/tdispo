@@ -3,6 +3,7 @@ package bow
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -23,15 +24,15 @@ const (
 	layoutsFolder = "layouts"
 )
 
-// HydrateFunc represents a func that injects data at the rendering of a view.
-// The map argument can be nil, so this needs to be handled.
-type HydrateFunc func(*http.Request, map[string]interface{})
+// InjectFunc represents a func that can inject automatic
+// data at the rendering of a view.
+type InjectFunc func(*http.Request, map[string]interface{})
 
 // Views is an engine that will render views from templates.
 type Views struct {
-	pages    map[string]*template.Template
-	partials *template.Template
-	hydrate  HydrateFunc
+	pages      map[string]*template.Template
+	partials   *template.Template
+	injectData InjectFunc
 }
 
 // Parse walks a filesystem from the root folder to discover and parse
@@ -47,9 +48,20 @@ type Views struct {
 //
 // Partials files are named with a leading underscore to distinguish them from regular views,
 // but will be referred to without the underscore.
-func (views *Views) Parse(fsys fs.FS, root string, funcs template.FuncMap, hydrate HydrateFunc) error {
+//
+// injectData is a function that will be called when rendering page views so that data can be
+// automatically injected.
+func (views *Views) Parse(fsys fs.FS, root string, funcs template.FuncMap, injectData InjectFunc) error {
 	views.pages = make(map[string]*template.Template)
-	views.hydrate = hydrate
+	views.injectData = injectData
+
+	if funcs == nil {
+		funcs = make(template.FuncMap)
+	}
+
+	// include default funcs
+	funcs["map"] = mapFunc
+	funcs["safe"] = safe
 
 	var pages, partials, layouts []string
 
@@ -99,24 +111,27 @@ func (views *Views) Parse(fsys fs.FS, root string, funcs template.FuncMap, hydra
 }
 
 // Render renders a given view or partial.
-// For page views, the layout can be set using the WithLayout function (or using the ApplyLayout middleware).
-// If no layout is defined, the "base" layout will be chosen.
-// Partial views are rendered without any layout.
-func (views *Views) Render(w http.ResponseWriter, r *http.Request, name string, data map[string]interface{}) error {
+// For page views, the layout can be set using the WithLayout function or using the ApplyLayout middleware.
+// If no layout is defined, the "base" layout will be chosen. Partial views are rendered without any layout.
+func (views *Views) Render(w http.ResponseWriter, r *http.Request, name string, data map[string]interface{}) {
 	w.Header().Set("Content-Type", "text/html")
 
-	if views.hydrate != nil {
-		views.hydrate(r, data)
+	if data == nil {
+		data = make(map[string]interface{})
 	}
 
 	partial := views.partials.Lookup(name)
 	if partial != nil {
-		return renderBuffered(w, views.partials, name, data)
+		if err := renderBuffered(w, views.partials, name, data); err != nil {
+			ServerError(w, err)
+		}
+		return
 	}
 
 	view, ok := views.pages[name]
 	if !ok {
-		return fmt.Errorf("view %s not found", name)
+		ServerError(w, fmt.Errorf("view %s not found", name))
+		return
 	}
 
 	layout, ok := r.Context().Value(contextKeyLayout).(string)
@@ -127,7 +142,8 @@ func (views *Views) Render(w http.ResponseWriter, r *http.Request, name string, 
 	}
 
 	if view.Lookup(layout) == nil {
-		return fmt.Errorf("layout %s not found", layout)
+		ServerError(w, fmt.Errorf("layout %s not found", layout))
+		return
 	}
 
 	skipLayout, _ := r.Context().Value(contextKeyStripLayout).(bool)
@@ -135,7 +151,13 @@ func (views *Views) Render(w http.ResponseWriter, r *http.Request, name string, 
 		layout = "main"
 	}
 
-	return renderBuffered(w, view, layout, data)
+	if views.injectData != nil {
+		views.injectData(r, data)
+	}
+
+	if err := renderBuffered(w, view, layout, data); err != nil {
+		ServerError(w, err)
+	}
 }
 
 // templateName returns a template name from a path.
@@ -224,4 +246,28 @@ func ApplyLayout(layout string) func(http.Handler) http.Handler {
 			h.ServeHTTP(w, WithLayout(r, layout))
 		})
 	}
+}
+
+// mapFunc is a function that is injected to templates to allow to easily pass data to partials.
+func mapFunc(values ...interface{}) (map[string]interface{}, error) {
+	if len(values)%2 != 0 {
+		return nil, errors.New("invalid number of argument in map call")
+	}
+
+	data := make(map[string]interface{})
+
+	for i := 0; i < len(values); i += 2 {
+		key, ok := values[i].(string)
+		if !ok {
+			return nil, errors.New("map keys must be strings")
+		}
+		data[key] = values[i+1]
+	}
+
+	return data, nil
+}
+
+// safe returns a verbatim unescaped HTML from a string
+func safe(s string) template.HTML {
+	return template.HTML(s)
 }

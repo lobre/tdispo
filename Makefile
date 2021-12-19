@@ -1,18 +1,26 @@
 BINARY_NAME=tdispo
 
-.PHONY: all tailwindcss build run install
+.PHONY: all tailwindcss build install run watch
 
-all: tailwindcss build run
+all: run
 
 tailwindcss:
 	tailwindcss --input ./tailwind.css --output ./static/style.css --minify
 
-build:
+build: tailwindcss
 	go build -o ${BINARY_NAME}
 
-run:
+install: tailwindcss
+	go install
+
+run: build
 	./${BINARY_NAME}
 
-install:
-	go install
+watch:
+	@inotifywait -m -qr -e close_write . | grep -E "\.(go|html)$$" --line-buffered | \
+	while read path events file; do \
+		if [ -n "$$pid" ]; then kill "$$pid"; fi; \
+		make --no-print-directory & \
+		pid=$$!; \
+	done
 
