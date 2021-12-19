@@ -6,33 +6,47 @@
   <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
   {{ with $.Form }}
     <div>
-      <label for="title">{{ "Title" | translate }}</label>
+      <label>{{ "Title" | translate }} <span class="text-red-500">*</span></label>
       <input type="text" name="title" value='{{ .Get "title" }}' required />
       {{ with .Error "title" }}
         <span>{{ . | translate }}</span>
       {{ end }}
     </div>
     <div>
-      <label for="date">{{ "Date" | translate }}</label>
-      <input type="date" name="date" value='{{ .Get "date" }}' required />
-      {{ with .Error "date" }}
+      <label>{{ "Start date" | translate }} <span class="text-red-500">*</span></label>
+      <input type="date" name="startdate" value='{{ .Get "startdate" }}' required />
+      {{ with .Error "startdate" }}
         <span>{{ . | translate }}</span>
       {{ end }}
     </div>
     <div>
-      <label for="time">{{ "Time" | translate }}</label>
-      <input type="time" name="time" value='{{ .Get "time" }}' required />
-      {{ with .Error "time" }}
+      <label>{{ "Start time" | translate }} <span class="text-red-500">*</span></label>
+      <input type="time" name="starttime" value='{{ .Get "starttime" }}' required />
+      {{ with .Error "starttime" }}
         <span>{{ . | translate }}</span>
       {{ end }}
     </div>
     <div>
-      <label for="description">{{ "Description" | translate }}</label>
+      <label>{{ "End date" | translate }}</label>
+      <input type="date" name="enddate" value='{{ .Get "enddate" }}' />
+      {{ with .Error "enddate" }}
+        <span>{{ . | translate }}</span>
+      {{ end }}
+    </div>
+    <div>
+      <label>{{ "End time" | translate }}</label>
+      <input type="time" name="endtime" value='{{ .Get "endtime" }}' />
+      {{ with .Error "endtime" }}
+        <span>{{ . | translate }}</span>
+      {{ end }}
+    </div>
+    <div>
+      <label>{{ "Description" | translate }}</label>
       <input id="description" type="hidden" name="description">
       <trix-editor input="description"></trix-editor>
     </div>
     <div>
-      <label for="status">{{ "Status" | translate }}</label>
+      <label>{{ "Status" | translate }}</label>
       <select name="status">
         {{ range $.Statuses }}
           <option value="{{ .ID }}">{{ .Label }}</option>

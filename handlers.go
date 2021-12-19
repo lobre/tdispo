@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -152,14 +153,29 @@ func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := bow.NewForm(r.PostForm)
-	form.Required("title", "status")
-	form.IsDate("date")
-	form.IsTime("time")
+	form.Required("title", "status", "startdate", "starttime")
+	form.IsDate("startdate", "enddate")
+	form.IsTime("starttime", "endtime")
+
+	if form.Get("enddate") != "" && form.Get("endtime") == "" {
+		form.CustomError("endtime", "This field cannot be blank as end date is filled")
+	}
+
+	if form.Get("enddate") == "" && form.Get("endtime") != "" {
+		form.CustomError("enddate", "This field cannot be blank as end time is filled")
+	}
 
 	if !form.Valid() {
+		statuses, _, err := app.statusService.FindStatuses(r.Context())
+		if err != nil {
+			bow.ServerError(w, err)
+			return
+		}
+
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		app.views.Render(w, r, "events/create_form", map[string]interface{}{
-			"Form": form,
+			"Form":     form,
+			"Statuses": statuses,
 		})
 		return
 	}
@@ -170,16 +186,33 @@ func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	date, err := time.Parse(layoutDatetime, fmt.Sprintf("%s %s", form.Get("date"), form.Get("time")))
+	startDate, err := time.Parse(layoutDatetime, fmt.Sprintf("%s %s", form.Get("startdate"), form.Get("starttime")))
 	if err != nil {
 		bow.ClientError(w, http.StatusBadRequest)
 		return
 	}
 
+	var endDate sql.NullTime
+	if form.Get("enddate") != "" || form.Get("endtime") != "" {
+		endDate.Time, err = time.Parse(layoutDatetime, fmt.Sprintf("%s %s", form.Get("enddate"), form.Get("endtime")))
+		if err != nil {
+			bow.ClientError(w, http.StatusBadRequest)
+			return
+		}
+		endDate.Valid = true
+	}
+
+	var description sql.NullString
+	if form.Get("description") != "" {
+		description.String = form.Get("description")
+		description.Valid = true
+	}
+
 	evt := Event{
 		Title:       form.Get("title"),
-		OccursAt:    date,
-		Description: form.Get("description"),
+		StartsAt:    startDate,
+		EndsAt:      endDate,
+		Description: description,
 		StatusID:    statusID,
 	}
 
@@ -211,12 +244,20 @@ func (app *application) updateEventForm(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	var endDate, endTime string
+	if evt.EndsAt.Valid {
+		endDate = evt.EndsAt.Time.Format(layoutDate)
+		endTime = evt.EndsAt.Time.Format(layoutTime)
+	}
+
 	app.views.Render(w, r, "events/update_form", map[string]interface{}{
 		"Form": bow.NewForm(url.Values{
 			"title":       []string{evt.Title},
-			"date":        []string{evt.OccursAt.Format(layoutDate)},
-			"time":        []string{evt.OccursAt.Format(layoutTime)},
-			"description": []string{evt.Description},
+			"startdate":   []string{evt.StartsAt.Format(layoutDate)},
+			"starttime":   []string{evt.StartsAt.Format(layoutTime)},
+			"enddate":     []string{endDate},
+			"endtime":     []string{endTime},
+			"description": []string{evt.Description.String},
 		}),
 		"Event":    evt,
 		"Statuses": statuses,
@@ -237,9 +278,17 @@ func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := bow.NewForm(r.PostForm)
-	form.Required("title", "status")
-	form.IsDate("date")
-	form.IsTime("time")
+	form.Required("title", "status", "startdate", "starttime")
+	form.IsDate("startdate", "enddate")
+	form.IsTime("starttime", "endtime")
+
+	if form.Get("enddate") != "" && form.Get("endtime") == "" {
+		form.CustomError("endtime", "This field cannot be blank as end date is filled")
+	}
+
+	if form.Get("enddate") == "" && form.Get("endtime") != "" {
+		form.CustomError("enddate", "This field cannot be blank as end time is filled")
+	}
 
 	if !form.Valid() {
 		evt, err := app.eventService.FindEventByID(r.Context(), id)
@@ -270,18 +319,34 @@ func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	date, err := time.Parse(layoutDatetime, fmt.Sprintf("%s %s", form.Get("date"), form.Get("time")))
+	startDate, err := time.Parse(layoutDatetime, fmt.Sprintf("%s %s", form.Get("startdate"), form.Get("starttime")))
 	if err != nil {
 		bow.ClientError(w, http.StatusBadRequest)
 		return
 	}
 
+	var endDate sql.NullTime
+	if form.Get("enddate") != "" || form.Get("endtime") != "" {
+		endDate.Time, err = time.Parse(layoutDatetime, fmt.Sprintf("%s %s", form.Get("enddate"), form.Get("endtime")))
+		if err != nil {
+			bow.ClientError(w, http.StatusBadRequest)
+			return
+		}
+		endDate.Valid = true
+	}
+
 	title := form.Get("title")
-	description := form.Get("description")
+
+	var description sql.NullString
+	if form.Get("description") != "" {
+		description.String = form.Get("description")
+		description.Valid = true
+	}
 
 	upd := EventUpdate{
 		Title:       &title,
-		OccursAt:    &date,
+		StartsAt:    &startDate,
+		EndsAt:      &endDate,
 		Description: &description,
 		StatusID:    &statusID,
 	}

@@ -9,9 +9,11 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golangcollege/sessions"
+	"github.com/goodsign/monday"
 	"github.com/lobre/tdispo/bow"
 )
 
@@ -39,7 +41,7 @@ var (
 type config struct {
 	port       int
 	dsn        string
-	lang       string
+	locale     string
 	sessionKey string
 }
 
@@ -49,6 +51,9 @@ type application struct {
 	translator *Translator
 	session    *sessions.Session
 	views      bow.Views
+
+	locale monday.Locale
+	lang   string
 
 	statusService *StatusService
 	guestService  *GuestService
@@ -69,7 +74,7 @@ func run(args []string, stdout io.Writer) error {
 
 	flagSet.IntVar(&cfg.port, "port", 8080, "http server port")
 	flagSet.StringVar(&cfg.dsn, "dsn", "tdispo.db", "database data source name")
-	flagSet.StringVar(&cfg.lang, "lang", "en", "language of the application")
+	flagSet.StringVar(&cfg.locale, "locale", "en_US", "locale of the application")
 	flagSet.StringVar(&cfg.sessionKey, "session-key", "0g6kFh15VxjIfRSDDoXxrK2DLivlX6xt", "session key for cookies encryption")
 
 	if err := flagSet.Parse(args[1:]); err != nil {
@@ -81,7 +86,21 @@ func run(args []string, stdout io.Writer) error {
 		return err
 	}
 
-	translator, err := NewTranslator(fmt.Sprintf("translations/%s.csv", cfg.lang))
+	var locale monday.Locale
+	var lang string
+	for _, l := range monday.ListLocales() {
+		if string(l) == cfg.locale {
+			locale = l
+			lang = strings.Split(string(l), "_")[0]
+			break
+		}
+	}
+
+	if locale == "" {
+		return errors.New("provided locale is in wrong format")
+	}
+
+	translator, err := NewTranslator(fmt.Sprintf("translations/%s.csv", lang))
 	if err != nil {
 		return err
 	}
@@ -94,13 +113,17 @@ func run(args []string, stdout io.Writer) error {
 		translator: translator,
 		session:    session,
 
+		locale: locale,
+		lang:   lang,
+
 		statusService: &StatusService{db: db},
 		guestService:  &GuestService{db: db},
 		eventService:  &EventService{db: db},
 	}
 
 	funcs := template.FuncMap{
-		"humanDate": humanDate,
+		"humanDate": app.humanDate,
+		"humanTime": app.humanTime,
 		"translate": app.translator.Translate,
 	}
 
@@ -125,7 +148,13 @@ func run(args []string, stdout io.Writer) error {
 }
 
 // humanDate returns a nicely formatted string representation
-// of a time.Time object.
-func humanDate(t time.Time) string {
-	return t.Format("02 Jan 2006 at 15:04")
+// of the date from a time.Time object.
+func (app *application) humanDate(t time.Time) string {
+	return monday.Format(t, monday.FullFormatsByLocale[app.locale], app.locale)
+}
+
+// humanTime returns a nicely formatted string representation
+// of the time from a time.Time object.
+func (app *application) humanTime(t time.Time) string {
+	return monday.Format(t, monday.TimeFormatsByLocale[app.locale], app.locale)
 }

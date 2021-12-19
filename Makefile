@@ -1,4 +1,5 @@
 BINARY_NAME=tdispo
+LOCALE="en_US"
 
 .PHONY: all tailwindcss build install run watch
 
@@ -14,7 +15,7 @@ install: tailwindcss
 	go install
 
 run: build
-	./${BINARY_NAME}
+	./${BINARY_NAME} -locale $(LOCALE)
 
 watch:
 	@inotifywait -m -qr -e close_write . | grep -E "\.(go|html)$$" --line-buffered | \

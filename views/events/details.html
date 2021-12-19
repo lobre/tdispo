@@ -1,13 +1,35 @@
 {{ define "title" }}{{ "Event" | translate }} - {{ $.Event.Title }}{{ end }}
 
-<h2>{{ $.Event.Title }} - {{ $.Event.OccursAt | humanDate }}</h2>
+<h2>{{ $.Event.Title }}</h2>
 
-<p>
+<div>
   {{ "Status" | translate }} {{ $.Event.Status.Label }}
   <span style="height: 8px; width: 8px; border-radius: 50%; display: inline-block; background-color: {{ $.Event.Status.Color }};"></span>
-</p>
+</div>
 
-{{ if $.Event.Description }}{{ $.Event.Description | safe }}{{ end }}
+<div class="rounded-xl shadow-sm ring-1 ring-gray-300">
+  <div class="flex items-center p-6">
+    <dt class="w-2/5">{{ "Start date" | translate }}</dt>
+    <dd>{{ $.Event.StartsAt | humanDate }}</dd>
+  </div>
+  <div class="flex items-center p-6">
+    <dt class="w-2/5">{{ "Start time" | translate }}</dt>
+    <dd>{{ $.Event.StartsAt | humanTime }}</dd>
+  </div>
+
+  {{ if $.Event.EndsAt.Valid }}
+    <div class="flex items-center p-6">
+      <dt class="w-2/5">{{ "End date" | translate }}</dt>
+      <dd>{{ $.Event.EndsAt.Time | humanDate }}</dd>
+    </div>
+    <div class="flex items-center p-6">
+      <dt class="w-2/5">{{ "End time" | translate }}</dt>
+      <dd>{{ $.Event.EndsAt.Time | humanTime }}</dd>
+    </div>
+  {{ end }}
+</div>
+
+{{ if $.Event.Description.Valid }}{{ $.Event.Description.String | safe }}{{ end }}
 
 <turbo-frame id="participations">
   <h2>{{ "Guests" | translate }}</h2>
@@ -24,7 +46,7 @@
 
             {{ range $id, $label := $.AttendText }}
               <input type="radio" name="attend" value="{{ $id }}" {{ if eq $.CurrentParticipation.Attend $id }} checked {{ end }}>
-              <label>{{ $label }}</label> 
+              <label>{{ $label | translate }}</label> 
             {{ end }}
 
             <noscript>
@@ -47,7 +69,7 @@
               <input type="radio" name="attend" value="{{ $id }}" 
                 {{ if eq $part.Attend $id }} checked {{ end }} 
                 {{ if and (not $.IsAdmin) (ne $part.Guest.ID $.CurrentGuest.ID) }} disabled {{ end }}>
-              <label>{{ $label }}</label> 
+              <label>{{ $label | translate }}</label> 
             {{ end }}
 
             {{ if or $.IsAdmin (eq $part.Guest.ID $.CurrentGuest.ID) }}

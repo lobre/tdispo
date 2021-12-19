@@ -7,8 +7,9 @@ CREATE TABLE statuses (
 CREATE TABLE events (
   id          INTEGER PRIMARY KEY,
   title       TEXT NOT NULL,
-  occurs_at   DATETIME NOT NULL,
-  description TEXT,
+  starts_at   DATETIME NOT NULL,
+  ends_at     DATETIME DEFAULT NULL,
+  description TEXT DEFAULT NULL,
   status      INTEGER NOT NULL REFERENCES statuses (id)
 );
 

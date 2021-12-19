@@ -4,14 +4,14 @@
   <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
   {{ with $.Form }}
     <div>
-      <label for="name">{{ "Name" | translate }}</label>
+      <label>{{ "Name" | translate }} <span class="text-red-500">*</span></label>
       <input type="text" name="name" value='{{ .Get "name" }}' required />
       {{ with .Error "name" }}
         <span>{{ . | translate }}</span>
       {{ end }}
     </div>
     <div>
-      <label for="email">{{ "Email" | translate }}</label>
+      <label>{{ "Email" | translate }} <span class="text-red-500">*</span></label>
       <input type="email" name="email" value='{{ .Get "email" }}' required />
       {{ with .Error "email" }}
         <span>{{ . | translate }}</span>

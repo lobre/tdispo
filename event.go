@@ -15,8 +15,9 @@ import (
 type Event struct {
 	ID          int
 	Title       string
-	OccursAt    time.Time
-	Description string
+	StartsAt    time.Time
+	EndsAt      sql.NullTime
+	Description sql.NullString
 
 	StatusID int
 	Status   *Status
@@ -34,8 +35,9 @@ type EventFilter struct {
 // EventUpdate represents a set of fields to be updated via UpdateEvent
 type EventUpdate struct {
 	Title       *string
-	OccursAt    *time.Time
-	Description *string
+	StartsAt    *time.Time
+	EndsAt      *sql.NullTime
+	Description *sql.NullString
 	StatusID    *int
 }
 
@@ -195,19 +197,18 @@ func findEvents(ctx context.Context, tx *sql.Tx, filter EventFilter) (_ []*Event
 		where, args = append(where, "title LIKE ?"), append(args, "%"+*filter.Title+"%")
 	}
 
-	// at some point, we will want to have a date
-	// and order by date desc
 	rows, err := tx.QueryContext(ctx,
 		`SELECT
 			id,
 			title,
-			occurs_at,
+			starts_at,
+			ends_at,
 			description,
 			status,
 			COUNT(*) OVER()
 		FROM events
 		WHERE `+strings.Join(where, " AND ")+`
-		ORDER BY title`,
+		ORDER BY starts_at ASC`,
 		args...,
 	)
 	if err != nil {
@@ -220,7 +221,7 @@ func findEvents(ctx context.Context, tx *sql.Tx, filter EventFilter) (_ []*Event
 	for rows.Next() {
 		var evt Event
 
-		err = rows.Scan(&evt.ID, &evt.Title, &evt.OccursAt, &evt.Description, &evt.StatusID, &n)
+		err = rows.Scan(&evt.ID, &evt.Title, &evt.StartsAt, &evt.EndsAt, &evt.Description, &evt.StatusID, &n)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				return nil, 0, ErrNoRecord
@@ -239,10 +240,10 @@ func findEvents(ctx context.Context, tx *sql.Tx, filter EventFilter) (_ []*Event
 }
 
 func findEventByID(ctx context.Context, tx *sql.Tx, id int) (*Event, error) {
-	row := tx.QueryRowContext(ctx, `SELECT id, title, occurs_at, description, status FROM events WHERE id = ?`, id)
+	row := tx.QueryRowContext(ctx, `SELECT id, title, starts_at, ends_at, description, status FROM events WHERE id = ?`, id)
 
 	var evt Event
-	err := row.Scan(&evt.ID, &evt.Title, &evt.OccursAt, &evt.Description, &evt.StatusID)
+	err := row.Scan(&evt.ID, &evt.Title, &evt.StartsAt, &evt.EndsAt, &evt.Description, &evt.StatusID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
@@ -255,9 +256,10 @@ func findEventByID(ctx context.Context, tx *sql.Tx, id int) (*Event, error) {
 
 func createEvent(ctx context.Context, tx *sql.Tx, event *Event) error {
 	res, err := tx.ExecContext(ctx,
-		`INSERT INTO events (title, occurs_at, description, status) VALUES (?, ?, ?, ?)`,
+		`INSERT INTO events (title, starts_at, ends_at, description, status) VALUES (?, ?, ?, ?, ?)`,
 		event.Title,
-		event.OccursAt,
+		event.StartsAt,
+		event.EndsAt,
 		event.Description,
 		event.StatusID,
 	)
@@ -284,8 +286,12 @@ func updateEvent(ctx context.Context, tx *sql.Tx, id int, upd EventUpdate) (*Eve
 		event.Title = *upd.Title
 	}
 
-	if upd.OccursAt != nil {
-		event.OccursAt = *upd.OccursAt
+	if upd.StartsAt != nil {
+		event.StartsAt = *upd.StartsAt
+	}
+
+	if upd.EndsAt != nil {
+		event.EndsAt = *upd.EndsAt
 	}
 
 	if upd.Description != nil {
@@ -297,9 +303,10 @@ func updateEvent(ctx context.Context, tx *sql.Tx, id int, upd EventUpdate) (*Eve
 	}
 
 	_, err = tx.ExecContext(ctx,
-		`UPDATE events SET title = ?, occurs_at = ?, description = ?, status = ? WHERE id = ?`,
+		`UPDATE events SET title = ?, starts_at = ?, ends_at = ?, description = ?, status = ? WHERE id = ?`,
 		event.Title,
-		event.OccursAt,
+		event.StartsAt,
+		event.EndsAt,
 		event.Description,
 		event.StatusID,
 		id,

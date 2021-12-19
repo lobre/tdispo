@@ -18,7 +18,7 @@
     <ul>
       {{ range $.Events }}
         <li>
-          <a href="/{{ .ID }}">{{ .Title }}</a>
+          <a href="/{{ .ID }}">{{ .StartsAt | humanDate }} - {{ .Title }}</a>
           <span>- {{ .Status.Label}}</span>
           <span style="height: 8px; width: 8px; border-radius: 50%; display: inline-block; background-color: {{ .Status.Color }};"></span>
           {{ if $.IsAdmin }}

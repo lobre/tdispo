@@ -106,26 +106,41 @@ func (f *Form) MatchesPattern(field string, pattern *regexp.Regexp) {
 }
 
 // IsEmail checks that a specific field in the form is a correct email.
-func (f *Form) IsEmail(field string) {
-	value := f.Get(field)
-	if _, err := mail.ParseAddress(value); err != nil {
-		f.CustomError(field, "This field is not a valid email")
+func (f *Form) IsEmail(fields ...string) {
+	for _, field := range fields {
+		value := f.Get(field)
+		if value == "" {
+			continue
+		}
+		if _, err := mail.ParseAddress(value); err != nil {
+			f.CustomError(field, "This field is not a valid email")
+		}
 	}
 }
 
 // IsDate checks that a specific field in the form is a correct date.
-func (f *Form) IsDate(field string) {
-	value := f.Get(field)
-	if _, err := time.Parse("2006-01-02", value); err != nil {
-		f.CustomError(field, "This field is not a valid date")
+func (f *Form) IsDate(fields ...string) {
+	for _, field := range fields {
+		value := f.Get(field)
+		if value == "" {
+			continue
+		}
+		if _, err := time.Parse("2006-01-02", value); err != nil {
+			f.CustomError(field, "This field is not a valid date")
+		}
 	}
 }
 
 // IsTime checks that a specific field in the form is a correct time.
-func (f *Form) IsTime(field string) {
-	value := f.Get(field)
-	if _, err := time.Parse("15:04", value); err != nil {
-		f.CustomError(field, "This field is not a valid time")
+func (f *Form) IsTime(fields ...string) {
+	for _, field := range fields {
+		value := f.Get(field)
+		if value == "" {
+			continue
+		}
+		if _, err := time.Parse("15:04", value); err != nil {
+			f.CustomError(field, "This field is not a valid time")
+		}
 	}
 }
 

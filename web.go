@@ -15,7 +15,7 @@ const contextKeyCurrentGuest contextKey = iota
 
 // addDefaultData automatically injects data that are common to all pages.
 func (app *application) addDefaultData(r *http.Request, data map[string]interface{}) {
-	data["Lang"] = app.config.lang
+	data["Lang"] = app.lang
 	data["CSRFToken"] = nosurf.Token(r)
 	data["Flash"] = app.session.PopString(r, "flash")
 	data["CurrentGuest"] = currentGuest(r)
