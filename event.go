@@ -26,6 +26,13 @@ type Event struct {
 	Participations []*Participation
 }
 
+// Upcoming returns true if the event is in the future,
+// false otherwise.
+func (evt *Event) Upcoming() bool {
+	today := time.Now()
+	return evt.StartsAt.After(today)
+}
+
 type EventFilter struct {
 	ID      *int
 	IDNotIn []int

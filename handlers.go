@@ -541,14 +541,20 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	event, err := app.eventService.FindEventByID(r.Context(), eventID)
+	if err != nil {
+		if errors.Is(err, ErrNoRecord) {
+			http.NotFound(w, r)
+			return
+		} else {
+			bow.ServerError(w, err)
+			return
+		}
+	}
+
 	guestID, err := strconv.Atoi(r.URL.Query().Get(":guest"))
 	if err != nil {
 		http.NotFound(w, r)
-		return
-	}
-
-	if currentGuest(r).ID != guestID && !app.isAdmin(r) {
-		bow.ClientError(w, http.StatusForbidden)
 		return
 	}
 
@@ -569,6 +575,16 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 
 	attend, _ := strconv.Atoi(form.Get("attend"))
 
+	if !app.isAdmin(r) && currentGuest(r).ID != guestID {
+		// can’t participate for another guest if not admin
+		bow.ClientError(w, http.StatusForbidden)
+		return
+	} else if !app.isAdmin(r) && !event.Upcoming() {
+		// can’t participate to past events if not admin
+		bow.ClientError(w, http.StatusForbidden)
+		return
+	}
+
 	err = app.eventService.Participate(r.Context(), &Participation{
 		EventID: eventID,
 		GuestID: guestID,
@@ -579,7 +595,8 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event, err := app.eventService.FindEventByID(r.Context(), eventID)
+	// Refresh event with the new participation
+	event, err = app.eventService.FindEventByID(r.Context(), eventID)
 	if err != nil {
 		if errors.Is(err, ErrNoRecord) {
 			http.NotFound(w, r)

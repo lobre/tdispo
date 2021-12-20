@@ -45,7 +45,9 @@
             <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
 
             {{ range $id, $label := $.AttendText }}
-              <input type="radio" name="attend" value="{{ $id }}" {{ if eq $.CurrentParticipation.Attend $id }} checked {{ end }}>
+              <input type="radio" name="attend" value="{{ $id }}" 
+                {{ if eq $.CurrentParticipation.Attend $id }} checked {{ end }}
+                {{ if or $.IsAdmin $.Event.Upcoming }} enabled {{ else }} disabled {{ end }}>
               <label>{{ $label | translate }}</label> 
             {{ end }}
 
@@ -68,7 +70,7 @@
             {{ range $id, $label := $.AttendText }}
               <input type="radio" name="attend" value="{{ $id }}" 
                 {{ if eq $part.Attend $id }} checked {{ end }} 
-                {{ if and (not $.IsAdmin) (ne $part.Guest.ID $.CurrentGuest.ID) }} disabled {{ end }}>
+                {{ if $.IsAdmin }} enabled {{ else }} disabled {{ end }}>
               <label>{{ $label | translate }}</label> 
             {{ end }}
 
