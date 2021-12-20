@@ -30,6 +30,7 @@ type EventFilter struct {
 	ID      *int
 	IDNotIn []int
 	Title   *string
+	Past    *bool
 }
 
 // EventUpdate represents a set of fields to be updated via UpdateEvent
@@ -197,6 +198,16 @@ func findEvents(ctx context.Context, tx *sql.Tx, filter EventFilter) (_ []*Event
 		where, args = append(where, "title LIKE ?"), append(args, "%"+*filter.Title+"%")
 	}
 
+	order := "ASC"
+	if filter.Past != nil {
+		if *filter.Past {
+			where = append(where, "starts_at < date('now')")
+			order = "DESC"
+		} else {
+			where = append(where, "starts_at >= date('now')")
+		}
+	}
+
 	rows, err := tx.QueryContext(ctx,
 		`SELECT
 			id,
@@ -208,7 +219,7 @@ func findEvents(ctx context.Context, tx *sql.Tx, filter EventFilter) (_ []*Event
 			COUNT(*) OVER()
 		FROM events
 		WHERE `+strings.Join(where, " AND ")+`
-		ORDER BY starts_at ASC`,
+		ORDER BY starts_at `+order,
 		args...,
 	)
 	if err != nil {

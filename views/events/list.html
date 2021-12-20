@@ -1,11 +1,16 @@
 {{ define "title" }}{{ "List of events" | translate }}{{ end }}
 
-<form method="get" action="/" data-turbo-frame="events" x-data @input.debounce.500ms="$el.requestSubmit()">
+<form method="get" action="/" data-turbo-frame="events" x-data @change="$el.requestSubmit()" @input.debounce.500ms="$el.requestSubmit()">
   {{ with $.Form }}
     <input type="search" name="q" 
       value='{{ .Get "q" }}' 
       autocomplete="off" 
       autofocus>
+
+    <div>
+      <input type="checkbox" name="past" {{ if eq (.Get "past") "true" }} checked {{ end }}>
+      <label>{{ "See past events" | translate }}</label>
+    </div>
 
     <noscript>
       <input type="submit" value='{{ "Search" | translate }}'>

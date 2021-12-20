@@ -89,6 +89,12 @@ func (app *application) findEvents(w http.ResponseWriter, r *http.Request) {
 		filter.Title = &q
 	}
 
+	filter.Past = new(bool)
+	past := r.URL.Query().Get("past")
+	if past == "on" {
+		*filter.Past = true
+	}
+
 	events, _, err := app.eventService.FindEvents(r.Context(), filter)
 	if err != nil {
 		bow.ServerError(w, err)
@@ -97,7 +103,8 @@ func (app *application) findEvents(w http.ResponseWriter, r *http.Request) {
 
 	app.views.Render(w, r, "events/list", map[string]interface{}{
 		"Form": bow.NewForm(url.Values{
-			"q": []string{q},
+			"q":    []string{q},
+			"past": []string{past},
 		}),
 		"Events": events,
 	})
