@@ -28,7 +28,7 @@
           <span style="height: 8px; width: 8px; border-radius: 50%; display: inline-block; background-color: {{ .Status.Color }};"></span>
           {{ if $.CurrentGuest }}
             {{ $part := .ExtractParticipation $.CurrentGuest }}
-            {{ if $part }}<span>- {{ $part.Attend }}</span>{{ end }}
+            {{ if $part.Attend.Valid }}<span>- {{ index $.AttendText $part.Attend.Int64 | translate }}</span>{{ end }}
           {{ end }}
           {{ if $.IsAdmin }}
             <a href="/{{ .ID }}/edit">({{ "edit" | translate }})</a>

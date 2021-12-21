@@ -6,14 +6,12 @@ import (
 )
 
 const (
-	AttendNoAnswer int = iota
-	AttendNo
+	AttendNo int64 = iota
 	AttendYes
 	AttendIfNeeded
 )
 
-var AttendText = map[int]string{
-	AttendNoAnswer: "no answer",
+var AttendText = map[int64]string{
 	AttendNo:       "no",
 	AttendYes:      "yes",
 	AttendIfNeeded: "if needed",
@@ -26,7 +24,7 @@ type Participation struct {
 	EventID int
 	Event   *Event
 
-	Attend int
+	Attend sql.NullInt64
 }
 
 // findParticipationsByEvent fetches the participations related to a specific event.
@@ -115,6 +113,58 @@ func findParticipationsByGuest(ctx context.Context, tx *sql.Tx, id int) (_ []*Pa
 	}
 
 	return participations, n, nil
+}
+
+// attachUnansweredGuests injects a participation with no value
+// on the event object for each guest who hasn’t answered.
+// Existing participations should already have been added from database.
+func attachUnansweredGuests(ctx context.Context, tx *sql.Tx, event *Event) error {
+	var guestIDs []int
+	for _, part := range event.Participations {
+		guestIDs = append(guestIDs, part.GuestID)
+	}
+
+	pending, _, err := findGuests(ctx, tx, GuestFilter{IDNotIn: guestIDs})
+	if err != nil {
+		return err
+	}
+
+	// Add participations with attend that equals no answer for pending guests
+	for _, guest := range pending {
+		event.Participations = append(event.Participations, &Participation{
+			Guest:  guest,
+			Event:  event,
+			Attend: sql.NullInt64{},
+		})
+	}
+
+	return nil
+}
+
+// attachUnansweredEvents injects a participation with no value
+// on the guest object for each event with no answer.
+// Existing participations should already have been added from database.
+func attachUnansweredEvents(ctx context.Context, tx *sql.Tx, guest *Guest) error {
+	var eventIDs []int
+	for _, part := range guest.Participations {
+		eventIDs = append(eventIDs, part.EventID)
+	}
+
+	pending, _, err := findEvents(ctx, tx, EventFilter{IDNotIn: eventIDs})
+	if err != nil {
+		return err
+	}
+
+	// Add participations with attend that equals no answer for pending events
+	for _, event := range pending {
+		guest.Participations = append(guest.Participations, &Participation{
+			Guest:  guest,
+			Event:  event,
+			Attend: sql.NullInt64{},
+		})
+	}
+
+	return nil
 }
 
 func participate(ctx context.Context, tx *sql.Tx, part *Participation) error {

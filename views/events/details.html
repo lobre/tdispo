@@ -39,6 +39,7 @@
         <li>
           <span>{{ $.CurrentParticipation.Guest.Name }}</span>
           <form method="put" action='/{{ $.Event.ID }}/participation/{{ $.CurrentParticipation.Guest.ID }}' 
+            data-turbo-confirm='{{ "Are you sure?" | translate }}'
             x-data @change="$el.requestSubmit()"
             class="inline">
 
@@ -46,7 +47,7 @@
 
             {{ range $id, $label := $.AttendText }}
               <input type="radio" name="attend" value="{{ $id }}" 
-                {{ if eq $.CurrentParticipation.Attend $id }} checked {{ end }}
+                {{ if and $.CurrentParticipation.Attend.Valid (eq $.CurrentParticipation.Attend.Int64 $id) }} checked {{ end }}
                 {{ if or $.IsAdmin $.Event.Upcoming }} enabled {{ else }} disabled {{ end }}>
               <label>{{ $label | translate }}</label> 
             {{ end }}
@@ -62,6 +63,7 @@
         <li>
           <span>{{ $part.Guest.Name }}:</span>
           <form method="put" action='/{{ $.Event.ID }}/participation/{{ $part.Guest.ID }}' 
+            data-turbo-confirm='{{ "Are you sure?" | translate }}'
             x-data @change="$el.requestSubmit()"
             class="inline">
 
@@ -69,7 +71,7 @@
 
             {{ range $id, $label := $.AttendText }}
               <input type="radio" name="attend" value="{{ $id }}" 
-                {{ if eq $part.Attend $id }} checked {{ end }} 
+                {{ if and $part.Attend.Valid (eq $part.Attend.Int64 $id) }} checked {{ end }} 
                 {{ if $.IsAdmin }} enabled {{ else }} disabled {{ end }}>
               <label>{{ $label | translate }}</label> 
             {{ end }}

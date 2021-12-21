@@ -22,7 +22,7 @@ CREATE TABLE guests (
 CREATE TABLE participations (
   guest_id INTEGER NOT NULL REFERENCES guests (id) ON DELETE CASCADE,
   event_id INTEGER NOT NULL REFERENCES events (id) ON DELETE CASCADE,
-  attend   INTEGER NOT NULL,
+  attend   INTEGER DEFAULT NULL,
 
   PRIMARY KEY (guest_id, event_id)
 );

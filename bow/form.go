@@ -148,6 +148,9 @@ func (f *Form) IsTime(fields ...string) {
 func (f *Form) IsInteger(fields ...string) {
 	for _, field := range fields {
 		value := f.Get(field)
+		if value == "" {
+			continue
+		}
 		if _, err := strconv.Atoi(value); err != nil {
 			f.CustomError(field, "This field is not a valid integer")
 		}

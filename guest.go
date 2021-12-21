@@ -69,7 +69,7 @@ func (s *GuestService) FindGuestByID(ctx context.Context, id int) (*Guest, error
 		guest.Participations = append(guest.Participations, &Participation{
 			Guest:  guest,
 			Event:  event,
-			Attend: AttendNoAnswer,
+			Attend: sql.NullInt64{},
 		})
 	}
 

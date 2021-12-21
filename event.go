@@ -94,24 +94,9 @@ func (s *EventService) FindEventByID(ctx context.Context, id int) (*Event, error
 		return nil, err
 	}
 
-	var guestIDs []int
-	for _, part := range event.Participations {
-		guestIDs = append(guestIDs, part.GuestID)
-	}
-
-	// attach guests who haven’t answered yet
-	pending, _, err := findGuests(ctx, tx, GuestFilter{IDNotIn: guestIDs})
-	if err != nil {
+	// create participations with no value for unanswered guests
+	if err := attachUnansweredGuests(ctx, tx, event); err != nil {
 		return nil, err
-	}
-
-	// Add participations with attend that equals no answer for pending guests
-	for _, guest := range pending {
-		event.Participations = append(event.Participations, &Participation{
-			Guest:  guest,
-			Event:  event,
-			Attend: AttendNoAnswer,
-		})
 	}
 
 	sort.Sort(ByGuestName(event.Participations))
@@ -138,6 +123,19 @@ func (s *EventService) FindEvents(ctx context.Context, filter EventFilter) ([]*E
 		if err != nil {
 			return nil, 0, err
 		}
+
+		// attach participations for this event
+		event.Participations, _, err = findParticipationsByEvent(ctx, tx, event.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		// create participations with no value for unanswered guests
+		if err := attachUnansweredGuests(ctx, tx, event); err != nil {
+			return nil, 0, err
+		}
+
+		sort.Sort(ByGuestName(event.Participations))
 	}
 
 	return events, n, nil

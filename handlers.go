@@ -106,7 +106,8 @@ func (app *application) findEvents(w http.ResponseWriter, r *http.Request) {
 			"q":    []string{q},
 			"past": []string{past},
 		}),
-		"Events": events,
+		"Events":     events,
+		"AttendText": AttendText,
 	})
 }
 
@@ -557,23 +558,6 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = r.ParseForm()
-	if err != nil {
-		bow.ClientError(w, http.StatusBadRequest)
-		return
-	}
-
-	form := bow.NewForm(r.PostForm)
-	form.Required("attend")
-	form.IsInteger("attend")
-
-	if !form.Valid() {
-		bow.ClientError(w, http.StatusBadRequest)
-		return
-	}
-
-	attend, _ := strconv.Atoi(form.Get("attend"))
-
 	if !app.isAdmin(r) && currentGuest(r).ID != guestID {
 		// can’t participate for another guest if not admin
 		bow.ClientError(w, http.StatusForbidden)
@@ -582,6 +566,24 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 		// can’t participate to past events if not admin
 		bow.ClientError(w, http.StatusForbidden)
 		return
+	}
+
+	err = r.ParseForm()
+	if err != nil {
+		bow.ClientError(w, http.StatusBadRequest)
+		return
+	}
+
+	form := bow.NewForm(r.PostForm)
+
+	var attend sql.NullInt64
+	if form.Get("attend") != "" {
+		attend.Int64, err = strconv.ParseInt(form.Get("attend"), 10, 64)
+		if err != nil {
+			bow.ClientError(w, http.StatusBadRequest)
+			return
+		}
+		attend.Valid = true
 	}
 
 	err = app.eventService.Participate(r.Context(), &Participation{
