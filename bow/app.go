@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/benbjohnson/hashfs"
 	"github.com/justinas/alice"
 	"github.com/justinas/nosurf"
 )
@@ -101,6 +103,30 @@ func injectCSRFCookie(next http.Handler) http.Handler {
 	})
 
 	return csrfHandler
+}
+
+// Assets handles the serving of asset files
+// with generated hash names and enforcing cache.
+type Assets struct {
+	fsys *hashfs.FS
+}
+
+// NewAssets creates an Assets from a regular
+// filesystem, and adds a convenient hashName
+// function to templates.
+//
+// This should be called before views.Parse.
+func NewAssets(fsys fs.FS) Assets {
+	hfsys := hashfs.NewFS(fsys)
+	defaultFuncs["hashName"] = hfsys.HashName
+	return Assets{
+		fsys: hfsys,
+	}
+}
+
+// FileServer returns a handler that will serve assets.
+func (assets Assets) FileServer() http.Handler {
+	return hashfs.FileServer(assets.fsys)
 }
 
 // Run runs the http server and launches a goroutine

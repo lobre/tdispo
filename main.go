@@ -17,6 +17,8 @@ import (
 	"github.com/lobre/tdispo/bow"
 )
 
+//go:generate tailwindcss --input ./tailwind.css --output ./assets/tailwind.css --minify
+
 const (
 	layoutDatetime = "2006-01-02 15:04"
 	layoutDate     = "2006-01-02"
@@ -29,8 +31,8 @@ const (
 //go:embed views/statuses/*.html
 //go:embed migrations/*.sql
 //go:embed translations/*.csv
-//go:embed static
-var assets embed.FS
+//go:embed assets
+var fsys embed.FS
 
 var (
 	ErrNoRecord       = errors.New("no record")
@@ -51,6 +53,7 @@ type application struct {
 	translator *Translator
 	session    *sessions.Session
 	views      bow.Views
+	assets     bow.Assets
 
 	locale monday.Locale
 	lang   string
@@ -81,7 +84,7 @@ func run(args []string, stdout io.Writer) error {
 		return err
 	}
 
-	db := bow.NewDB(cfg.dsn, assets)
+	db := bow.NewDB(cfg.dsn, fsys)
 	if err := db.Open(); err != nil {
 		return err
 	}
@@ -112,6 +115,7 @@ func run(args []string, stdout io.Writer) error {
 		config:     cfg,
 		translator: translator,
 		session:    session,
+		assets:     bow.NewAssets(fsys),
 
 		locale: locale,
 		lang:   lang,
@@ -127,7 +131,7 @@ func run(args []string, stdout io.Writer) error {
 		"translate": app.translator.Translate,
 	}
 
-	err = app.views.Parse(assets, "views", funcs, app.addDefaultData)
+	err = app.views.Parse(fsys, "views", funcs, app.addDefaultData)
 	if err != nil {
 		return err
 	}

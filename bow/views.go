@@ -35,6 +35,13 @@ type Views struct {
 	injectData InjectFunc
 }
 
+// defaultFuncs contains the default functions
+// that will be added to templates.
+var defaultFuncs = template.FuncMap{
+	"map":  mapFunc,
+	"safe": safe,
+}
+
 // Parse walks a filesystem from the root folder to discover and parse
 // html files into views. Files starting with an underscore are partial views.
 // Files in the layouts folder not starting with underscore are layouts. The rest of
@@ -60,8 +67,9 @@ func (views *Views) Parse(fsys fs.FS, root string, funcs template.FuncMap, injec
 	}
 
 	// include default funcs
-	funcs["map"] = mapFunc
-	funcs["safe"] = safe
+	for k, v := range defaultFuncs {
+		funcs[k] = v
+	}
 
 	var pages, partials, layouts []string
 

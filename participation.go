@@ -137,18 +137,3 @@ type ByGuestName []*Participation
 func (parts ByGuestName) Len() int           { return len(parts) }
 func (parts ByGuestName) Less(i, j int) bool { return parts[i].Guest.Name < parts[j].Guest.Name }
 func (parts ByGuestName) Swap(i, j int)      { parts[i], parts[j] = parts[j], parts[i] }
-
-// extractParticipation extracts the participation of the given guest and returns the list of
-// participations without it.
-func extractParticipation(guest *Guest, parts []*Participation) (*Participation, []*Participation) {
-	var current *Participation
-	for i, part := range parts {
-		if part.Guest.ID == guest.ID {
-			current = part
-			// remove from list
-			parts = append(parts[:i], parts[i+1:]...)
-			break
-		}
-	}
-	return current, parts
-}

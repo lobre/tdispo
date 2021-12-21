@@ -12,7 +12,7 @@ func (app *application) routes() http.Handler {
 
 	mux := pat.New()
 
-	mux.Get("/static/", http.FileServer(http.FS(assets)))
+	mux.Get("/assets/", app.assets.FileServer())
 
 	// cookie authentication
 	mux.Get("/whoareyou", chain.ThenFunc(app.whoAreYou))

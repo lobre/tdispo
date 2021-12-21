@@ -128,13 +128,12 @@ func (app *application) findEventByID(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var currentParticipation *Participation
 	// extract participation from current guest to be able to display it first
-	currentParticipation, event.Participations = extractParticipation(currentGuest(r), event.Participations)
+	curGuestPart := event.ExtractParticipation(currentGuest(r))
 
 	app.views.Render(w, r, "events/details", map[string]interface{}{
 		"Event":                event,
-		"CurrentParticipation": currentParticipation,
+		"CurrentParticipation": curGuestPart,
 		"AttendText":           AttendText,
 	})
 }
@@ -607,13 +606,12 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var currentParticipation *Participation
 	// extract participation from current guest to be able to display it first
-	currentParticipation, event.Participations = extractParticipation(currentGuest(r), event.Participations)
+	curGuestPart := event.ExtractParticipation(currentGuest(r))
 
 	app.views.Render(w, r, "events/details", map[string]interface{}{
 		"Event":                event,
-		"CurrentParticipation": currentParticipation,
+		"CurrentParticipation": curGuestPart,
 		"AttendText":           AttendText,
 	})
 }

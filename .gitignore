@@ -2,5 +2,5 @@ tdispo
 tdispo.db
 tdispo.db-shm
 tdispo.db-wal
-static/tailwind.css
+assets/tailwind.css
 .env

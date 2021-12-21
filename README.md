@@ -2,12 +2,24 @@
 
 Tdispo is a Doodle like web application to record participations to events.
 
-## Pitch
+## Development
 
-Administrators can create events. Events have a title, a date, a description and a status.
+It requires Go and [Tailwind CLI](https://tailwindcss.com/docs/installation).
 
-A status has a name and a color. Administrators can define them.
+### Build and run
 
-A static list of guests is managed by administrators. A guest has a name and an email address. A guest can participate to an event.
+```
+go generate
+go build
+./tdispo
+```
 
-Participations connect guests to events. A participation tells whether the guest will attend or not.
+Then browse [http://localhost:8080](http://localhost:8080).
+
+### Live reload
+
+I simply use this command line with the [entr](http://eradman.com/entrproject/) utility.
+
+```
+git ls-files '*.go' '*.html' | entr -crs 'go generate; go build; ./tdispo'
+```

@@ -20,11 +20,11 @@ func NewTranslator(csvPath string) (*Translator, error) {
 
 	tr.index = make(map[string]string)
 
-	if _, err := fs.Stat(assets, csvPath); os.IsNotExist(err) {
+	if _, err := fs.Stat(fsys, csvPath); os.IsNotExist(err) {
 		return &tr, nil
 	}
 
-	f, err := assets.Open(csvPath)
+	f, err := fsys.Open(csvPath)
 	if err != nil {
 		return nil, err
 	}

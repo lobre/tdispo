@@ -33,6 +33,23 @@ func (evt *Event) Upcoming() bool {
 	return evt.StartsAt.After(today)
 }
 
+// ExtractParticipation extracts the participation of the given guest from an event.
+// The participation is removed from the event itself and returned.
+func (evt *Event) ExtractParticipation(guest *Guest) *Participation {
+	var guestPart *Participation
+
+	for i, part := range evt.Participations {
+		if part.Guest.ID == guest.ID {
+			guestPart = part
+			// remove from list
+			evt.Participations = append(evt.Participations[:i], evt.Participations[i+1:]...)
+			break
+		}
+	}
+
+	return guestPart
+}
+
 type EventFilter struct {
 	ID      *int
 	IDNotIn []int

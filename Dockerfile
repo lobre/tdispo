@@ -11,13 +11,13 @@ RUN apk upgrade --no-cache -U && \
   apk del binutils
 
 # install build deps
-RUN apk add make build-base
+RUN apk add build-base
 RUN npm --global config set user root && npm --global install tailwindcss
 
 # build application
 COPY . /go/src/app
 WORKDIR /go/src/app
-RUN --mount=type=cache,target=/root/.cache/go-build make install
+RUN --mount=type=cache,target=/root/.cache/go-build go generate && go install
 
 # final image
 FROM alpine
