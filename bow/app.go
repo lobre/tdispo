@@ -105,17 +105,20 @@ func injectCSRFCookie(next http.Handler) http.Handler {
 	return csrfHandler
 }
 
-// Assets handles the serving of asset files
-// with generated hash names and enforcing cache.
+// CSRFToken is a convenient wrapper around nosurf.Token.
+func CSRFToken(r *http.Request) string {
+	return nosurf.Token(r)
+}
+
+// Assets handles the serving of asset files and enforces http cache by
+// appending hashes to filenames.
 type Assets struct {
 	fsys *hashfs.FS
 }
 
-// NewAssets creates an Assets from a regular
-// filesystem, and adds a convenient hashName
-// function to templates.
-//
-// This should be called before views.Parse.
+// NewAssets creates an Assets from a filesystem. It adds a convenient hashName
+// function to templates that allows to retrieve the hashed filename from the filename.
+// This function should be called before the parsing of views.
 func NewAssets(fsys fs.FS) Assets {
 	hfsys := hashfs.NewFS(fsys)
 	defaultFuncs["hashName"] = hfsys.HashName
@@ -124,7 +127,8 @@ func NewAssets(fsys fs.FS) Assets {
 	}
 }
 
-// FileServer returns a handler that will serve assets.
+// FileServer returns a handler for serving filesystem files
+// taking the cache hashes into account.
 func (assets Assets) FileServer() http.Handler {
 	return hashfs.FileServer(assets.fsys)
 }

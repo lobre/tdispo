@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/justinas/nosurf"
 	"github.com/lobre/tdispo/bow"
 )
 
@@ -16,7 +15,7 @@ const contextKeyCurrentGuest contextKey = iota
 // addDefaultData automatically injects data that are common to all pages.
 func (app *application) addDefaultData(r *http.Request, data map[string]interface{}) {
 	data["Lang"] = app.lang
-	data["CSRFToken"] = nosurf.Token(r)
+	data["CSRFToken"] = bow.CSRFToken(r)
 	data["Flash"] = app.session.PopString(r, "flash")
 	data["CurrentGuest"] = currentGuest(r)
 	data["IsAdmin"] = app.isAdmin(r)
