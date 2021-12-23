@@ -12,6 +12,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/justinas/nosurf"
 )
 
 type contextKey int
@@ -40,6 +42,12 @@ type Views struct {
 var defaultFuncs = template.FuncMap{
 	"map":  mapFunc,
 	"safe": safe,
+}
+
+// defaultInjectData is an InjectFunc that will be called to automatically
+// inject default data at the rendering of templates.
+var defaultInjectData = func(r *http.Request, data map[string]interface{}) {
+	data["CSRFToken"] = nosurf.Token(r)
 }
 
 // Parse walks a filesystem from the root folder to discover and parse
@@ -157,6 +165,10 @@ func (views *Views) Render(w http.ResponseWriter, r *http.Request, name string, 
 	skipLayout, _ := r.Context().Value(contextKeyStripLayout).(bool)
 	if skipLayout {
 		layout = "main"
+	}
+
+	if defaultInjectData != nil {
+		defaultInjectData(r, data)
 	}
 
 	if views.injectData != nil {

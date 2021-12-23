@@ -105,11 +105,6 @@ func injectCSRFCookie(next http.Handler) http.Handler {
 	return csrfHandler
 }
 
-// CSRFToken is a convenient wrapper around nosurf.Token.
-func CSRFToken(r *http.Request) string {
-	return nosurf.Token(r)
-}
-
 // Assets handles the serving of asset files and enforces http cache by
 // appending hashes to filenames.
 type Assets struct {
