@@ -33,15 +33,16 @@ type InjectFunc func(*http.Request, map[string]interface{})
 // Views is an engine that will render views from templates.
 type Views struct {
 	pages      map[string]*template.Template
-	partials   *template.Template
+	partials   map[string]*template.Template
 	injectData InjectFunc
 }
 
 // defaultFuncs contains the default functions
 // that will be added to templates.
 var defaultFuncs = template.FuncMap{
-	"map":  mapFunc,
-	"safe": safe,
+	"partial": func() template.HTML { return "" }, // will be overidden at rendering
+	"map":     mapFunc,
+	"safe":    safe,
 }
 
 // defaultInjectData is an InjectFunc that will be called to automatically
@@ -68,6 +69,7 @@ var defaultInjectData = func(r *http.Request, data map[string]interface{}) {
 // automatically injected.
 func (views *Views) Parse(fsys fs.FS, root string, funcs template.FuncMap, injectData InjectFunc) error {
 	views.pages = make(map[string]*template.Template)
+	views.partials = make(map[string]*template.Template)
 	views.injectData = injectData
 
 	if funcs == nil {
@@ -108,7 +110,7 @@ func (views *Views) Parse(fsys fs.FS, root string, funcs template.FuncMap, injec
 	}
 
 	for _, page := range pages {
-		tmpl, err := parseTemplate(fsys, funcs, page, append(layouts, partials...))
+		tmpl, err := parseTemplate(fsys, funcs, page, layouts)
 		if err != nil {
 			return err
 		}
@@ -116,12 +118,14 @@ func (views *Views) Parse(fsys fs.FS, root string, funcs template.FuncMap, injec
 		views.pages[templateName(page)] = tmpl
 	}
 
-	tmpl, err := parseTemplate(fsys, funcs, "", partials)
-	if err != nil {
-		return err
-	}
+	for _, partial := range partials {
+		tmpl, err := parseTemplate(fsys, funcs, partial, nil)
+		if err != nil {
+			return err
+		}
 
-	views.partials = tmpl
+		views.partials[templateName(partial)] = tmpl
+	}
 
 	return nil
 }
@@ -132,13 +136,9 @@ func (views *Views) Parse(fsys fs.FS, root string, funcs template.FuncMap, injec
 func (views *Views) Render(w http.ResponseWriter, r *http.Request, name string, data map[string]interface{}) {
 	w.Header().Set("Content-Type", "text/html")
 
-	if data == nil {
-		data = make(map[string]interface{})
-	}
-
-	partial := views.partials.Lookup(name)
-	if partial != nil {
-		if err := renderBuffered(w, views.partials, name, data); err != nil {
+	partial, ok := views.partials[name]
+	if ok {
+		if err := views.render(w, r, partial, "main", data); err != nil {
 			ServerError(w, err)
 		}
 		return
@@ -167,6 +167,39 @@ func (views *Views) Render(w http.ResponseWriter, r *http.Request, name string, 
 		layout = "main"
 	}
 
+	if err := views.render(w, r, view, layout, data); err != nil {
+		ServerError(w, err)
+	}
+}
+
+// render renders the given template and inject default data and dynamic funcs.
+func (views *Views) render(w io.Writer, r *http.Request, tmpl *template.Template, name string, data map[string]interface{}) error {
+	funcs := template.FuncMap{
+		"partial": func(name string, data map[string]interface{}) (template.HTML, error) {
+			partial, ok := views.partials[name]
+			if !ok {
+				return "", fmt.Errorf("partial %s not found", name)
+			}
+
+			var buf bytes.Buffer
+			if err := views.render(&buf, r, partial, "main", data); err != nil {
+				return "", err
+			}
+			return template.HTML(buf.String()), nil
+		},
+	}
+
+	if data == nil {
+		data = make(map[string]interface{})
+	}
+
+	tmpl, err := tmpl.Clone()
+	if err != nil {
+		return err
+	}
+
+	tmpl.Funcs(funcs)
+
 	if defaultInjectData != nil {
 		defaultInjectData(r, data)
 	}
@@ -175,9 +208,22 @@ func (views *Views) Render(w http.ResponseWriter, r *http.Request, name string, 
 		views.injectData(r, data)
 	}
 
-	if err := renderBuffered(w, view, layout, data); err != nil {
-		ServerError(w, err)
+	return renderBuffered(w, tmpl, name, data)
+}
+
+// renderBuffered renders the given template to a buffer, and then to the writer.
+// This way, if there is a problem during the rendering, an error can be returned.
+func renderBuffered(w io.Writer, tmpl *template.Template, name string, data interface{}) error {
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, name, data); err != nil {
+		return err
 	}
+
+	if _, err := buf.WriteTo(w); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // templateName returns a template name from a path.
@@ -224,21 +270,6 @@ func parseTemplate(fsys fs.FS, funcs template.FuncMap, main string, associated [
 	}
 
 	return tmpl, nil
-}
-
-// renderBuffered renders the given template to a buffer, and then to the writer.
-// This way, if there is a problem during the rendering, an error can be returned.
-func renderBuffered(w io.Writer, tmpl *template.Template, name string, data interface{}) error {
-	var buf bytes.Buffer
-	if err := tmpl.ExecuteTemplate(&buf, name, data); err != nil {
-		return err
-	}
-
-	if _, err := buf.WriteTo(w); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // StripLayout returns a shallow copy of the request but

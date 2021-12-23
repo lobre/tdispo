@@ -1,6 +1,6 @@
 {{ define "title" }}{{ "Add an event" | translate }}{{ end }}
 
-{{ define "head" }}{{ template "events/trix" . }}{{ end }}
+{{ define "head" }}{{ partial "events/trix" . }}{{ end }}
 
 <form action="/new" method="post">
   <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">

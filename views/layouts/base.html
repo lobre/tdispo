@@ -17,9 +17,9 @@
   </head>
 
   <body class="prose">
-    {{ template "layouts/header" . }}
-    {{ template "layouts/nav" . }}
-    {{ template "layouts/flash" . }}
+    {{ partial "layouts/header" . }}
+    {{ partial "layouts/nav" . }}
+    {{ partial "layouts/flash" . }}
 
     <main class="container mx-auto px-4">
       {{ template "main" . }}

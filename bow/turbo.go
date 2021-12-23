@@ -45,20 +45,16 @@ func AcceptsStream(r *http.Request) bool {
 func (views *Views) RenderStream(action StreamAction, target string, w http.ResponseWriter, r *http.Request, name string, data map[string]interface{}) {
 	w.Header().Set("Content-Type", streamMime)
 
-	if data == nil {
-		data = make(map[string]interface{})
-	}
-
 	var buf bytes.Buffer
 
 	if action != ActionRemove {
-		partial := views.partials.Lookup(name)
-		if partial == nil {
+		partial, ok := views.partials[name]
+		if !ok {
 			ServerError(w, fmt.Errorf("partial %s not found", name))
 			return
 		}
 
-		if err := renderBuffered(&buf, views.partials, name, data); err != nil {
+		if err := views.render(&buf, r, partial, name, data); err != nil {
 			ServerError(w, err)
 			return
 		}
