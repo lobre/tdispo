@@ -4,15 +4,14 @@ import (
 	"net/http"
 
 	"github.com/bmizerany/pat"
-	"github.com/lobre/tdispo/bow"
 )
 
 func (app *application) routes() http.Handler {
-	chain := bow.DynChain.Append(app.session.Enable, app.recognizeGuest)
+	chain := app.DynChain().Append(app.recognizeGuest)
 
 	mux := pat.New()
 
-	mux.Get("/assets/", app.assets.FileServer())
+	mux.Get("/assets/", app.FileServer())
 
 	// cookie authentication
 	mux.Get("/whoareyou", chain.ThenFunc(app.whoAreYou))
@@ -44,5 +43,5 @@ func (app *application) routes() http.Handler {
 	mux.Get("/:id", chain.Append(requireRecognition).ThenFunc(app.findEventByID))
 	mux.Del("/:id", chain.Append(app.requireAdmin).ThenFunc(app.deleteEvent))
 
-	return bow.StdChain.Then(mux)
+	return app.StdChain().Then(mux)
 }

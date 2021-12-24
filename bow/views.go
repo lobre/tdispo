@@ -8,12 +8,12 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
-
-	"github.com/justinas/nosurf"
 )
 
 type contextKey int
@@ -26,29 +26,35 @@ const (
 	layoutsFolder = "layouts"
 )
 
-// InjectFunc represents a func that can inject automatic
-// data at the rendering of a view.
-type InjectFunc func(*http.Request, map[string]interface{})
+// DataInjector represents a func that can inject automatic data at the rendering of a view.
+type DataInjector func(*http.Request, map[string]interface{})
 
-// Views is an engine that will render views from templates.
-type Views struct {
-	pages      map[string]*template.Template
-	partials   map[string]*template.Template
-	injectData InjectFunc
+// views is an engine that will render views from templates.
+type views struct {
+	logger *log.Logger
+
+	pages    map[string]*template.Template
+	partials map[string]*template.Template
+
+	funcs template.FuncMap
+
+	defaultInjector DataInjector
+	injector        DataInjector
 }
 
-// defaultFuncs contains the default functions
-// that will be added to templates.
-var defaultFuncs = template.FuncMap{
-	"partial": func() template.HTML { return "" }, // will be overidden at rendering
-	"map":     mapFunc,
-	"safe":    safe,
+// serverError writes an error message and stack trace to the logger,
+// then sends a generic 500 Internal Server Error response to the user.
+func (views *views) ServerError(w http.ResponseWriter, err error) {
+	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
+	views.logger.Output(2, trace)
+
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
-// defaultInjectData is an InjectFunc that will be called to automatically
-// inject default data at the rendering of templates.
-var defaultInjectData = func(r *http.Request, data map[string]interface{}) {
-	data["CSRFToken"] = nosurf.Token(r)
+// clientError sends a specific status code and corresponding description to the user.
+// This should be used to send responses when there's a problem with the request that the user sent.
+func (views *views) ClientError(w http.ResponseWriter, status int) {
+	http.Error(w, http.StatusText(status), status)
 }
 
 // Parse walks a filesystem from the root folder to discover and parse
@@ -67,23 +73,10 @@ var defaultInjectData = func(r *http.Request, data map[string]interface{}) {
 //
 // injectData is a function that will be called when rendering page views so that data can be
 // automatically injected.
-func (views *Views) Parse(fsys fs.FS, root string, funcs template.FuncMap, injectData InjectFunc) error {
-	views.pages = make(map[string]*template.Template)
-	views.partials = make(map[string]*template.Template)
-	views.injectData = injectData
-
-	if funcs == nil {
-		funcs = make(template.FuncMap)
-	}
-
-	// include default funcs
-	for k, v := range defaultFuncs {
-		funcs[k] = v
-	}
-
+func (views *views) Parse(fsys fs.FS) error {
 	var pages, partials, layouts []string
 
-	err := fs.WalkDir(fsys, root, func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(fsys, "views", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -110,7 +103,7 @@ func (views *Views) Parse(fsys fs.FS, root string, funcs template.FuncMap, injec
 	}
 
 	for _, page := range pages {
-		tmpl, err := parseTemplate(fsys, funcs, page, layouts)
+		tmpl, err := parseTemplate(fsys, views.funcs, page, layouts)
 		if err != nil {
 			return err
 		}
@@ -119,7 +112,7 @@ func (views *Views) Parse(fsys fs.FS, root string, funcs template.FuncMap, injec
 	}
 
 	for _, partial := range partials {
-		tmpl, err := parseTemplate(fsys, funcs, partial, nil)
+		tmpl, err := parseTemplate(fsys, views.funcs, partial, nil)
 		if err != nil {
 			return err
 		}
@@ -133,20 +126,20 @@ func (views *Views) Parse(fsys fs.FS, root string, funcs template.FuncMap, injec
 // Render renders a given view or partial.
 // For page views, the layout can be set using the WithLayout function or using the ApplyLayout middleware.
 // If no layout is defined, the "base" layout will be chosen. Partial views are rendered without any layout.
-func (views *Views) Render(w http.ResponseWriter, r *http.Request, name string, data map[string]interface{}) {
+func (views *views) Render(w http.ResponseWriter, r *http.Request, name string, data map[string]interface{}) {
 	w.Header().Set("Content-Type", "text/html")
 
 	partial, ok := views.partials[name]
 	if ok {
-		if err := views.render(w, r, partial, "main", data); err != nil {
-			ServerError(w, err)
+		if err := views.injectAndRender(w, r, partial, "main", data); err != nil {
+			views.ServerError(w, err)
 		}
 		return
 	}
 
 	view, ok := views.pages[name]
 	if !ok {
-		ServerError(w, fmt.Errorf("view %s not found", name))
+		views.ServerError(w, fmt.Errorf("view %s not found", name))
 		return
 	}
 
@@ -158,7 +151,7 @@ func (views *Views) Render(w http.ResponseWriter, r *http.Request, name string, 
 	}
 
 	if view.Lookup(layout) == nil {
-		ServerError(w, fmt.Errorf("layout %s not found", layout))
+		views.ServerError(w, fmt.Errorf("layout %s not found", layout))
 		return
 	}
 
@@ -167,28 +160,13 @@ func (views *Views) Render(w http.ResponseWriter, r *http.Request, name string, 
 		layout = "main"
 	}
 
-	if err := views.render(w, r, view, layout, data); err != nil {
-		ServerError(w, err)
+	if err := views.injectAndRender(w, r, view, layout, data); err != nil {
+		views.ServerError(w, err)
 	}
 }
 
-// render renders the given template and inject default data and dynamic funcs.
-func (views *Views) render(w io.Writer, r *http.Request, tmpl *template.Template, name string, data map[string]interface{}) error {
-	funcs := template.FuncMap{
-		"partial": func(name string, data map[string]interface{}) (template.HTML, error) {
-			partial, ok := views.partials[name]
-			if !ok {
-				return "", fmt.Errorf("partial %s not found", name)
-			}
-
-			var buf bytes.Buffer
-			if err := views.render(&buf, r, partial, "main", data); err != nil {
-				return "", err
-			}
-			return template.HTML(buf.String()), nil
-		},
-	}
-
+// injectAndRender injects default data and dynamic funcs and renders the given template.
+func (views *views) injectAndRender(w io.Writer, r *http.Request, tmpl *template.Template, name string, data map[string]interface{}) error {
 	if data == nil {
 		data = make(map[string]interface{})
 	}
@@ -198,14 +176,27 @@ func (views *Views) render(w io.Writer, r *http.Request, tmpl *template.Template
 		return err
 	}
 
-	tmpl.Funcs(funcs)
+	tmpl.Funcs(template.FuncMap{
+		"partial": func(name string, data map[string]interface{}) (template.HTML, error) {
+			partial, ok := views.partials[name]
+			if !ok {
+				return "", fmt.Errorf("partial %s not found", name)
+			}
 
-	if defaultInjectData != nil {
-		defaultInjectData(r, data)
+			var buf bytes.Buffer
+			if err := views.injectAndRender(&buf, r, partial, "main", data); err != nil {
+				return "", err
+			}
+			return template.HTML(buf.String()), nil
+		},
+	})
+
+	if views.defaultInjector != nil {
+		views.defaultInjector(r, data)
 	}
 
-	if views.injectData != nil {
-		views.injectData(r, data)
+	if views.injector != nil {
+		views.injector(r, data)
 	}
 
 	return renderBuffered(w, tmpl, name, data)

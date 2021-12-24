@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-
-	"github.com/lobre/tdispo/bow"
 )
 
 type contextKey int
@@ -15,7 +13,7 @@ const contextKeyCurrentGuest contextKey = iota
 // addDefaultData automatically injects data that are common to all pages.
 func (app *application) addDefaultData(r *http.Request, data map[string]interface{}) {
 	data["Lang"] = app.lang
-	data["Flash"] = app.session.PopString(r, "flash")
+	data["Flash"] = app.Session().PopString(r, "flash")
 	data["CurrentGuest"] = currentGuest(r)
 	data["IsAdmin"] = app.isAdmin(r)
 }
@@ -25,16 +23,16 @@ func (app *application) addDefaultData(r *http.Request, data map[string]interfac
 // request context.
 func (app *application) recognizeGuest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if ok := app.session.Exists(r, "guest"); !ok {
+		if ok := app.Session().Exists(r, "guest"); !ok {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		guest, err := app.guestService.FindGuestByID(r.Context(), app.session.GetInt(r, "guest"))
+		guest, err := app.guestService.FindGuestByID(r.Context(), app.Session().GetInt(r, "guest"))
 		if errors.Is(err, ErrNoRecord) {
-			app.session.Remove(r, "guest")
+			app.Session().Remove(r, "guest")
 		} else if err != nil {
-			bow.ServerError(w, err)
+			app.ServerError(w, err)
 			return
 		}
 
@@ -70,7 +68,7 @@ func currentGuest(r *http.Request) *Guest {
 // isAdmin returns true if the current user is connected
 // as admin, otherwise false.
 func (app *application) isAdmin(r *http.Request) bool {
-	return app.session.GetBool(r, "isAdmin")
+	return app.Session().GetBool(r, "isAdmin")
 }
 
 // requireAdmin is a middleware that redirects the user to the homepage

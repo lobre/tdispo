@@ -19,19 +19,19 @@ type DB struct {
 	fsys fs.FS  // filesystem for migration files
 }
 
-// NewDB creates a new DB taking a data source name
+// newDB creates a new DB taking a data source name
 // and a filesystem for migration files.
-func NewDB(dns string, fsys fs.FS) *DB {
+func newDB(dns string, fsys fs.FS) *DB {
 	return &DB{
 		dsn:  dns,
 		fsys: fsys,
 	}
 }
 
-// Open opens a sqlite database specified by the data source name.
+// open opens a sqlite database specified by the data source name.
 // It also enables WAL mode and foreign keys check, and finally execute
 // pending SQL migrations.
-func (db *DB) Open() (err error) {
+func (db *DB) open() (err error) {
 	if db.dsn == "" {
 		return fmt.Errorf("dsn required")
 	}
