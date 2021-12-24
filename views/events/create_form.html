@@ -3,7 +3,7 @@
 {{ define "head" }}{{ partial "events/trix" . }}{{ end }}
 
 <form action="/new" method="post">
-  <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf }}">
   {{ with $.Form }}
     <div>
       <label>{{ "Title" | translate }} <span class="text-red-500">*</span></label>

@@ -29,6 +29,9 @@ const (
 // DataInjector represents a func that can inject automatic data at the rendering of a view.
 type DataInjector func(*http.Request, map[string]interface{})
 
+// dynFuncMap is a dynamic version of template.FuncMap that is request-aware.
+type dynFuncMap map[string]func(r *http.Request) interface{}
+
 // views is an engine that will render views from templates.
 type views struct {
 	logger *log.Logger
@@ -36,10 +39,9 @@ type views struct {
 	pages    map[string]*template.Template
 	partials map[string]*template.Template
 
-	funcs template.FuncMap
-
-	defaultInjector DataInjector
-	injector        DataInjector
+	funcs    template.FuncMap
+	dynFuncs dynFuncMap
+	injector DataInjector
 }
 
 // serverError writes an error message and stack trace to the logger,
@@ -101,6 +103,14 @@ func (views *views) Parse(fsys fs.FS) error {
 	if err != nil {
 		return err
 	}
+
+	// create empty dynamic functions that will be redefined in render.
+	for k := range views.dynFuncs {
+		views.funcs[k] = func() string { return "" }
+	}
+
+	// also manually add a dynamic function to execute partials.
+	views.funcs["partial"] = func() string { return "" }
 
 	for _, page := range pages {
 		tmpl, err := parseTemplate(fsys, views.funcs, page, layouts)
@@ -176,24 +186,26 @@ func (views *views) injectAndRender(w io.Writer, r *http.Request, tmpl *template
 		return err
 	}
 
-	tmpl.Funcs(template.FuncMap{
-		"partial": func(name string, data map[string]interface{}) (template.HTML, error) {
-			partial, ok := views.partials[name]
-			if !ok {
-				return "", fmt.Errorf("partial %s not found", name)
-			}
-
-			var buf bytes.Buffer
-			if err := views.injectAndRender(&buf, r, partial, "main", data); err != nil {
-				return "", err
-			}
-			return template.HTML(buf.String()), nil
-		},
-	})
-
-	if views.defaultInjector != nil {
-		views.defaultInjector(r, data)
+	for k, v := range views.dynFuncs {
+		views.funcs[k] = v(r)
 	}
+
+	// manually define the partial function.
+	// It cannot be added as a dynFuncMap as it requires name and data
+	views.funcs["partial"] = func(name string, data map[string]interface{}) (template.HTML, error) {
+		partial, ok := views.partials[name]
+		if !ok {
+			return "", fmt.Errorf("partial %s not found", name)
+		}
+
+		var buf bytes.Buffer
+		if err := views.injectAndRender(&buf, r, partial, "main", data); err != nil {
+			return "", err
+		}
+		return template.HTML(buf.String()), nil
+	}
+
+	tmpl.Funcs(views.funcs)
 
 	if views.injector != nil {
 		views.injector(r, data)
@@ -290,7 +302,7 @@ func ApplyLayout(layout string) func(http.Handler) http.Handler {
 	}
 }
 
-// mapFunc is a function that is injected to templates to allow to easily pass data to partials.
+// mapFunc is a function that is injected to templates to allow to easily create maps.
 func mapFunc(values ...interface{}) (map[string]interface{}, error) {
 	if len(values)%2 != 0 {
 		return nil, errors.New("invalid number of argument in map call")

@@ -43,7 +43,7 @@
             x-data @change="$el.requestSubmit()"
             class="inline">
 
-            <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf }}">
 
             {{ range $id, $label := $.AttendText }}
               <input type="radio" name="attend" value="{{ $id }}" 
@@ -67,7 +67,7 @@
             x-data @change="$el.requestSubmit()"
             class="inline">
 
-            <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf }}">
 
             {{ range $id, $label := $.AttendText }}
               <input type="radio" name="attend" value="{{ $id }}" 

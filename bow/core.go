@@ -25,8 +25,8 @@ type Core struct {
 	fsys   fs.FS
 	hfsys  *hashfs.FS
 
-	views   *views
 	db      *DB
+	views   *views
 	session *sessions.Session
 }
 
@@ -45,20 +45,23 @@ func NewCore(fsys fs.FS, options ...Option) (*Core, error) {
 			partials: make(map[string]*template.Template),
 
 			funcs: template.FuncMap{
-				"partial":  func() template.HTML { return "" }, // will be overidden at rendering
-				"map":      mapFunc,
-				"safe":     safe,
-				"hashName": hfsys.HashName,
+				"hash": hfsys.HashName,
+				"map":  mapFunc,
+				"safe": safe,
 			},
 
-			defaultInjector: func(r *http.Request, data map[string]interface{}) {
-				data["CSRFToken"] = nosurf.Token(r)
+			dynFuncs: dynFuncMap{
+				"csrf": func(r *http.Request) interface{} {
+					return func() string {
+						return nosurf.Token(r)
+					}
+				},
 			},
 		},
 	}
 
-	for _, o := range options {
-		if err := o(core); err != nil {
+	for _, opt := range options {
+		if err := opt(core); err != nil {
 			return nil, err
 		}
 	}

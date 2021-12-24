@@ -1,7 +1,7 @@
 {{ define "title" }}{{ "Add a status" | translate }}{{ end }}
 
 <form action="/status/new" method="post">
-  <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf }}">
   {{ with $.Form }}
     <div>
       <label>{{ "Label" | translate }} <span class="text-red-500">*</span></label>

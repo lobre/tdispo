@@ -2,16 +2,16 @@
 <html lang="{{ $.Lang }}">
   <head>
     <meta charset="utf-8" />
-    <meta name="csrf-token" content="{{ $.CSRFToken }}" />
+    <meta name="csrf-token" content="{{ csrf }}" />
 
     <title>{{ template "title" . }} - Tdispo</title>
 
     <script src="https://unpkg.com/@hotwired/turbo@7.x.x/dist/turbo.es2017-umd.js"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
-    <link href='/{{ hashName "assets/tailwind.css" }}' rel="stylesheet">
+    <link href='/{{ hash "assets/tailwind.css" }}' rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/@tailwindcss/typography@0.4.x/dist/typography.min.css">
-    <link rel="icon" href='/{{ hashName "assets/favicon.ico" }}'>
+    <link rel="icon" href='/{{ hash "assets/favicon.ico" }}'>
 
     {{ block "head"  . }}{{ end }}
   </head>
