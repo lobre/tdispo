@@ -4,11 +4,27 @@ import (
 	"context"
 	"errors"
 	"net/http"
+
+	"github.com/lobre/tdispo/bow"
 )
 
 type contextKey int
 
 const contextKeyCurrentGuest contextKey = iota
+
+type templateData struct {
+	Form *bow.Form
+
+	Event    *Event
+	Events   []*Event
+	Guest    *Guest
+	Guests   []*Guest
+	Statuses []*Status
+
+	CurrentParticipation *Participation
+
+	AttendText map[int64]string
+}
 
 // addGlobals automatically injects data that are common to all pages.
 func (app *application) addGlobals(r *http.Request) interface{} {

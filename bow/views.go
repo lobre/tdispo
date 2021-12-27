@@ -124,7 +124,7 @@ func (views *views) Parse(fsys fs.FS) error {
 // Render renders a given view or partial.
 // For page views, the layout can be set using the WithLayout function or using the ApplyLayout middleware.
 // If no layout is defined, the "base" layout will be chosen. Partial views are rendered without any layout.
-func (views *views) Render(w http.ResponseWriter, r *http.Request, name string, data map[string]interface{}) {
+func (views *views) Render(w http.ResponseWriter, r *http.Request, name string, data interface{}) {
 	w.Header().Set("Content-Type", "text/html")
 
 	partial, ok := views.partials[name]
@@ -159,11 +159,7 @@ func (views *views) Render(w http.ResponseWriter, r *http.Request, name string, 
 }
 
 // renderWithFuncs injects dynamic funcs and renders the given template.
-func (views *views) renderWithFuncs(w io.Writer, r *http.Request, tmpl *template.Template, name string, data map[string]interface{}) error {
-	if data == nil {
-		data = make(map[string]interface{})
-	}
-
+func (views *views) renderWithFuncs(w io.Writer, r *http.Request, tmpl *template.Template, name string, data interface{}) error {
 	tmpl, err := tmpl.Clone()
 	if err != nil {
 		return err
@@ -266,7 +262,7 @@ func safe(s string) template.HTML {
 
 // partial is meant to be added as a reqFuncMap to include partials from within templates.
 func (views *views) partial(r *http.Request) interface{} {
-	return func(name string, data map[string]interface{}) (template.HTML, error) {
+	return func(name string, data interface{}) (template.HTML, error) {
 		partial, ok := views.partials[name]
 		if !ok {
 			return "", fmt.Errorf("partial %s not found", name)

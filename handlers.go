@@ -19,14 +19,14 @@ func (app *application) findStatuses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.Render(w, r, "statuses/list", map[string]interface{}{
-		"Statuses": statuses,
+	app.Render(w, r, "statuses/list", templateData{
+		Statuses: statuses,
 	})
 }
 
 func (app *application) createStatusForm(w http.ResponseWriter, r *http.Request) {
-	app.Render(w, r, "statuses/create_form", map[string]interface{}{
-		"Form": bow.NewForm(nil),
+	app.Render(w, r, "statuses/create_form", templateData{
+		Form: bow.NewForm(nil),
 	})
 }
 
@@ -42,8 +42,8 @@ func (app *application) createStatus(w http.ResponseWriter, r *http.Request) {
 
 	if !form.Valid() {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		app.Render(w, r, "statuses/create_form", map[string]interface{}{
-			"Form": form,
+		app.Render(w, r, "statuses/create_form", templateData{
+			Form: form,
 		})
 		return
 	}
@@ -101,13 +101,13 @@ func (app *application) findEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.Render(w, r, "events/list", map[string]interface{}{
-		"Form": bow.NewForm(url.Values{
+	app.Render(w, r, "events/list", templateData{
+		Form: bow.NewForm(url.Values{
 			"q":    []string{q},
 			"past": []string{past},
 		}),
-		"Events":     events,
-		"AttendText": AttendText,
+		Events:     events,
+		AttendText: AttendText,
 	})
 }
 
@@ -129,12 +129,12 @@ func (app *application) findEventByID(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// extract participation from current guest to be able to display it first
-	curGuestPart := event.ExtractParticipation(currentGuest(r))
+	currentPart := event.ExtractParticipation(currentGuest(r))
 
-	app.Render(w, r, "events/details", map[string]interface{}{
-		"Event":                event,
-		"CurrentParticipation": curGuestPart,
-		"AttendText":           AttendText,
+	app.Render(w, r, "events/details", templateData{
+		Event:                event,
+		CurrentParticipation: currentPart,
+		AttendText:           AttendText,
 	})
 }
 
@@ -145,9 +145,9 @@ func (app *application) createEventForm(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	app.Render(w, r, "events/create_form", map[string]interface{}{
-		"Form":     bow.NewForm(nil),
-		"Statuses": statuses,
+	app.Render(w, r, "events/create_form", templateData{
+		Form:     bow.NewForm(nil),
+		Statuses: statuses,
 	})
 }
 
@@ -179,9 +179,9 @@ func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		app.Render(w, r, "events/create_form", map[string]interface{}{
-			"Form":     form,
-			"Statuses": statuses,
+		app.Render(w, r, "events/create_form", templateData{
+			Form:     form,
+			Statuses: statuses,
 		})
 		return
 	}
@@ -256,8 +256,8 @@ func (app *application) updateEventForm(w http.ResponseWriter, r *http.Request) 
 		endTime = evt.EndsAt.Time.Format(layoutTime)
 	}
 
-	app.Render(w, r, "events/update_form", map[string]interface{}{
-		"Form": bow.NewForm(url.Values{
+	app.Render(w, r, "events/update_form", templateData{
+		Form: bow.NewForm(url.Values{
 			"title":       []string{evt.Title},
 			"startdate":   []string{evt.StartsAt.Format(layoutDate)},
 			"starttime":   []string{evt.StartsAt.Format(layoutTime)},
@@ -265,8 +265,8 @@ func (app *application) updateEventForm(w http.ResponseWriter, r *http.Request) 
 			"endtime":     []string{endTime},
 			"description": []string{evt.Description.String},
 		}),
-		"Event":    evt,
-		"Statuses": statuses,
+		Event:    evt,
+		Statuses: statuses,
 	})
 }
 
@@ -310,10 +310,10 @@ func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		app.Render(w, r, "events/update_form", map[string]interface{}{
-			"Form":     form,
-			"Event":    evt,
-			"Statuses": statuses,
+		app.Render(w, r, "events/update_form", templateData{
+			Form:     form,
+			Event:    evt,
+			Statuses: statuses,
 		})
 
 		return
@@ -389,14 +389,14 @@ func (app *application) findGuests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.Render(w, r, "guests/list", map[string]interface{}{
-		"Guests": guests,
+	app.Render(w, r, "guests/list", templateData{
+		Guests: guests,
 	})
 }
 
 func (app *application) createGuestForm(w http.ResponseWriter, r *http.Request) {
-	app.Render(w, r, "guests/create_form", map[string]interface{}{
-		"Form": bow.NewForm(nil),
+	app.Render(w, r, "guests/create_form", templateData{
+		Form: bow.NewForm(nil),
 	})
 }
 
@@ -412,8 +412,8 @@ func (app *application) createGuest(w http.ResponseWriter, r *http.Request) {
 
 	if !form.Valid() {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		app.Render(w, r, "guests/create_form", map[string]interface{}{
-			"Form": form,
+		app.Render(w, r, "guests/create_form", templateData{
+			Form: form,
 		})
 		return
 	}
@@ -428,8 +428,8 @@ func (app *application) createGuest(w http.ResponseWriter, r *http.Request) {
 		form.CustomError("email", "The email address already exists")
 
 		w.WriteHeader(http.StatusConflict)
-		app.Render(w, r, "guests/create_form", map[string]interface{}{
-			"Form": form,
+		app.Render(w, r, "guests/create_form", templateData{
+			Form: form,
 		})
 
 		return
@@ -459,12 +459,12 @@ func (app *application) updateGuestForm(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	app.Render(w, r, "guests/update_form", map[string]interface{}{
-		"Form": bow.NewForm(url.Values{
+	app.Render(w, r, "guests/update_form", templateData{
+		Form: bow.NewForm(url.Values{
 			"name":  []string{guest.Name},
 			"email": []string{guest.Email},
 		}),
-		"Guest": guest,
+		Guest: guest,
 	})
 }
 
@@ -492,9 +492,9 @@ func (app *application) updateGuest(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		app.Render(w, r, "guests/update_form", map[string]interface{}{
-			"Form":  form,
-			"Guest": guest,
+		app.Render(w, r, "guests/update_form", templateData{
+			Form:  form,
+			Guest: guest,
 		})
 
 		return
@@ -608,12 +608,12 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// extract participation from current guest to be able to display it first
-	curGuestPart := event.ExtractParticipation(currentGuest(r))
+	currentPart := event.ExtractParticipation(currentGuest(r))
 
-	app.Render(w, r, "events/details", map[string]interface{}{
-		"Event":                event,
-		"CurrentParticipation": curGuestPart,
-		"AttendText":           AttendText,
+	app.Render(w, r, "events/details", templateData{
+		Event:                event,
+		CurrentParticipation: currentPart,
+		AttendText:           AttendText,
 	})
 }
 
@@ -624,8 +624,8 @@ func (app *application) whoAreYou(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.Render(w, r, "guests/whoareyou", map[string]interface{}{
-		"Guests": guests,
+	app.Render(w, r, "guests/whoareyou", templateData{
+		Guests: guests,
 	})
 }
 

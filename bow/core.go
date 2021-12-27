@@ -251,12 +251,12 @@ func (core *Core) ClientError(w http.ResponseWriter, status int) {
 }
 
 // Render is a convenient wrapper around views.Render.
-func (core *Core) Render(w http.ResponseWriter, r *http.Request, name string, data map[string]interface{}) {
+func (core *Core) Render(w http.ResponseWriter, r *http.Request, name string, data interface{}) {
 	core.views.Render(w, r, name, data)
 }
 
 // RenderStream is a convenient wrapper around views.RenderStream.
-func (core *Core) RenderStream(action StreamAction, target string, w http.ResponseWriter, r *http.Request, name string, data map[string]interface{}) {
+func (core *Core) RenderStream(action StreamAction, target string, w http.ResponseWriter, r *http.Request, name string, data interface{}) {
 	core.views.RenderStream(action, target, w, r, name, data)
 }
 
