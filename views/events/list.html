@@ -26,11 +26,11 @@
           <a href="/{{ .ID }}">{{ .StartsAt | humanDate }} - {{ .Title }}</a>
           <span>- {{ .Status.Label}}</span>
           <span style="height: 8px; width: 8px; border-radius: 50%; display: inline-block; background-color: {{ .Status.Color }};"></span>
-          {{ if $.CurrentGuest }}
-            {{ $part := .ExtractParticipation $.CurrentGuest }}
+          {{ if globals.CurrentGuest }}
+            {{ $part := .ExtractParticipation globals.CurrentGuest }}
             {{ if $part.Attend.Valid }}<span>- {{ index $.AttendText $part.Attend.Int64 | translate }}</span>{{ end }}
           {{ end }}
-          {{ if $.IsAdmin }}
+          {{ if globals.IsAdmin }}
             <a href="/{{ .ID }}/edit">({{ "edit" | translate }})</a>
             <a href="/{{ .ID }}" data-turbo-method="delete" data-turbo-confirm='{{ "Are you sure?" | translate }}'>({{ "delete" | translate }})</a>
           {{ end }}
@@ -42,4 +42,4 @@
   {{ end }}
 </turbo-frame>
 
-{{ if $.IsAdmin }}<a href="/new">{{ "New event" | translate }}</a>{{ end }}
+{{ if globals.IsAdmin }}<a href="/new">{{ "New event" | translate }}</a>{{ end }}

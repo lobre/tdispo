@@ -72,7 +72,7 @@ func (app *application) deleteStatus(w http.ResponseWriter, r *http.Request) {
 	err = app.statusService.DeleteStatus(r.Context(), id)
 	if err != nil && errors.Is(err, ErrStatusUsed) {
 		w.WriteHeader(http.StatusConflict)
-		app.Session().Put(r, "flash", "Can’t delete a status assigned to an existing event")
+		app.Flash(r, "Can’t delete a status assigned to an existing event")
 	} else if err != nil {
 		app.ServerError(w, err)
 		return

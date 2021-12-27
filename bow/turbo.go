@@ -22,17 +22,6 @@ const (
 	streamMime string = "text/vnd.turbo-stream.html"
 )
 
-// optimizeTurboFrame is a middleware that optimizes so that
-// the layout is stripped from the response for turbo frame requests.
-func optimizeTurboFrame(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Turbo-Frame") != "" {
-			r = StripLayout(r)
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
 // AcceptsStream returns true if the request has got a Accept header saying
 // that it accepts turbo streams in response.
 func AcceptsStream(r *http.Request) bool {
@@ -54,7 +43,7 @@ func (views *views) RenderStream(action StreamAction, target string, w http.Resp
 			return
 		}
 
-		if err := views.injectAndRender(&buf, r, partial, name, data); err != nil {
+		if err := views.renderWithFuncs(&buf, r, partial, name, data); err != nil {
 			views.ServerError(w, err)
 			return
 		}

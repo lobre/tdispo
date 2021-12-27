@@ -10,12 +10,17 @@ type contextKey int
 
 const contextKeyCurrentGuest contextKey = iota
 
-// addDefaultData automatically injects data that are common to all pages.
-func (app *application) addDefaultData(r *http.Request, data map[string]interface{}) {
-	data["Lang"] = app.lang
-	data["Flash"] = app.Session().PopString(r, "flash")
-	data["CurrentGuest"] = currentGuest(r)
-	data["IsAdmin"] = app.isAdmin(r)
+// addGlobals automatically injects data that are common to all pages.
+func (app *application) addGlobals(r *http.Request) interface{} {
+	return struct {
+		Lang         string
+		CurrentGuest *Guest
+		IsAdmin      bool
+	}{
+		app.lang,
+		currentGuest(r),
+		app.isAdmin(r),
+	}
 }
 
 // recognizeGuest is a middleware that checks if a guest exists in the session,

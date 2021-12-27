@@ -43,20 +43,8 @@ func NewCore(fsys fs.FS, options ...Option) (*Core, error) {
 		views: &views{
 			pages:    make(map[string]*template.Template),
 			partials: make(map[string]*template.Template),
-
-			funcs: template.FuncMap{
-				"hash": hfsys.HashName,
-				"map":  mapFunc,
-				"safe": safe,
-			},
-
-			dynFuncs: dynFuncMap{
-				"csrf": func(r *http.Request) interface{} {
-					return func() string {
-						return nosurf.Token(r)
-					}
-				},
-			},
+			funcs:    make(template.FuncMap),
+			reqFuncs: make(ReqFuncMap),
 		},
 	}
 
@@ -67,6 +55,23 @@ func NewCore(fsys fs.FS, options ...Option) (*Core, error) {
 	}
 
 	core.views.logger = core.logger
+
+	// set default funcs
+	core.views.funcs["hash"] = hfsys.HashName
+	core.views.funcs["safe"] = safe
+
+	// set default req funcs
+	core.views.reqFuncs["partial"] = core.views.partial
+	core.views.reqFuncs["flash"] = func(r *http.Request) interface{} {
+		return func() string {
+			return core.session.PopString(r, "flash")
+		}
+	}
+	core.views.reqFuncs["csrf"] = func(r *http.Request) interface{} {
+		return func() string {
+			return nosurf.Token(r)
+		}
+	}
 
 	if err := core.views.Parse(fsys); err != nil {
 		return nil, err
@@ -89,8 +94,8 @@ func WithLogger(logger *log.Logger) Option {
 // WithDB is an option to enable and configure the database access.
 func WithDB(dsn string) Option {
 	return func(core *Core) error {
-		core.db = newDB(dsn, core.fsys)
-		if err := core.db.open(); err != nil {
+		core.db = NewDB(dsn, core.fsys)
+		if err := core.db.Open(); err != nil {
 			return err
 		}
 		return nil
@@ -112,18 +117,34 @@ func WithSession(key string) Option {
 // be injected into views.
 func WithFuncs(funcs template.FuncMap) Option {
 	return func(core *Core) error {
-		for k, v := range funcs {
-			core.views.funcs[k] = v
+		for k, fn := range funcs {
+			core.views.funcs[k] = fn
 		}
 		return nil
 	}
 }
 
-// WithDataInjector is an option that configures a function that will
-// be called at the rendering of views to automatically inject data.
-func WithDataInjector(injector DataInjector) Option {
+// WithReqFuncs is an option similar to WithFuncs, but with functions that
+// are request-aware.
+func WithReqFuncs(funcs ReqFuncMap) Option {
 	return func(core *Core) error {
-		core.views.injector = injector
+		for k, fn := range funcs {
+			core.views.reqFuncs[k] = fn
+		}
+		return nil
+	}
+}
+
+// WithGlobals is an option that allows to define a function that is
+// called at each rendering to inject data that can be retrieved using the
+// "globals" helper template function.
+func WithGlobals(fn func(*http.Request) interface{}) Option {
+	return func(core *Core) error {
+		core.views.reqFuncs["globals"] = func(r *http.Request) interface{} {
+			return func() interface{} {
+				return fn(r)
+			}
+		}
 		return nil
 	}
 }
@@ -138,11 +159,6 @@ func (core *Core) FileServer() http.Handler {
 // Log returns the application logger.
 func (core *Core) Log() *log.Logger {
 	return core.logger
-}
-
-// DB returns the application db.
-func (core *Core) DB() *DB {
-	return core.db
 }
 
 // Session returns the application session.
@@ -162,10 +178,9 @@ func (core *Core) StdChain() alice.Chain {
 }
 
 // DynChain returns a chain of middleware that can be applied to all dynamic routes.
-// It injects a CSRF cookie, enable sessions and optimizes responses for turbo frames
-// by skipping the rendering of the layout.
+// It injects a CSRF cookie and enable sessions.
 func (core *Core) DynChain() alice.Chain {
-	chain := alice.New(injectCSRFCookie, optimizeTurboFrame)
+	chain := alice.New(injectCSRFCookie)
 	if core.session != nil {
 		chain = chain.Append(core.session.Enable)
 	}
@@ -243,6 +258,11 @@ func (core *Core) Render(w http.ResponseWriter, r *http.Request, name string, da
 // RenderStream is a convenient wrapper around views.RenderStream.
 func (core *Core) RenderStream(action StreamAction, target string, w http.ResponseWriter, r *http.Request, name string, data map[string]interface{}) {
 	core.views.RenderStream(action, target, w, r, name, data)
+}
+
+// Flash sets a flash message to the session.
+func (core *Core) Flash(r *http.Request, msg string) {
+	core.session.Put(r, "flash", msg)
 }
 
 // Run runs the http server and launches a goroutine

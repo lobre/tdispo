@@ -100,11 +100,20 @@ func run(args []string, stdout io.Writer) error {
 		return err
 	}
 
+	db := bow.NewDB(cfg.dsn, fsys)
+	if err := db.Open(); err != nil {
+		return err
+	}
+
 	app := application{
 		config:     cfg,
 		translator: translator,
 		locale:     locale,
 		lang:       lang,
+
+		statusService: &StatusService{db: db},
+		guestService:  &GuestService{db: db},
+		eventService:  &EventService{db: db},
 	}
 
 	funcs := template.FuncMap{
@@ -115,18 +124,13 @@ func run(args []string, stdout io.Writer) error {
 
 	app.Core, err = bow.NewCore(
 		fsys,
-		bow.WithDB(cfg.dsn),
 		bow.WithSession(cfg.sessionKey),
+		bow.WithGlobals(app.addGlobals),
 		bow.WithFuncs(funcs),
-		bow.WithDataInjector(app.addDefaultData),
 	)
 	if err != nil {
 		return err
 	}
-
-	app.statusService = &StatusService{db: app.DB()}
-	app.guestService = &GuestService{db: app.DB()}
-	app.eventService = &EventService{db: app.DB()}
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.port),
@@ -140,7 +144,7 @@ func run(args []string, stdout io.Writer) error {
 		return err
 	}
 
-	return app.DB().Close()
+	return db.Close()
 }
 
 // humanDate returns a nicely formatted string representation

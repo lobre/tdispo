@@ -3,7 +3,6 @@ package bow
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -20,17 +19,13 @@ type contextKey int
 
 const (
 	contextKeyLayout contextKey = iota
-	contextKeyStripLayout
 
 	partialPrefix = "_"
 	layoutsFolder = "layouts"
 )
 
-// DataInjector represents a func that can inject automatic data at the rendering of a view.
-type DataInjector func(*http.Request, map[string]interface{})
-
-// dynFuncMap is a dynamic version of template.FuncMap that is request-aware.
-type dynFuncMap map[string]func(r *http.Request) interface{}
+// ReqFuncMap is a dynamic version of template.FuncMap that is request-aware.
+type ReqFuncMap map[string]func(r *http.Request) interface{}
 
 // views is an engine that will render views from templates.
 type views struct {
@@ -40,8 +35,7 @@ type views struct {
 	partials map[string]*template.Template
 
 	funcs    template.FuncMap
-	dynFuncs dynFuncMap
-	injector DataInjector
+	reqFuncs ReqFuncMap
 }
 
 // serverError writes an error message and stack trace to the logger,
@@ -72,9 +66,6 @@ func (views *views) ClientError(w http.ResponseWriter, status int) {
 //
 // Partials files are named with a leading underscore to distinguish them from regular views,
 // but will be referred to without the underscore.
-//
-// injectData is a function that will be called when rendering page views so that data can be
-// automatically injected.
 func (views *views) Parse(fsys fs.FS) error {
 	var pages, partials, layouts []string
 
@@ -105,12 +96,9 @@ func (views *views) Parse(fsys fs.FS) error {
 	}
 
 	// create empty dynamic functions that will be redefined in render.
-	for k := range views.dynFuncs {
+	for k := range views.reqFuncs {
 		views.funcs[k] = func() string { return "" }
 	}
-
-	// also manually add a dynamic function to execute partials.
-	views.funcs["partial"] = func() string { return "" }
 
 	for _, page := range pages {
 		tmpl, err := parseTemplate(fsys, views.funcs, page, layouts)
@@ -141,7 +129,7 @@ func (views *views) Render(w http.ResponseWriter, r *http.Request, name string, 
 
 	partial, ok := views.partials[name]
 	if ok {
-		if err := views.injectAndRender(w, r, partial, "main", data); err != nil {
+		if err := views.renderWithFuncs(w, r, partial, "main", data); err != nil {
 			views.ServerError(w, err)
 		}
 		return
@@ -165,18 +153,13 @@ func (views *views) Render(w http.ResponseWriter, r *http.Request, name string, 
 		return
 	}
 
-	skipLayout, _ := r.Context().Value(contextKeyStripLayout).(bool)
-	if skipLayout {
-		layout = "main"
-	}
-
-	if err := views.injectAndRender(w, r, view, layout, data); err != nil {
+	if err := views.renderWithFuncs(w, r, view, layout, data); err != nil {
 		views.ServerError(w, err)
 	}
 }
 
-// injectAndRender injects default data and dynamic funcs and renders the given template.
-func (views *views) injectAndRender(w io.Writer, r *http.Request, tmpl *template.Template, name string, data map[string]interface{}) error {
+// renderWithFuncs injects dynamic funcs and renders the given template.
+func (views *views) renderWithFuncs(w io.Writer, r *http.Request, tmpl *template.Template, name string, data map[string]interface{}) error {
 	if data == nil {
 		data = make(map[string]interface{})
 	}
@@ -186,30 +169,11 @@ func (views *views) injectAndRender(w io.Writer, r *http.Request, tmpl *template
 		return err
 	}
 
-	for k, v := range views.dynFuncs {
-		views.funcs[k] = v(r)
-	}
-
-	// manually define the partial function.
-	// It cannot be added as a dynFuncMap as it requires name and data
-	views.funcs["partial"] = func(name string, data map[string]interface{}) (template.HTML, error) {
-		partial, ok := views.partials[name]
-		if !ok {
-			return "", fmt.Errorf("partial %s not found", name)
-		}
-
-		var buf bytes.Buffer
-		if err := views.injectAndRender(&buf, r, partial, "main", data); err != nil {
-			return "", err
-		}
-		return template.HTML(buf.String()), nil
+	for k, fn := range views.reqFuncs {
+		views.funcs[k] = fn(r)
 	}
 
 	tmpl.Funcs(views.funcs)
-
-	if views.injector != nil {
-		views.injector(r, data)
-	}
 
 	return renderBuffered(w, tmpl, name, data)
 }
@@ -275,15 +239,8 @@ func parseTemplate(fsys fs.FS, funcs template.FuncMap, main string, associated [
 	return tmpl, nil
 }
 
-// StripLayout returns a shallow copy of the request but
-// with the information that the layout should be stripped.
-func StripLayout(r *http.Request) *http.Request {
-	ctx := context.WithValue(r.Context(), contextKeyStripLayout, true)
-	return r.WithContext(ctx)
-}
-
-// WithLayout returns a shallow copy of the request but
-// with the information of the layout to apply.
+// WithLayout returns a shallow copy of the request but with the information of the layout to apply.
+// It can be used in a handler before calling render to change the layout.
 func WithLayout(r *http.Request, layout string) *http.Request {
 	ctx := context.WithValue(r.Context(), contextKeyLayout, layout)
 	return r.WithContext(ctx)
@@ -302,26 +259,23 @@ func ApplyLayout(layout string) func(http.Handler) http.Handler {
 	}
 }
 
-// mapFunc is a function that is injected to templates to allow to easily create maps.
-func mapFunc(values ...interface{}) (map[string]interface{}, error) {
-	if len(values)%2 != 0 {
-		return nil, errors.New("invalid number of argument in map call")
-	}
-
-	data := make(map[string]interface{})
-
-	for i := 0; i < len(values); i += 2 {
-		key, ok := values[i].(string)
-		if !ok {
-			return nil, errors.New("map keys must be strings")
-		}
-		data[key] = values[i+1]
-	}
-
-	return data, nil
-}
-
 // safe returns a verbatim unescaped HTML from a string
 func safe(s string) template.HTML {
 	return template.HTML(s)
+}
+
+// partial is meant to be added as a reqFuncMap to include partials from within templates.
+func (views *views) partial(r *http.Request) interface{} {
+	return func(name string, data map[string]interface{}) (template.HTML, error) {
+		partial, ok := views.partials[name]
+		if !ok {
+			return "", fmt.Errorf("partial %s not found", name)
+		}
+
+		var buf bytes.Buffer
+		if err := views.renderWithFuncs(&buf, r, partial, "main", data); err != nil {
+			return "", err
+		}
+		return template.HTML(buf.String()), nil
+	}
 }

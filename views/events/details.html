@@ -48,7 +48,7 @@
             {{ range $id, $label := $.AttendText }}
               <input type="radio" name="attend" value="{{ $id }}" 
                 {{ if and $.CurrentParticipation.Attend.Valid (eq $.CurrentParticipation.Attend.Int64 $id) }} checked {{ end }}
-                {{ if or $.IsAdmin $.Event.Upcoming }} enabled {{ else }} disabled {{ end }}>
+                {{ if or globals.IsAdmin $.Event.Upcoming }} enabled {{ else }} disabled {{ end }}>
               <label>{{ $label | translate }}</label> 
             {{ end }}
 
@@ -72,11 +72,11 @@
             {{ range $id, $label := $.AttendText }}
               <input type="radio" name="attend" value="{{ $id }}" 
                 {{ if and $part.Attend.Valid (eq $part.Attend.Int64 $id) }} checked {{ end }} 
-                {{ if $.IsAdmin }} enabled {{ else }} disabled {{ end }}>
+                {{ if globals.IsAdmin }} enabled {{ else }} disabled {{ end }}>
               <label>{{ $label | translate }}</label> 
             {{ end }}
 
-            {{ if or $.IsAdmin (eq $part.Guest.ID $.CurrentGuest.ID) }}
+            {{ if or globals.IsAdmin (eq $part.Guest.ID globals.CurrentGuest.ID) }}
               <noscript>
                 <input type="submit" value='{{ "Update" | translate }}'>
               </noscript>
