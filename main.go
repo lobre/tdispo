@@ -39,7 +39,7 @@ var (
 type config struct {
 	port       int
 	dsn        string
-	lang       string
+	locale     string
 	sessionKey string
 }
 
@@ -67,7 +67,7 @@ func run(args []string, stdout io.Writer) error {
 
 	flagSet.IntVar(&cfg.port, "port", 8080, "http server port")
 	flagSet.StringVar(&cfg.dsn, "dsn", "tdispo.db", "database data source name")
-	flagSet.StringVar(&cfg.lang, "lang", "auto", "language of the application as BCP 47")
+	flagSet.StringVar(&cfg.locale, "locale", "auto", "locale of the application")
 	flagSet.StringVar(&cfg.sessionKey, "session-key", "xxx", "session key for cookies encryption")
 
 	if err := flagSet.Parse(args[1:]); err != nil {
@@ -85,7 +85,7 @@ func run(args []string, stdout io.Writer) error {
 		bow.WithDB(cfg.dsn),
 		bow.WithSession(cfg.sessionKey),
 		bow.WithGlobals(app.addGlobals),
-		bow.WithTranslator(cfg.lang),
+		bow.WithTranslator(cfg.locale),
 	)
 	if err != nil {
 		return err

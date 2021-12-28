@@ -105,20 +105,17 @@ func WithDB(dsn string) Option {
 }
 
 // WithTranslator is an option to enable and configure the translator.
-// The lang parameter should represent a BCP 47 language.
-// If its value is "auto", it will be retrieved first from the "lang" cookie,
-// then from the "Accept-Language" request header.
+// If the locale paramater value is "auto", the locale will be retrieved
+// first from the "lang" cookie, then from the "Accept-Language" request header.
 // If it cannot retrieve it, messages will be returned untranslated.
-func WithTranslator(lang string) Option {
+func WithTranslator(locale string) Option {
 	return func(core *Core) error {
 		core.translator = NewTranslator()
 		if err := core.translator.Parse(core.fsys); err != nil {
 			return err
 		}
 
-		locale := LocaleFromBCP47(lang)
-
-		if lang != "auto" {
+		if locale != "auto" {
 			core.Views.Funcs(template.FuncMap{
 				"translate": func(msg string) string {
 					return core.translator.Translate(msg, locale)

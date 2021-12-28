@@ -24,7 +24,7 @@ const (
 type index map[string]string
 
 // Translator allows to translate a message from english to a predefined
-// set of languages parsed from csv files. Il also deals with date and time formats.
+// set of locales parsed from csv files. Il also deals with date and time formats.
 type Translator struct {
 	dict      map[string]index
 	regexDict map[string]index // used for translations with placeholders
@@ -205,11 +205,6 @@ func (tr *Translator) ReqLocale(r *http.Request) string {
 	lang, _ := r.Cookie("lang")
 	tag, _ := language.MatchStrings(tr.matcher, lang.String(), r.Header.Get("Accept-Language"))
 	return localeFromTag(tag)
-}
-
-// LocaleFromBCP47 returns the locale representation of a BCP 47 language string.
-func LocaleFromBCP47(lang string) string {
-	return localeFromTag(language.Make(lang))
 }
 
 // localeFromTag returns a locale from a language tag.
