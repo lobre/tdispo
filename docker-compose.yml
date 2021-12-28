@@ -6,6 +6,7 @@ volumes:
 services: 
   app: 
     build: .
+    command: ["-dsn", "/root/tdispo.db", "-session-key", "${key}"]
     volumes:
       - db:/root
     labels: 
