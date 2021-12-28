@@ -29,11 +29,9 @@ type templateData struct {
 // addGlobals automatically injects data that are common to all pages.
 func (app *application) addGlobals(r *http.Request) interface{} {
 	return struct {
-		Lang         string
 		CurrentGuest *Guest
 		IsAdmin      bool
 	}{
-		app.lang,
 		currentGuest(r),
 		app.isAdmin(r),
 	}
@@ -44,16 +42,16 @@ func (app *application) addGlobals(r *http.Request) interface{} {
 // request context.
 func (app *application) recognizeGuest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if ok := app.Session().Exists(r, "guest"); !ok {
+		if ok := app.Session.Exists(r, "guest"); !ok {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		guest, err := app.guestService.FindGuestByID(r.Context(), app.Session().GetInt(r, "guest"))
+		guest, err := app.guestService.FindGuestByID(r.Context(), app.Session.GetInt(r, "guest"))
 		if errors.Is(err, ErrNoRecord) {
-			app.Session().Remove(r, "guest")
+			app.Session.Remove(r, "guest")
 		} else if err != nil {
-			app.ServerError(w, err)
+			app.Views.ServerError(w, err)
 			return
 		}
 
@@ -89,7 +87,7 @@ func currentGuest(r *http.Request) *Guest {
 // isAdmin returns true if the current user is connected
 // as admin, otherwise false.
 func (app *application) isAdmin(r *http.Request) bool {
-	return app.Session().GetBool(r, "isAdmin")
+	return app.Session.GetBool(r, "isAdmin")
 }
 
 // requireAdmin is a middleware that redirects the user to the homepage

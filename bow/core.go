@@ -21,13 +21,16 @@ import (
 // Core holds the core logic to configure and run a simple web app.
 // It is meant to be embedded in a parent web app structure.
 type Core struct {
-	logger *log.Logger
-	fsys   fs.FS
-	hfsys  *hashfs.FS
+	fsys  fs.FS
+	hfsys *hashfs.FS
 
-	db      *DB
-	views   *views
-	session *sessions.Session
+	Logger *log.Logger
+
+	DB      *DB
+	Views   *Views
+	Session *sessions.Session
+
+	translator *Translator
 }
 
 // NewCore creates a core with sane defaults. Options can be used for specific configurations.
@@ -35,17 +38,12 @@ func NewCore(fsys fs.FS, options ...Option) (*Core, error) {
 	hfsys := hashfs.NewFS(fsys)
 
 	core := &Core{
-		logger: log.New(os.Stdout, "", log.Ldate|log.Ltime),
+		Logger: log.New(os.Stdout, "", log.Ldate|log.Ltime),
 
 		fsys:  fsys,
 		hfsys: hfsys,
 
-		views: &views{
-			pages:    make(map[string]*template.Template),
-			partials: make(map[string]*template.Template),
-			funcs:    make(template.FuncMap),
-			reqFuncs: make(ReqFuncMap),
-		},
+		Views: NewViews(),
 	}
 
 	for _, opt := range options {
@@ -54,26 +52,30 @@ func NewCore(fsys fs.FS, options ...Option) (*Core, error) {
 		}
 	}
 
-	core.views.logger = core.logger
+	// reapply logger to match the one provided as option
+	core.Views.Logger = core.Logger
 
 	// set default funcs
-	core.views.funcs["hash"] = hfsys.HashName
-	core.views.funcs["safe"] = safe
+	core.Views.Funcs(template.FuncMap{
+		"hash": hfsys.HashName,
+	})
 
 	// set default req funcs
-	core.views.reqFuncs["partial"] = core.views.partial
-	core.views.reqFuncs["flash"] = func(r *http.Request) interface{} {
-		return func() string {
-			return core.session.PopString(r, "flash")
-		}
-	}
-	core.views.reqFuncs["csrf"] = func(r *http.Request) interface{} {
-		return func() string {
-			return nosurf.Token(r)
-		}
-	}
+	core.Views.ReqFuncs(ReqFuncMap{
+		"csrf": func(r *http.Request) interface{} {
+			return func() string {
+				return nosurf.Token(r)
+			}
+		},
 
-	if err := core.views.Parse(fsys); err != nil {
+		"flash": func(r *http.Request) interface{} {
+			return func() string {
+				return core.Session.PopString(r, "flash")
+			}
+		},
+	})
+
+	if err := core.Views.Parse(fsys); err != nil {
 		return nil, err
 	}
 
@@ -86,7 +88,7 @@ type Option func(*Core) error
 // WithLogger is an option to set the application logger.
 func WithLogger(logger *log.Logger) Option {
 	return func(core *Core) error {
-		core.logger = logger
+		core.Logger = logger
 		return nil
 	}
 }
@@ -94,10 +96,100 @@ func WithLogger(logger *log.Logger) Option {
 // WithDB is an option to enable and configure the database access.
 func WithDB(dsn string) Option {
 	return func(core *Core) error {
-		core.db = NewDB(dsn, core.fsys)
-		if err := core.db.Open(); err != nil {
+		core.DB = NewDB(dsn, core.fsys)
+		if err := core.DB.Open(); err != nil {
 			return err
 		}
+		return nil
+	}
+}
+
+// WithTranslator is an option to enable and configure the translator.
+// Pass "auto" as the lang and it will try to retrieve it first
+// from the "lang" cookie, then from the "Accept-Language" request header.
+// If it cannot retrieve it, messages will be returned untranslated.
+func WithTranslator(lang string) Option {
+	return func(core *Core) error {
+		core.translator = NewTranslator()
+		if err := core.translator.Parse(core.fsys); err != nil {
+			return err
+		}
+
+		core.Views.ReqFuncs(ReqFuncMap{
+			"translate": func(r *http.Request) interface{} {
+				l := lang
+				if lang == "auto" {
+					l = core.translator.ReqLang(r)
+				}
+				return func(msg string) string {
+					return core.translator.Translate(msg, l)
+				}
+			},
+			"langCode": func(r *http.Request) interface{} {
+				l := lang
+				if lang == "auto" {
+					l = core.translator.ReqLang(r)
+				}
+				return func() string {
+					return LangCode(l)
+				}
+			},
+			"dateTime": func(r *http.Request) interface{} {
+				l := lang
+				if lang == "auto" {
+					l = core.translator.ReqLang(r)
+				}
+				return func(t time.Time) string {
+					return FormatDateTime(t, l)
+				}
+			},
+			"dateFull": func(r *http.Request) interface{} {
+				l := lang
+				if lang == "auto" {
+					l = core.translator.ReqLang(r)
+				}
+				return func(t time.Time) string {
+					return FormatDateFull(t, l)
+				}
+			},
+			"dateLong": func(r *http.Request) interface{} {
+				l := lang
+				if lang == "auto" {
+					l = core.translator.ReqLang(r)
+				}
+				return func(t time.Time) string {
+					return FormatDateLong(t, l)
+				}
+			},
+			"dateMedium": func(r *http.Request) interface{} {
+				l := lang
+				if lang == "auto" {
+					l = core.translator.ReqLang(r)
+				}
+				return func(t time.Time) string {
+					return FormatDateMedium(t, l)
+				}
+			},
+			"dateShort": func(r *http.Request) interface{} {
+				l := lang
+				if lang == "auto" {
+					l = core.translator.ReqLang(r)
+				}
+				return func(t time.Time) string {
+					return FormatDateShort(t, l)
+				}
+			},
+			"time": func(r *http.Request) interface{} {
+				l := lang
+				if lang == "auto" {
+					l = core.translator.ReqLang(r)
+				}
+				return func(t time.Time) string {
+					return FormatTime(t, l)
+				}
+			},
+		})
+
 		return nil
 	}
 }
@@ -107,8 +199,8 @@ func WithDB(dsn string) Option {
 // and encrypt sessions cookies, and should be 32 bytes long.
 func WithSession(key string) Option {
 	return func(core *Core) error {
-		core.session = sessions.New([]byte(key))
-		core.session.Lifetime = 12 * time.Hour
+		core.Session = sessions.New([]byte(key))
+		core.Session.Lifetime = 12 * time.Hour
 		return nil
 	}
 }
@@ -118,7 +210,7 @@ func WithSession(key string) Option {
 func WithFuncs(funcs template.FuncMap) Option {
 	return func(core *Core) error {
 		for k, fn := range funcs {
-			core.views.funcs[k] = fn
+			core.Views.funcs[k] = fn
 		}
 		return nil
 	}
@@ -129,7 +221,7 @@ func WithFuncs(funcs template.FuncMap) Option {
 func WithReqFuncs(funcs ReqFuncMap) Option {
 	return func(core *Core) error {
 		for k, fn := range funcs {
-			core.views.reqFuncs[k] = fn
+			core.Views.reqFuncs[k] = fn
 		}
 		return nil
 	}
@@ -140,11 +232,13 @@ func WithReqFuncs(funcs ReqFuncMap) Option {
 // "globals" helper template function.
 func WithGlobals(fn func(*http.Request) interface{}) Option {
 	return func(core *Core) error {
-		core.views.reqFuncs["globals"] = func(r *http.Request) interface{} {
-			return func() interface{} {
-				return fn(r)
-			}
-		}
+		core.Views.ReqFuncs(ReqFuncMap{
+			"globals": func(r *http.Request) interface{} {
+				return func() interface{} {
+					return fn(r)
+				}
+			},
+		})
 		return nil
 	}
 }
@@ -154,16 +248,6 @@ func WithGlobals(fn func(*http.Request) interface{}) Option {
 // A hashName function is defined in templates to gather the hashed filename of a file.
 func (core *Core) FileServer() http.Handler {
 	return hashfs.FileServer(core.hfsys)
-}
-
-// Log returns the application logger.
-func (core *Core) Log() *log.Logger {
-	return core.logger
-}
-
-// Session returns the application session.
-func (core *Core) Session() *sessions.Session {
-	return core.session
 }
 
 // StdChain returns a chain of middleware that can be applied to all routes.
@@ -181,8 +265,8 @@ func (core *Core) StdChain() alice.Chain {
 // It injects a CSRF cookie and enable sessions.
 func (core *Core) DynChain() alice.Chain {
 	chain := alice.New(injectCSRFCookie)
-	if core.session != nil {
-		chain = chain.Append(core.session.Enable)
+	if core.Session != nil {
+		chain = chain.Append(core.Session.Enable)
 	}
 	return chain
 }
@@ -190,7 +274,7 @@ func (core *Core) DynChain() alice.Chain {
 // logRequest is a middleware that logs the request to the application logger.
 func (core *Core) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		core.logger.Printf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
+		core.Logger.Printf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
 		next.ServeHTTP(w, r)
 	})
 }
@@ -206,7 +290,7 @@ func (core *Core) recoverPanic(next http.Handler) http.Handler {
 			if err := recover(); err != nil {
 				// make the http.Server automatically close the current connection.
 				w.Header().Set("Connection", "close")
-				core.ServerError(w, fmt.Errorf("%s", err))
+				core.Views.ServerError(w, fmt.Errorf("%s", err))
 			}
 		}()
 
@@ -240,29 +324,9 @@ func injectCSRFCookie(next http.Handler) http.Handler {
 	return csrfHandler
 }
 
-// ServerError is a convenient wrapper around views.ServerError.
-func (core *Core) ServerError(w http.ResponseWriter, err error) {
-	core.views.ServerError(w, err)
-}
-
-// ClientError is a convenient wrapper around views.ClientError.
-func (core *Core) ClientError(w http.ResponseWriter, status int) {
-	core.views.ClientError(w, status)
-}
-
-// Render is a convenient wrapper around views.Render.
-func (core *Core) Render(w http.ResponseWriter, r *http.Request, name string, data interface{}) {
-	core.views.Render(w, r, name, data)
-}
-
-// RenderStream is a convenient wrapper around views.RenderStream.
-func (core *Core) RenderStream(action StreamAction, target string, w http.ResponseWriter, r *http.Request, name string, data interface{}) {
-	core.views.RenderStream(action, target, w, r, name, data)
-}
-
 // Flash sets a flash message to the session.
 func (core *Core) Flash(r *http.Request, msg string) {
-	core.session.Put(r, "flash", msg)
+	core.Session.Put(r, "flash", msg)
 }
 
 // Run runs the http server and launches a goroutine
@@ -275,7 +339,7 @@ func (core *Core) Run(srv *http.Server) error {
 		signal.Notify(stop, os.Interrupt)
 		<-stop
 
-		core.logger.Println("shutting down server")
+		core.Logger.Println("shutting down server")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -283,7 +347,7 @@ func (core *Core) Run(srv *http.Server) error {
 		shutdown <- srv.Shutdown(ctx)
 	}()
 
-	core.logger.Printf("starting server on %s\n", srv.Addr)
+	core.Logger.Printf("starting server on %s\n", srv.Addr)
 
 	err := srv.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {
@@ -295,7 +359,7 @@ func (core *Core) Run(srv *http.Server) error {
 		return err
 	}
 
-	core.logger.Println("server stopped")
+	core.Logger.Println("server stopped")
 
 	return nil
 }

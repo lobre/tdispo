@@ -15,17 +15,17 @@ import (
 func (app *application) findStatuses(w http.ResponseWriter, r *http.Request) {
 	statuses, _, err := app.statusService.FindStatuses(r.Context())
 	if err != nil {
-		app.ServerError(w, err)
+		app.Views.ServerError(w, err)
 		return
 	}
 
-	app.Render(w, r, "statuses/list", templateData{
+	app.Views.Render(w, r, "statuses/list", templateData{
 		Statuses: statuses,
 	})
 }
 
 func (app *application) createStatusForm(w http.ResponseWriter, r *http.Request) {
-	app.Render(w, r, "statuses/create_form", templateData{
+	app.Views.Render(w, r, "statuses/create_form", templateData{
 		Form: bow.NewForm(nil),
 	})
 }
@@ -33,7 +33,7 @@ func (app *application) createStatusForm(w http.ResponseWriter, r *http.Request)
 func (app *application) createStatus(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		app.ClientError(w, http.StatusBadRequest)
+		app.Views.ClientError(w, http.StatusBadRequest)
 		return
 	}
 
@@ -42,7 +42,7 @@ func (app *application) createStatus(w http.ResponseWriter, r *http.Request) {
 
 	if !form.Valid() {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		app.Render(w, r, "statuses/create_form", templateData{
+		app.Views.Render(w, r, "statuses/create_form", templateData{
 			Form: form,
 		})
 		return
@@ -55,7 +55,7 @@ func (app *application) createStatus(w http.ResponseWriter, r *http.Request) {
 
 	err = app.statusService.CreateStatus(r.Context(), &s)
 	if err != nil {
-		app.ServerError(w, err)
+		app.Views.ServerError(w, err)
 		return
 	}
 
@@ -74,7 +74,7 @@ func (app *application) deleteStatus(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusConflict)
 		app.Flash(r, "Can’t delete a status assigned to an existing event")
 	} else if err != nil {
-		app.ServerError(w, err)
+		app.Views.ServerError(w, err)
 		return
 	}
 
@@ -97,11 +97,11 @@ func (app *application) findEvents(w http.ResponseWriter, r *http.Request) {
 
 	events, _, err := app.eventService.FindEvents(r.Context(), filter)
 	if err != nil {
-		app.ServerError(w, err)
+		app.Views.ServerError(w, err)
 		return
 	}
 
-	app.Render(w, r, "events/list", templateData{
+	app.Views.Render(w, r, "events/list", templateData{
 		Form: bow.NewForm(url.Values{
 			"q":    []string{q},
 			"past": []string{past},
@@ -124,14 +124,14 @@ func (app *application) findEventByID(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 			return
 		} else {
-			app.ServerError(w, err)
+			app.Views.ServerError(w, err)
 			return
 		}
 	}
 	// extract participation from current guest to be able to display it first
 	currentPart := event.ExtractParticipation(currentGuest(r))
 
-	app.Render(w, r, "events/details", templateData{
+	app.Views.Render(w, r, "events/details", templateData{
 		Event:                event,
 		CurrentParticipation: currentPart,
 		AttendText:           AttendText,
@@ -141,11 +141,11 @@ func (app *application) findEventByID(w http.ResponseWriter, r *http.Request) {
 func (app *application) createEventForm(w http.ResponseWriter, r *http.Request) {
 	statuses, _, err := app.statusService.FindStatuses(r.Context())
 	if err != nil {
-		app.ServerError(w, err)
+		app.Views.ServerError(w, err)
 		return
 	}
 
-	app.Render(w, r, "events/create_form", templateData{
+	app.Views.Render(w, r, "events/create_form", templateData{
 		Form:     bow.NewForm(nil),
 		Statuses: statuses,
 	})
@@ -154,7 +154,7 @@ func (app *application) createEventForm(w http.ResponseWriter, r *http.Request) 
 func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		app.ClientError(w, http.StatusBadRequest)
+		app.Views.ClientError(w, http.StatusBadRequest)
 		return
 	}
 
@@ -174,12 +174,12 @@ func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 	if !form.Valid() {
 		statuses, _, err := app.statusService.FindStatuses(r.Context())
 		if err != nil {
-			app.ServerError(w, err)
+			app.Views.ServerError(w, err)
 			return
 		}
 
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		app.Render(w, r, "events/create_form", templateData{
+		app.Views.Render(w, r, "events/create_form", templateData{
 			Form:     form,
 			Statuses: statuses,
 		})
@@ -188,13 +188,13 @@ func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 
 	statusID, err := strconv.Atoi(form.Get("status"))
 	if err != nil {
-		app.ClientError(w, http.StatusBadRequest)
+		app.Views.ClientError(w, http.StatusBadRequest)
 		return
 	}
 
 	startDate, err := time.Parse(layoutDatetime, fmt.Sprintf("%s %s", form.Get("startdate"), form.Get("starttime")))
 	if err != nil {
-		app.ClientError(w, http.StatusBadRequest)
+		app.Views.ClientError(w, http.StatusBadRequest)
 		return
 	}
 
@@ -202,7 +202,7 @@ func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 	if form.Get("enddate") != "" || form.Get("endtime") != "" {
 		endDate.Time, err = time.Parse(layoutDatetime, fmt.Sprintf("%s %s", form.Get("enddate"), form.Get("endtime")))
 		if err != nil {
-			app.ClientError(w, http.StatusBadRequest)
+			app.Views.ClientError(w, http.StatusBadRequest)
 			return
 		}
 		endDate.Valid = true
@@ -224,7 +224,7 @@ func (app *application) createEvent(w http.ResponseWriter, r *http.Request) {
 
 	err = app.eventService.CreateEvent(r.Context(), &evt)
 	if err != nil {
-		app.ServerError(w, err)
+		app.Views.ServerError(w, err)
 		return
 	}
 
@@ -240,13 +240,13 @@ func (app *application) updateEventForm(w http.ResponseWriter, r *http.Request) 
 
 	evt, err := app.eventService.FindEventByID(r.Context(), id)
 	if err != nil {
-		app.ServerError(w, err)
+		app.Views.ServerError(w, err)
 		return
 	}
 
 	statuses, _, err := app.statusService.FindStatuses(r.Context())
 	if err != nil {
-		app.ServerError(w, err)
+		app.Views.ServerError(w, err)
 		return
 	}
 
@@ -256,7 +256,7 @@ func (app *application) updateEventForm(w http.ResponseWriter, r *http.Request) 
 		endTime = evt.EndsAt.Time.Format(layoutTime)
 	}
 
-	app.Render(w, r, "events/update_form", templateData{
+	app.Views.Render(w, r, "events/update_form", templateData{
 		Form: bow.NewForm(url.Values{
 			"title":       []string{evt.Title},
 			"startdate":   []string{evt.StartsAt.Format(layoutDate)},
@@ -279,7 +279,7 @@ func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 
 	err = r.ParseForm()
 	if err != nil {
-		app.ClientError(w, http.StatusBadRequest)
+		app.Views.ClientError(w, http.StatusBadRequest)
 		return
 	}
 
@@ -299,18 +299,18 @@ func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 	if !form.Valid() {
 		evt, err := app.eventService.FindEventByID(r.Context(), id)
 		if err != nil {
-			app.ServerError(w, err)
+			app.Views.ServerError(w, err)
 			return
 		}
 
 		statuses, _, err := app.statusService.FindStatuses(r.Context())
 		if err != nil {
-			app.ServerError(w, err)
+			app.Views.ServerError(w, err)
 			return
 		}
 
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		app.Render(w, r, "events/update_form", templateData{
+		app.Views.Render(w, r, "events/update_form", templateData{
 			Form:     form,
 			Event:    evt,
 			Statuses: statuses,
@@ -321,13 +321,13 @@ func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 
 	statusID, err := strconv.Atoi(form.Get("status"))
 	if err != nil {
-		app.ClientError(w, http.StatusBadRequest)
+		app.Views.ClientError(w, http.StatusBadRequest)
 		return
 	}
 
 	startDate, err := time.Parse(layoutDatetime, fmt.Sprintf("%s %s", form.Get("startdate"), form.Get("starttime")))
 	if err != nil {
-		app.ClientError(w, http.StatusBadRequest)
+		app.Views.ClientError(w, http.StatusBadRequest)
 		return
 	}
 
@@ -335,7 +335,7 @@ func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 	if form.Get("enddate") != "" || form.Get("endtime") != "" {
 		endDate.Time, err = time.Parse(layoutDatetime, fmt.Sprintf("%s %s", form.Get("enddate"), form.Get("endtime")))
 		if err != nil {
-			app.ClientError(w, http.StatusBadRequest)
+			app.Views.ClientError(w, http.StatusBadRequest)
 			return
 		}
 		endDate.Valid = true
@@ -359,7 +359,7 @@ func (app *application) updateEvent(w http.ResponseWriter, r *http.Request) {
 
 	_, err = app.eventService.UpdateEvent(r.Context(), id, upd)
 	if err != nil {
-		app.ServerError(w, err)
+		app.Views.ServerError(w, err)
 		return
 	}
 
@@ -375,7 +375,7 @@ func (app *application) deleteEvent(w http.ResponseWriter, r *http.Request) {
 
 	err = app.eventService.DeleteEvent(r.Context(), id)
 	if err != nil {
-		app.ServerError(w, err)
+		app.Views.ServerError(w, err)
 		return
 	}
 
@@ -385,17 +385,17 @@ func (app *application) deleteEvent(w http.ResponseWriter, r *http.Request) {
 func (app *application) findGuests(w http.ResponseWriter, r *http.Request) {
 	guests, _, err := app.guestService.FindGuests(r.Context(), GuestFilter{})
 	if err != nil {
-		app.ServerError(w, err)
+		app.Views.ServerError(w, err)
 		return
 	}
 
-	app.Render(w, r, "guests/list", templateData{
+	app.Views.Render(w, r, "guests/list", templateData{
 		Guests: guests,
 	})
 }
 
 func (app *application) createGuestForm(w http.ResponseWriter, r *http.Request) {
-	app.Render(w, r, "guests/create_form", templateData{
+	app.Views.Render(w, r, "guests/create_form", templateData{
 		Form: bow.NewForm(nil),
 	})
 }
@@ -403,7 +403,7 @@ func (app *application) createGuestForm(w http.ResponseWriter, r *http.Request) 
 func (app *application) createGuest(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		app.ClientError(w, http.StatusBadRequest)
+		app.Views.ClientError(w, http.StatusBadRequest)
 		return
 	}
 
@@ -412,7 +412,7 @@ func (app *application) createGuest(w http.ResponseWriter, r *http.Request) {
 
 	if !form.Valid() {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		app.Render(w, r, "guests/create_form", templateData{
+		app.Views.Render(w, r, "guests/create_form", templateData{
 			Form: form,
 		})
 		return
@@ -428,13 +428,13 @@ func (app *application) createGuest(w http.ResponseWriter, r *http.Request) {
 		form.CustomError("email", "The email address already exists")
 
 		w.WriteHeader(http.StatusConflict)
-		app.Render(w, r, "guests/create_form", templateData{
+		app.Views.Render(w, r, "guests/create_form", templateData{
 			Form: form,
 		})
 
 		return
 	} else if err != nil {
-		app.ServerError(w, err)
+		app.Views.ServerError(w, err)
 		return
 	}
 
@@ -454,12 +454,12 @@ func (app *application) updateGuestForm(w http.ResponseWriter, r *http.Request) 
 			http.NotFound(w, r)
 			return
 		} else {
-			app.ServerError(w, err)
+			app.Views.ServerError(w, err)
 			return
 		}
 	}
 
-	app.Render(w, r, "guests/update_form", templateData{
+	app.Views.Render(w, r, "guests/update_form", templateData{
 		Form: bow.NewForm(url.Values{
 			"name":  []string{guest.Name},
 			"email": []string{guest.Email},
@@ -477,7 +477,7 @@ func (app *application) updateGuest(w http.ResponseWriter, r *http.Request) {
 
 	err = r.ParseForm()
 	if err != nil {
-		app.ClientError(w, http.StatusBadRequest)
+		app.Views.ClientError(w, http.StatusBadRequest)
 		return
 	}
 
@@ -487,12 +487,12 @@ func (app *application) updateGuest(w http.ResponseWriter, r *http.Request) {
 	if !form.Valid() {
 		guest, err := app.guestService.FindGuestByID(r.Context(), id)
 		if err != nil {
-			app.ServerError(w, err)
+			app.Views.ServerError(w, err)
 			return
 		}
 
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		app.Render(w, r, "guests/update_form", templateData{
+		app.Views.Render(w, r, "guests/update_form", templateData{
 			Form:  form,
 			Guest: guest,
 		})
@@ -510,7 +510,7 @@ func (app *application) updateGuest(w http.ResponseWriter, r *http.Request) {
 
 	_, err = app.guestService.UpdateGuest(r.Context(), id, upd)
 	if err != nil {
-		app.ServerError(w, err)
+		app.Views.ServerError(w, err)
 		return
 	}
 
@@ -526,7 +526,7 @@ func (app *application) deleteGuest(w http.ResponseWriter, r *http.Request) {
 
 	err = app.guestService.DeleteGuest(r.Context(), id)
 	if err != nil {
-		app.ServerError(w, err)
+		app.Views.ServerError(w, err)
 		return
 	}
 
@@ -546,7 +546,7 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 			return
 		} else {
-			app.ServerError(w, err)
+			app.Views.ServerError(w, err)
 			return
 		}
 	}
@@ -559,17 +559,17 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 
 	if !app.isAdmin(r) && currentGuest(r).ID != guestID {
 		// can’t participate for another guest if not admin
-		app.ClientError(w, http.StatusForbidden)
+		app.Views.ClientError(w, http.StatusForbidden)
 		return
 	} else if !app.isAdmin(r) && !event.Upcoming() {
 		// can’t participate to past events if not admin
-		app.ClientError(w, http.StatusForbidden)
+		app.Views.ClientError(w, http.StatusForbidden)
 		return
 	}
 
 	err = r.ParseForm()
 	if err != nil {
-		app.ClientError(w, http.StatusBadRequest)
+		app.Views.ClientError(w, http.StatusBadRequest)
 		return
 	}
 
@@ -579,7 +579,7 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 	if form.Get("attend") != "" {
 		attend.Int64, err = strconv.ParseInt(form.Get("attend"), 10, 64)
 		if err != nil {
-			app.ClientError(w, http.StatusBadRequest)
+			app.Views.ClientError(w, http.StatusBadRequest)
 			return
 		}
 		attend.Valid = true
@@ -591,7 +591,7 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 		Attend:  attend,
 	})
 	if err != nil {
-		app.ServerError(w, err)
+		app.Views.ServerError(w, err)
 		return
 	}
 
@@ -602,7 +602,7 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 			return
 		} else {
-			app.ServerError(w, err)
+			app.Views.ServerError(w, err)
 			return
 		}
 	}
@@ -610,7 +610,7 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 	// extract participation from current guest to be able to display it first
 	currentPart := event.ExtractParticipation(currentGuest(r))
 
-	app.Render(w, r, "events/details", templateData{
+	app.Views.Render(w, r, "events/details", templateData{
 		Event:                event,
 		CurrentParticipation: currentPart,
 		AttendText:           AttendText,
@@ -620,11 +620,11 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 func (app *application) whoAreYou(w http.ResponseWriter, r *http.Request) {
 	guests, _, err := app.guestService.FindGuests(r.Context(), GuestFilter{})
 	if err != nil {
-		app.ServerError(w, err)
+		app.Views.ServerError(w, err)
 		return
 	}
 
-	app.Render(w, r, "guests/whoareyou", templateData{
+	app.Views.Render(w, r, "guests/whoareyou", templateData{
 		Guests: guests,
 	})
 }
@@ -636,16 +636,16 @@ func (app *application) iAm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.Session().Put(r, "guest", id)
+	app.Session.Put(r, "guest", id)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (app *application) admin(w http.ResponseWriter, r *http.Request) {
-	app.Session().Put(r, "isAdmin", true)
+	app.Session.Put(r, "isAdmin", true)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (app *application) noAdmin(w http.ResponseWriter, r *http.Request) {
-	app.Session().Remove(r, "isAdmin")
+	app.Session.Remove(r, "isAdmin")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

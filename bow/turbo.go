@@ -31,7 +31,7 @@ func AcceptsStream(r *http.Request) bool {
 
 // RenderStream renders a partial view and wraps it in a turbo stream tag.
 // It also sets the appropriate Content-Type header on the response.
-func (views *views) RenderStream(action StreamAction, target string, w http.ResponseWriter, r *http.Request, name string, data interface{}) {
+func (views *Views) RenderStream(action StreamAction, target string, w http.ResponseWriter, r *http.Request, name string, data interface{}) {
 	w.Header().Set("Content-Type", streamMime)
 
 	var buf bytes.Buffer

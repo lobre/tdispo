@@ -27,9 +27,9 @@ const (
 // ReqFuncMap is a dynamic version of template.FuncMap that is request-aware.
 type ReqFuncMap map[string]func(r *http.Request) interface{}
 
-// views is an engine that will render views from templates.
-type views struct {
-	logger *log.Logger
+// Views is an engine that will render Views from templates.
+type Views struct {
+	Logger *log.Logger
 
 	pages    map[string]*template.Template
 	partials map[string]*template.Template
@@ -38,19 +38,46 @@ type views struct {
 	reqFuncs ReqFuncMap
 }
 
-// serverError writes an error message and stack trace to the logger,
-// then sends a generic 500 Internal Server Error response to the user.
-func (views *views) ServerError(w http.ResponseWriter, err error) {
-	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-	views.logger.Output(2, trace)
+// NewViews creates a views engine.
+func NewViews() *Views {
+	views := Views{
+		Logger: log.New(os.Stdout, "", log.Ldate|log.Ltime),
 
-	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		pages:    make(map[string]*template.Template),
+		partials: make(map[string]*template.Template),
+		funcs:    make(template.FuncMap),
+		reqFuncs: make(ReqFuncMap),
+	}
+
+	views.Funcs(template.FuncMap{
+		"safe": safe,
+	})
+
+	views.ReqFuncs(ReqFuncMap{
+		"partial": views.partial,
+	})
+
+	return &views
 }
 
-// clientError sends a specific status code and corresponding description to the user.
-// This should be used to send responses when there's a problem with the request that the user sent.
-func (views *views) ClientError(w http.ResponseWriter, status int) {
-	http.Error(w, http.StatusText(status), status)
+// Funcs adds the elements of the argument map to the list of
+// functions to inject into templates.
+func (views *Views) Funcs(funcs template.FuncMap) {
+	for k, fn := range funcs {
+		views.funcs[k] = fn
+	}
+}
+
+// ReqFuncs adds the elements of the argument map to the list of
+// request-aware functions to inject into templates.
+func (views *Views) ReqFuncs(reqFuncs ReqFuncMap) {
+	for k, fn := range reqFuncs {
+		views.reqFuncs[k] = fn
+
+		// also add a corresponding empty function to funcs
+		// that will be redifined at the rendering with the request info.
+		views.funcs[k] = func() string { return "" }
+	}
 }
 
 // Parse walks a filesystem from the root folder to discover and parse
@@ -66,7 +93,7 @@ func (views *views) ClientError(w http.ResponseWriter, status int) {
 //
 // Partials files are named with a leading underscore to distinguish them from regular views,
 // but will be referred to without the underscore.
-func (views *views) Parse(fsys fs.FS) error {
+func (views *Views) Parse(fsys fs.FS) error {
 	var pages, partials, layouts []string
 
 	err := fs.WalkDir(fsys, "views", func(path string, d fs.DirEntry, err error) error {
@@ -95,11 +122,6 @@ func (views *views) Parse(fsys fs.FS) error {
 		return err
 	}
 
-	// create empty dynamic functions that will be redefined in render.
-	for k := range views.reqFuncs {
-		views.funcs[k] = func() string { return "" }
-	}
-
 	for _, page := range pages {
 		tmpl, err := parseTemplate(fsys, views.funcs, page, layouts)
 		if err != nil {
@@ -122,9 +144,10 @@ func (views *views) Parse(fsys fs.FS) error {
 }
 
 // Render renders a given view or partial.
+//
 // For page views, the layout can be set using the WithLayout function or using the ApplyLayout middleware.
 // If no layout is defined, the "base" layout will be chosen. Partial views are rendered without any layout.
-func (views *views) Render(w http.ResponseWriter, r *http.Request, name string, data interface{}) {
+func (views *Views) Render(w http.ResponseWriter, r *http.Request, name string, data interface{}) {
 	w.Header().Set("Content-Type", "text/html")
 
 	partial, ok := views.partials[name]
@@ -158,8 +181,23 @@ func (views *views) Render(w http.ResponseWriter, r *http.Request, name string, 
 	}
 }
 
+// ServerError writes an error message and stack trace to the logger,
+// then sends a generic 500 Internal Server Error response to the user.
+func (views *Views) ServerError(w http.ResponseWriter, err error) {
+	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
+	views.Logger.Output(2, trace)
+
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+}
+
+// ClientError sends a specific status code and corresponding description to the user.
+// This should be used to send responses when there's a problem with the request that the user sent.
+func (views *Views) ClientError(w http.ResponseWriter, status int) {
+	http.Error(w, http.StatusText(status), status)
+}
+
 // renderWithFuncs injects dynamic funcs and renders the given template.
-func (views *views) renderWithFuncs(w io.Writer, r *http.Request, tmpl *template.Template, name string, data interface{}) error {
+func (views *Views) renderWithFuncs(w io.Writer, r *http.Request, tmpl *template.Template, name string, data interface{}) error {
 	tmpl, err := tmpl.Clone()
 	if err != nil {
 		return err
@@ -229,7 +267,10 @@ func parseTemplate(fsys fs.FS, funcs template.FuncMap, main string, associated [
 			return nil, err
 		}
 
-		tmpl.New(templateName(path)).Parse(string(b))
+		_, err = tmpl.New(templateName(path)).Parse(string(b))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return tmpl, nil
@@ -255,13 +296,13 @@ func ApplyLayout(layout string) func(http.Handler) http.Handler {
 	}
 }
 
-// safe returns a verbatim unescaped HTML from a string
+// safe returns a verbatim unescaped HTML from a string.
 func safe(s string) template.HTML {
 	return template.HTML(s)
 }
 
-// partial is meant to be added as a reqFuncMap to include partials from within templates.
-func (views *views) partial(r *http.Request) interface{} {
+// partial is meant to be added as a ReqFuncMap to include partials from within templates.
+func (views *Views) partial(r *http.Request) interface{} {
 	return func(name string, data interface{}) (template.HTML, error) {
 		partial, ok := views.partials[name]
 		if !ok {
