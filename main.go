@@ -71,7 +71,7 @@ func run(args []string, stdout io.Writer) error {
 
 	flagSet.IntVar(&cfg.port, "port", 8080, "http server port")
 	flagSet.StringVar(&cfg.dsn, "dsn", "tdispo.db", "database data source name")
-	flagSet.StringVar(&cfg.lang, "lang", "auto", "language of the application")
+	flagSet.StringVar(&cfg.lang, "lang", "auto", "language of the application as BCP 47")
 	flagSet.StringVar(&cfg.sessionKey, "session-key", "00000000000000000000000000000000", "session key for cookies encryption")
 
 	if err := flagSet.Parse(args[1:]); err != nil {

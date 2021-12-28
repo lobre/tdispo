@@ -25,4 +25,4 @@ COPY --from=builder /go/bin/tdispo /usr/local/bin/
 EXPOSE 8080
 VOLUME /root
 ENTRYPOINT [ "tdispo" ]
-CMD [ "-dsn", "/root/tdispo.db", "-locale", "fr_FR" ]
+CMD [ "-dsn", "/root/tdispo.db" ]

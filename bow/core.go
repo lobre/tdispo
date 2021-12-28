@@ -105,8 +105,9 @@ func WithDB(dsn string) Option {
 }
 
 // WithTranslator is an option to enable and configure the translator.
-// Pass "auto" as the lang and it will try to retrieve it first
-// from the "lang" cookie, then from the "Accept-Language" request header.
+// The lang parameter should represent a BCP 47 language.
+// If its value is "auto", it will be retrieved first from the "lang" cookie,
+// then from the "Accept-Language" request header.
 // If it cannot retrieve it, messages will be returned untranslated.
 func WithTranslator(lang string) Option {
 	return func(core *Core) error {
@@ -115,80 +116,79 @@ func WithTranslator(lang string) Option {
 			return err
 		}
 
-		core.Views.ReqFuncs(ReqFuncMap{
-			"translate": func(r *http.Request) interface{} {
-				l := lang
-				if lang == "auto" {
-					l = core.translator.ReqLang(r)
-				}
-				return func(msg string) string {
-					return core.translator.Translate(msg, l)
-				}
-			},
-			"langCode": func(r *http.Request) interface{} {
-				l := lang
-				if lang == "auto" {
-					l = core.translator.ReqLang(r)
-				}
-				return func() string {
-					return LangCode(l)
-				}
-			},
-			"dateTime": func(r *http.Request) interface{} {
-				l := lang
-				if lang == "auto" {
-					l = core.translator.ReqLang(r)
-				}
-				return func(t time.Time) string {
-					return FormatDateTime(t, l)
-				}
-			},
-			"dateFull": func(r *http.Request) interface{} {
-				l := lang
-				if lang == "auto" {
-					l = core.translator.ReqLang(r)
-				}
-				return func(t time.Time) string {
-					return FormatDateFull(t, l)
-				}
-			},
-			"dateLong": func(r *http.Request) interface{} {
-				l := lang
-				if lang == "auto" {
-					l = core.translator.ReqLang(r)
-				}
-				return func(t time.Time) string {
-					return FormatDateLong(t, l)
-				}
-			},
-			"dateMedium": func(r *http.Request) interface{} {
-				l := lang
-				if lang == "auto" {
-					l = core.translator.ReqLang(r)
-				}
-				return func(t time.Time) string {
-					return FormatDateMedium(t, l)
-				}
-			},
-			"dateShort": func(r *http.Request) interface{} {
-				l := lang
-				if lang == "auto" {
-					l = core.translator.ReqLang(r)
-				}
-				return func(t time.Time) string {
-					return FormatDateShort(t, l)
-				}
-			},
-			"time": func(r *http.Request) interface{} {
-				l := lang
-				if lang == "auto" {
-					l = core.translator.ReqLang(r)
-				}
-				return func(t time.Time) string {
-					return FormatTime(t, l)
-				}
-			},
-		})
+		locale := LocaleFromBCP47(lang)
+
+		if lang != "auto" {
+			core.Views.Funcs(template.FuncMap{
+				"translate": func(msg string) string {
+					return core.translator.Translate(msg, locale)
+				},
+				"langCode": func() string {
+					return LangCode(locale)
+				},
+				"dateTime": func(t time.Time) string {
+					return FormatDateTime(t, locale)
+				},
+				"dateFull": func(t time.Time) string {
+					return FormatDateFull(t, locale)
+				},
+				"dateLong": func(t time.Time) string {
+					return FormatDateLong(t, locale)
+				},
+				"dateMedium": func(t time.Time) string {
+					return FormatDateMedium(t, locale)
+				},
+				"dateShort": func(t time.Time) string {
+					return FormatDateShort(t, locale)
+				},
+				"time": func(t time.Time) string {
+					return FormatTime(t, locale)
+				},
+			})
+		} else {
+			core.Views.ReqFuncs(ReqFuncMap{
+				"translate": func(r *http.Request) interface{} {
+					return func(msg string) string {
+						return core.translator.Translate(msg, core.translator.ReqLocale(r))
+					}
+				},
+				"langCode": func(r *http.Request) interface{} {
+					return func() string {
+						return LangCode(core.translator.ReqLocale(r))
+					}
+				},
+				"dateTime": func(r *http.Request) interface{} {
+					return func(t time.Time) string {
+						return FormatDateTime(t, core.translator.ReqLocale(r))
+					}
+				},
+				"dateFull": func(r *http.Request) interface{} {
+					return func(t time.Time) string {
+						return FormatDateFull(t, core.translator.ReqLocale(r))
+					}
+				},
+				"dateLong": func(r *http.Request) interface{} {
+					return func(t time.Time) string {
+						return FormatDateLong(t, core.translator.ReqLocale(r))
+					}
+				},
+				"dateMedium": func(r *http.Request) interface{} {
+					return func(t time.Time) string {
+						return FormatDateMedium(t, core.translator.ReqLocale(r))
+					}
+				},
+				"dateShort": func(r *http.Request) interface{} {
+					return func(t time.Time) string {
+						return FormatDateShort(t, core.translator.ReqLocale(r))
+					}
+				},
+				"time": func(r *http.Request) interface{} {
+					return func(t time.Time) string {
+						return FormatTime(t, core.translator.ReqLocale(r))
+					}
+				},
+			})
+		}
 
 		return nil
 	}
