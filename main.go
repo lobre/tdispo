@@ -10,7 +10,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/goodsign/monday"
 	"github.com/lobre/tdispo/bow"
 )
 
@@ -48,9 +47,6 @@ type application struct {
 	*bow.Core
 
 	config config
-
-	locale monday.Locale
-	lang   string
 
 	statusService *StatusService
 	guestService  *GuestService
