@@ -31,9 +31,13 @@ func (app *application) addGlobals(r *http.Request) interface{} {
 	return struct {
 		CurrentGuest *Guest
 		IsAdmin      bool
+		AsDate       string
+		AsTime       string
 	}{
 		currentGuest(r),
 		app.isAdmin(r),
+		"Monday 2 January 2006",
+		"15:04",
 	}
 }
 

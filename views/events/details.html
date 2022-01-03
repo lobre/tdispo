@@ -10,21 +10,21 @@
 <div class="rounded-xl shadow-sm ring-1 ring-gray-300">
   <div class="flex items-center p-6">
     <dt class="w-2/5">{{ "Start date" | translate }}</dt>
-    <dd>{{ $.Event.StartsAt | dateFull }}</dd>
+    <dd>{{ $.Event.StartsAt | format globals.AsDate }}</dd>
   </div>
   <div class="flex items-center p-6">
     <dt class="w-2/5">{{ "Start time" | translate }}</dt>
-    <dd>{{ $.Event.StartsAt | time }}</dd>
+    <dd>{{ $.Event.StartsAt | format globals.AsTime }}</dd>
   </div>
 
   {{ if $.Event.EndsAt.Valid }}
     <div class="flex items-center p-6">
       <dt class="w-2/5">{{ "End date" | translate }}</dt>
-      <dd>{{ $.Event.EndsAt.Time | dateFull }}</dd>
+      <dd>{{ $.Event.EndsAt.Time | format globals.AsDate }}</dd>
     </div>
     <div class="flex items-center p-6">
       <dt class="w-2/5">{{ "End time" | translate }}</dt>
-      <dd>{{ $.Event.EndsAt.Time | time }}</dd>
+      <dd>{{ $.Event.EndsAt.Time | format globals.AsTime }}</dd>
     </div>
   {{ end }}
 </div>

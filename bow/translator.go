@@ -9,11 +9,12 @@ import (
 	"net/http"
 	"path/filepath"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/goodsign/monday"
-	"golang.org/x/text/language"
 )
 
 const (
@@ -26,22 +27,23 @@ type index map[string]string
 // Translator allows to translate a message from english to a predefined
 // set of locales parsed from csv files. Il also deals with date and time formats.
 type Translator struct {
-	dict      map[string]index
-	regexDict map[string]index // used for translations with placeholders
-	matcher   language.Matcher
+	locales map[string]bool
+	dict    map[string]index
+	regDict map[string]index // used for translations with placeholders
 }
 
 // NewTranslator creates a translator.
 func NewTranslator() *Translator {
 	return &Translator{
-		dict:      make(map[string]index),
-		regexDict: make(map[string]index),
+		locales: make(map[string]bool),
+		dict:    make(map[string]index),
+		regDict: make(map[string]index),
 	}
 }
 
 // Parse parses all the csv files in the translations folder and
 // build dictionnary maps that will serve as databases for translations.
-// The name of csv file should be a BCP 47 compatible string.
+// The name of csv file should be a string representing a locale (e.g. en_US).
 // When % is used in a csv translation, it will serve as a placeholder
 // and its value won’t be altered during the translation.
 func (tr *Translator) Parse(fsys fs.FS) error {
@@ -50,28 +52,21 @@ func (tr *Translator) Parse(fsys fs.FS) error {
 		return err
 	}
 
-	// first tag is the default one
-	tags := []language.Tag{language.Make(defaultLocale)}
-
 	for _, path := range matches {
 		base := filepath.Base(path)
-		lang := strings.TrimSuffix(base, filepath.Ext(base))
+		locale := strings.TrimSuffix(base, filepath.Ext(base))
 
-		tag, err := language.Parse(lang)
-		if err != nil {
-			return fmt.Errorf("language %s is not valid", lang)
+		re := regexp.MustCompile("^[a-z]{2}_[A-Z]{2}$")
+		if !re.MatchString(locale) {
+			return fmt.Errorf("locale %s is not valid", locale)
 		}
 
-		locale := localeFromTag(tag)
-		tr.dict[locale], tr.regexDict[locale], err = parseIndex(fsys, path)
+		tr.locales[locale] = true
+		tr.dict[locale], tr.regDict[locale], err = parseIndex(fsys, path)
 		if err != nil {
 			return err
 		}
-
-		tags = append(tags, tag)
 	}
-
-	tr.matcher = language.NewMatcher(tags)
 
 	return nil
 }
@@ -79,14 +74,14 @@ func (tr *Translator) Parse(fsys fs.FS) error {
 // parseIndex parses a csv file that contains key values entries into index maps.
 // It returns one regular index map for static translations, and a regex index map
 // which contains regex patterns and replacements for translations with placeholders.
-func parseIndex(fsys fs.FS, path string) (index, index, error) {
+func parseIndex(fsys fs.FS, path string) (idx index, regIdx index, err error) {
 	f, err := fsys.Open(path)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	index := make(map[string]string)
-	regIndex := make(map[string]string)
+	idx = make(map[string]string)
+	regIdx = make(map[string]string)
 
 	r := csv.NewReader(f)
 	for {
@@ -105,7 +100,7 @@ func parseIndex(fsys fs.FS, path string) (index, index, error) {
 
 		// no placeholder found
 		if !re.MatchString(line[0]) {
-			index[line[0]] = line[1]
+			idx[line[0]] = line[1]
 			continue
 		}
 
@@ -117,10 +112,10 @@ func parseIndex(fsys fs.FS, path string) (index, index, error) {
 			return strings.ReplaceAll(s, placeholder, fmt.Sprintf("${%d}", i))
 		})
 
-		regIndex[key] = val
+		regIdx[key] = val
 	}
 
-	return index, regIndex, nil
+	return idx, regIdx, nil
 }
 
 // Translate translates a message into the language of the corresponding locale.
@@ -139,7 +134,7 @@ func (tr *Translator) Translate(msg string, locale string) string {
 		return out
 	}
 
-	for k, v := range tr.regexDict[locale] {
+	for k, v := range tr.regDict[locale] {
 		re := regexp.MustCompile(k)
 		if !re.MatchString(msg) {
 			continue
@@ -155,72 +150,124 @@ func (tr *Translator) Translate(msg string, locale string) string {
 	return msg
 }
 
-// FormatDateTime formats the time as "1/2/06 3:04 PM" in the given locale.
-func FormatDateTime(t time.Time, locale string) string {
-	mlocale := mondayLocale(locale)
-	return monday.Format(t, monday.DateTimeFormatsByLocale[mlocale], mlocale)
-}
-
-// FormatDateFull formats the time as "Monday, January 2, 2006" in the given locale.
-func FormatDateFull(t time.Time, locale string) string {
-	mlocale := mondayLocale(locale)
-	return monday.Format(t, monday.FullFormatsByLocale[mlocale], mlocale)
-}
-
-// FormatDateLong formats the time as "January 2, 2006" in the given locale.
-func FormatDateLong(t time.Time, locale string) string {
-	mlocale := mondayLocale(locale)
-	return monday.Format(t, monday.LongFormatsByLocale[mlocale], mlocale)
-}
-
-// FormatDateMedium formats the time as "Jan 02, 2006" in the given locale.
-func FormatDateMedium(t time.Time, locale string) string {
-	mlocale := mondayLocale(locale)
-	return monday.Format(t, monday.MediumFormatsByLocale[mlocale], mlocale)
-}
-
-// FormatDateShort formats the time as "1/2/06" in the given locale.
-func FormatDateShort(t time.Time, locale string) string {
-	mlocale := mondayLocale(locale)
-	return monday.Format(t, monday.ShortFormatsByLocale[mlocale], mlocale)
-}
-
-// FormatTime formats the time as "3:04 PM" in the given locale.
-func FormatTime(t time.Time, locale string) string {
-	mlocale := mondayLocale(locale)
-	return monday.Format(t, monday.TimeFormatsByLocale[mlocale], mlocale)
-}
-
-// LangCode returns the language code of a locale.
-func LangCode(locale string) string {
-	base, _ := language.Make(locale).Base()
-	return base.String()
-}
-
-// ReqLocale returns the locale gathered from the request.
+// ReqLocale tries to return the locale from the request.
 // It tries to retrieve it first using the "lang" cookie and otherwise
 // using the "Accept-Language" request header. If the locale is not recognized
 // or not supported, it will return the default locale (en_US).
 func (tr *Translator) ReqLocale(r *http.Request) string {
-	lang, _ := r.Cookie("lang")
-	tag, _ := language.MatchStrings(tr.matcher, lang.String(), r.Header.Get("Accept-Language"))
-	return localeFromTag(tag)
-}
-
-// localeFromTag returns a locale from a language tag.
-func localeFromTag(tag language.Tag) string {
-	base, _ := tag.Base()
-	region, _ := tag.Region()
-	return fmt.Sprintf("%s_%s", base, region)
-}
-
-// mondayLocale returns a monday.Locale from a locale.
-// If the locale does not exist in monday, the default one is returned.
-func mondayLocale(locale string) monday.Locale {
-	for _, mlocale := range monday.ListLocales() {
-		if locale == string(mlocale) {
-			return mlocale
+	lang, err := r.Cookie("lang")
+	if err == nil {
+		if _, ok := tr.locales[lang.Value]; ok {
+			return lang.Value
+		} else if locale, err := tr.localeFromLang(lang.Value); err == nil {
+			return locale
 		}
 	}
-	return monday.Locale(defaultLocale)
+
+	langs, _, err := parseAcceptLanguage(r.Header.Get("Accept-Language"))
+	if err == nil {
+		for _, lang := range langs {
+			if _, ok := tr.locales[lang]; ok {
+				return lang
+			} else if locale, err := tr.localeFromLang(lang); err == nil {
+				return locale
+			}
+		}
+	}
+
+	return defaultLocale
+}
+
+// parseAcceptLanguage parses a Accept-Language http header.
+func parseAcceptLanguage(s string) (langs []string, q []float32, err error) {
+	var entry string
+	for s != "" {
+		if entry, s = split(s, ','); entry == "" {
+			continue
+		}
+
+		lang, weight := split(entry, ';')
+		langs = append(langs, lang)
+
+		// Scan the optional weight.
+		w := 1.0
+		if weight != "" {
+			weight = consume(weight, 'q')
+			weight = consume(weight, '=')
+			// consume returns the empty string when a token could not be
+			// consumed, resulting in an error for ParseFloat.
+			if w, err = strconv.ParseFloat(weight, 32); err != nil {
+				return nil, nil, err
+			}
+			// Drop tags with a quality weight of 0.
+			if w <= 0 {
+				continue
+			}
+		}
+
+		q = append(q, float32(w))
+	}
+
+	sort.Stable(&qSort{langs, q})
+	return langs, q, nil
+}
+
+// consume removes a leading token c from s and returns the result or the empty
+// string if there is no such token.
+func consume(s string, c byte) string {
+	if s == "" || s[0] != c {
+		return ""
+	}
+	return strings.TrimSpace(s[1:])
+}
+
+// split splits a string at character c into a head and tail and returns
+// the full string as the head if not found.
+func split(s string, c byte) (head, tail string) {
+	if i := strings.IndexByte(s, c); i >= 0 {
+		return strings.TrimSpace(s[:i]), strings.TrimSpace(s[i+1:])
+	}
+	return strings.TrimSpace(s), ""
+}
+
+// qSort implements sort.Interface to sort a list
+// of languages according to q indexes.
+type qSort struct {
+	langs []string
+	q     []float32
+}
+
+func (s *qSort) Len() int {
+	return len(s.q)
+}
+
+func (s *qSort) Less(i, j int) bool {
+	return s.q[i] > s.q[j]
+}
+
+func (s *qSort) Swap(i, j int) {
+	s.langs[i], s.langs[j] = s.langs[j], s.langs[i]
+	s.q[i], s.q[j] = s.q[j], s.q[i]
+}
+
+// langFromLocale returns the language part of a locale.
+func (tr *Translator) langFromLocale(locale string) string {
+	return strings.Split(locale, "_")[0]
+}
+
+// localeFromLang returns the first locale matching the given lang.
+func (tr *Translator) localeFromLang(lang string) (string, error) {
+	for locale := range tr.locales {
+		if strings.HasPrefix(locale, lang+"_") {
+			return locale, nil
+		}
+	}
+
+	return "", fmt.Errorf("no locale found for language %s", lang)
+}
+
+// Format uses the package monday to format a time.Time according to a locale
+// with month and days translated.
+func Format(dt time.Time, layout string, locale string) string {
+	return monday.Format(dt, layout, monday.Locale(locale))
 }
