@@ -16,7 +16,7 @@ type Event struct {
 	ID          int
 	Title       string
 	StartsAt    time.Time
-	EndsAt      sql.NullTime
+	EndsAt      time.Time
 	Description sql.NullString
 
 	StatusID int
@@ -276,7 +276,8 @@ func findEventByID(ctx context.Context, tx *sql.Tx, id int) (*Event, error) {
 	row := tx.QueryRowContext(ctx, `SELECT id, title, starts_at, ends_at, description, status FROM events WHERE id = ?`, id)
 
 	var evt Event
-	err := row.Scan(&evt.ID, &evt.Title, &evt.StartsAt, &evt.EndsAt, &evt.Description, &evt.StatusID)
+	var endsAt sql.NullTime
+	err := row.Scan(&evt.ID, &evt.Title, &evt.StartsAt, &endsAt, &evt.Description, &evt.StatusID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
@@ -284,15 +285,24 @@ func findEventByID(ctx context.Context, tx *sql.Tx, id int) (*Event, error) {
 		return nil, err
 	}
 
+	if endsAt.Valid {
+		evt.EndsAt = endsAt.Time
+	}
+
 	return &evt, nil
 }
 
 func createEvent(ctx context.Context, tx *sql.Tx, event *Event) error {
+	endsAt := sql.NullTime{event.EndsAt, false}
+	if !event.EndsAt.IsZero() {
+		endsAt.Valid = true
+	}
+
 	res, err := tx.ExecContext(ctx,
 		`INSERT INTO events (title, starts_at, ends_at, description, status) VALUES (?, ?, ?, ?, ?)`,
 		event.Title,
 		event.StartsAt,
-		event.EndsAt,
+		endsAt,
 		event.Description,
 		event.StatusID,
 	)
