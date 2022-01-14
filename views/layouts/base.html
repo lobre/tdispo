@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="csrf-token" content="{{ csrf }}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 
     <title>{{ template "title" . }} - Tdispo</title>
 
@@ -17,12 +18,11 @@
     {{ block "head"  . }}{{ end }}
   </head>
 
-  <body class="prose">
-    {{ partial "layouts/header" . }}
+  <body class="bg-gray-100">
     {{ partial "layouts/nav" . }}
     {{ partial "layouts/flash" . }}
 
-    <main class="container mx-auto px-4">
+    <main class="container mx-auto px-4 text-gray-800">
       {{ template "main" . }}
     </main>
   </body>

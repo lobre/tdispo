@@ -1,16 +1,20 @@
-<nav>
-  <div>
-    <a href="/">{{ "Events" | translate }}</a>
-    {{ if globals.IsAdmin }}
-      <a href="/guests">{{ "Guests" | translate }}</a>
-      <a href="/status">{{ "Statuses" | translate }}</a>
-      <a href="/noadmin">{{ "Quit admin mode" | translate }}</a>
-    {{ end }}
-    <a href="/whoareyou">{{ "Who are you?" | translate }}</a>
+<nav class="flex justify-between items-center text-base text-gray-700">
+  <div class="flex items-center gap-4 overflow-hidden">
+    <img class="m-2 h-8 w-8" src="/assets/logo.svg" alt="Logo">
+    <div class="flex items-center gap-2 overflow-x-auto">
+      <a class="p-2 hover:underline" href="/">{{ "Events" | translate }}</a>
+      {{ if globals.IsAdmin }}
+        <a class="p-2 hover:underline" href="/guests">{{ "Guests" | translate }}</a>
+        <a class="p-2 hover:underline" href="/status">{{ "Statuses" | translate }}</a>
+        <a class="p-2 hover:underline" href="/noadmin">{{ "Quit admin mode" | translate }}</a>
+      {{ end }}
+    </div>
   </div>
-  <div>
+  <div class="flex items-center">
     {{ if globals.CurrentGuest }}
-      <span>{{ "You are logged in as" | translate }} {{ globals.CurrentGuest.Name }}</span>
+      <a class="p-2 hover:underline" href="/whoareyou">{{ globals.CurrentGuest.Name }}</a>
+    {{ else }}
+      <a class="p-2 hover:underline" href="/whoareyou">{{ "Who are you?" | translate }}</a>
     {{ end }}
   </div>
 </nav>

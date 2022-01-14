@@ -1,12 +1,16 @@
 {{ define "title" }}{{ "Who are you?" | translate }}{{ end }}
 
-<p>{{ "Who are you?" | translate }}</p>
-{{ if $.Guests }}
-  <ul>
-    {{ range $.Guests }}
-      <li><a href="/iam/{{ .ID }}" data-turbo-method="post">{{ .Name }}</a></li>
-    {{ end }}
-  </ul>
-{{ else }}
-  <p>{{ "No guests" | translate }}</p>
-{{ end }}
+<div class="w-1/4 mx-auto">
+  <h1 class="text-xl text-center mb-6">{{ "Who are you?" | translate }}</h1>
+  {{ if $.Guests }}
+    <ul class="flex flex-col space-y-4 w-full text-center">
+      {{ range $.Guests }}
+        <li class="bg-white hover:bg-indigo-600 hover:text-white shadow border border-gray-300 rounded-md">
+          <a class="block w-full py-3" href="/iam/{{ .ID }}" data-turbo-method="post">{{ .Name }}</a>
+        </li>
+      {{ end }}
+    </ul>
+  {{ else }}
+    <p class="text-center">{{ "No guests" | translate }}</p>
+  {{ end }}
+</div>

@@ -2,44 +2,98 @@
 
 <form method="get" action="/" data-turbo-frame="events" x-data @change="$el.requestSubmit()" @input.debounce.500ms="$el.requestSubmit()">
   {{ with $.Form }}
-    <input type="search" name="q" 
-      value='{{ .Get "q" }}' 
-      autocomplete="off" 
-      autofocus>
+    <div class="flex justify-center pt-20">
+      <div class="flex flex-col items-center gap-y-6">
+        <img class="w-1/2 ml-auto mr-auto" src="/assets/tdispo.svg">
 
-    <div>
-      <input type="checkbox" name="past" {{ if eq (.Get "past") "true" }} checked {{ end }}>
-      <label>{{ "See past events" | translate }}</label>
+        <div class="md:w-2/3 bg-white items-center flex border border-gray-200 rounded-full p-3 shadow text-md">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="search" name="q" 
+            value='{{ .Get "q" }}' 
+            placeholder='{{ "Search an event from title" | translate }}'
+            autocomplete="off" autofocus
+            class="px-3 outline-none w-full">
+        </div>
+
+        <div class="flex justify-center items-center flex-col bg-gray-100">
+          <label class="relative flex justify-between items-center group text-md">
+            {{ "See past events" | translate }}
+            <input type="checkbox" name="past" class="absolute left-1/2 -translate-x-1/2 w-full h-full peer appearance-none rounded-md" {{ if eq (.Get "past") "true" }} checked {{ end }}/>
+            <span class="w-16 h-10 flex items-center flex-shrink-0 ml-4 p-1 bg-gray-300 rounded-full duration-300 ease-in-out peer-checked:bg-indigo-600 after:w-8 after:h-8 after:bg-white after:rounded-full after:shadow-md after:duration-300 peer-checked:after:translate-x-6 group-hover:after:translate-x-1"></span>
+          </label>
+        </div>
+
+        <noscript>
+          <div class="flex justify-center">
+            <input type="submit" value='{{ "Search" | translate }}' class="btn">
+          </div>
+        </noscript>
+      </div>
     </div>
-
-    <noscript>
-      <input type="submit" value='{{ "Search" | translate }}'>
-    </noscript>
   {{ end }}
 </form>
 
 <turbo-frame id="events" target="_top">
-  {{ if $.Events }}
-    <ul>
-      {{ range $.Events }}
-        <li>
-          <a href="/{{ .ID }}">{{ .StartsAt | format globals.AsDate }} - {{ .Title }}</a>
-          <span>- {{ .Status.Label}}</span>
-          <span style="height: 8px; width: 8px; border-radius: 50%; display: inline-block; background-color: {{ .Status.Color }};"></span>
-          {{ if globals.CurrentGuest }}
-            {{ $part := .ExtractParticipation globals.CurrentGuest }}
-            {{ if $part.Attend.Valid }}<span>- {{ index $.AttendText $part.Attend.Int64 | translate }}</span>{{ end }}
+  <div class="mt-10">
+    {{ if $.Events }}
+      <table class="min-w-full border-0 rounded-none shadow-none md:rounded-lg md:shadow overflow-hidden block md:table text-left">
+        <thead class="hidden md:table-header-group">
+          <tr class="bg-white">
+            <th class="px-5 py-3 text-gray-900 border-b border-gray-200 text-sm uppercase font-normal">{{ "Date" | translate }}</th>
+            <th class="px-5 py-3 text-gray-900 border-b border-gray-200 text-sm uppercase font-normal">{{ "Title" | translate }}</th>
+            <th class="px-5 py-3 text-gray-900 border-b border-gray-200 text-sm uppercase font-normal">{{ "Status" | translate }}</th>
+            <th class="px-5 py-3 text-gray-900 border-b border-gray-200 text-sm uppercase font-normal">{{ "Participation" | translate }}</th>
+            <th class="px-5 py-3 text-gray-900 border-b border-gray-200 text-sm uppercase font-normal">{{ "Actions" | translate }}</th>
+          </tr>
+        </thead>
+        <tbody class="flex flex-col gap-y-10 md:table-row-group">
+          {{ range $.Events }}
+            <tr class="bg-white rounded-lg shadow block md:table-row">
+              <td class="px-5 py-5 border-b border-gray-200 text-sm flex md:table-cell">
+                <span class="inline-block w-1/3 md:hidden font-bold truncate">{{ "Date" | translate }}</span>
+                <span class="w-2/3">{{ .StartsAt | format globals.AsDate }}</span>
+              </td>
+              <td class="px-5 py-5 border-b border-gray-200 text-sm flex md:table-cell">
+                <span class="inline-block w-1/3 md:hidden font-bold truncate">{{ "Title" | translate }}</span>
+                <span class="w-2/3">{{ .Title }}</span>
+              </td>
+              <td class="px-5 py-5 border-b border-gray-200 text-sm flex md:table-cell">
+                <span class="w-1/3 inline-block md:hidden font-bold truncate">{{ "Status" | translate }}</span>
+                <span class="px-4 py-2 text-sm whitespace-nowrap rounded-full text-white" style="background-color: {{ .Status.Color }};">{{ .Status.Label }}</span>
+              </td>
+              <td class="px-5 py-5 border-b border-gray-200 text-sm flex md:table-cell">
+                <span class="inline-block w-1/3 md:hidden font-bold truncate">{{ "Participation" | translate }}</span>
+                {{ if globals.CurrentGuest }}
+                  {{ $part := .ExtractParticipation globals.CurrentGuest }}
+                  {{ if $part.Attend.Valid }}
+                    <span class="w-2/3">{{ index $.AttendText $part.Attend.Int64 | translate }}</span>
+                  {{ end }}
+                {{ end }}
+              </td>
+              <td class="px-5 py-5 border-b border-gray-200 text-sm flex md:table-cell">
+                <span class="w-1/3 inline-block md:hidden font-bold truncate">{{ "Actions" | translate }}</span>
+                <div class="w-2/3 flex flex-wrap gap-2 overflow-hidden">
+                  <a href="/{{ .ID }}" class="btn">{{ "Details" | translate }}</a>
+                  {{ if globals.IsAdmin }}
+                    <a href="/{{ .ID }}/edit" class="btn">{{ "edit" | translate }}</a>
+                    <a href="/{{ .ID }}" data-turbo-method="delete" data-turbo-confirm='{{ "Are you sure?" | translate }}' class="btn btn-danger">{{ "delete" | translate }}</a>
+                  {{ end }}
+                </div>
+              </td>
+            </tr>
           {{ end }}
-          {{ if globals.IsAdmin }}
-            <a href="/{{ .ID }}/edit">({{ "edit" | translate }})</a>
-            <a href="/{{ .ID }}" data-turbo-method="delete" data-turbo-confirm='{{ "Are you sure?" | translate }}'>({{ "delete" | translate }})</a>
-          {{ end }}
-        </li>
-      {{ end }}
-    </ul>
-  {{ else }}
-    <p>{{ "No events" | translate }}</p>
-  {{ end }}
+        </tbody>
+      </table>
+    {{ else }}
+      <p>{{ "No events" | translate }}</p>
+    {{ end }}
+  </div>
 </turbo-frame>
 
-{{ if globals.IsAdmin }}<a href="/new">{{ "New event" | translate }}</a>{{ end }}
+{{ if globals.IsAdmin }}
+  <div class="w-full flex justify-center my-10">
+    <a href="/new" class="btn">{{ "New event" | translate }}</a>
+  </div>
+{{ end }}
