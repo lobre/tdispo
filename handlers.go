@@ -595,26 +595,7 @@ func (app *application) participate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Refresh event with the new participation
-	event, err = app.eventService.FindEventByID(r.Context(), eventID)
-	if err != nil {
-		if errors.Is(err, ErrNoRecord) {
-			http.NotFound(w, r)
-			return
-		} else {
-			app.Views.ServerError(w, err)
-			return
-		}
-	}
-
-	// extract participation from current guest to be able to display it first
-	currentPart := event.ExtractParticipation(currentGuest(r))
-
-	app.Views.Render(w, r, "events/details", templateData{
-		Event:                event,
-		CurrentParticipation: currentPart,
-		AttendText:           AttendText,
-	})
+	http.Redirect(w, r, fmt.Sprintf("/%d", eventID), http.StatusSeeOther)
 }
 
 func (app *application) whoAreYou(w http.ResponseWriter, r *http.Request) {

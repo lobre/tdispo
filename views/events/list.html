@@ -1,5 +1,10 @@
 {{ define "title" }}{{ "List of events" | translate }}{{ end }}
 
+{{ define "head" }}
+  <!-- make sure the page is not cached when coming back from event that has been changed -->
+  <meta name="turbo-cache-control" content="no-cache">
+{{ end }}
+
 <form method="get" action="/" data-turbo-frame="events" x-data @change="$el.requestSubmit()" @input.debounce.500ms="$el.requestSubmit()">
   {{ with $.Form }}
     <div class="flex justify-center pt-20">
@@ -12,16 +17,17 @@
           </svg>
           <input type="search" name="q" 
             value='{{ .Get "q" }}' 
-            placeholder='{{ "Search an event from title" | translate }}'
+            placeholder='{{ "Filter events from title" | translate }}'
             autocomplete="off" autofocus
-            class="px-3 outline-none w-full">
+            class="px-3 outline-none w-full"
+            x-init="$el.setSelectionRange($el.value.length, $el.value.length)">
         </div>
 
         <div class="flex justify-center items-center flex-col bg-gray-100">
           <label class="relative flex justify-between items-center group text-md">
             {{ "See past events" | translate }}
-            <input type="checkbox" name="past" class="absolute left-1/2 -translate-x-1/2 w-full h-full peer appearance-none rounded-md" {{ if eq (.Get "past") "true" }} checked {{ end }}/>
-            <span class="w-16 h-10 flex items-center flex-shrink-0 ml-4 p-1 bg-gray-300 rounded-full duration-300 ease-in-out peer-checked:bg-indigo-600 after:w-8 after:h-8 after:bg-white after:rounded-full after:shadow-md after:duration-300 peer-checked:after:translate-x-6 group-hover:after:translate-x-1"></span>
+            <input type="checkbox" name="past" class="absolute left-1/2 -translate-x-1/2 w-full h-full peer appearance-none rounded-md" {{ if eq (.Get "past") "on" }} checked {{ end }}/>
+            <span class="toggle"></span>
           </label>
         </div>
 
@@ -35,7 +41,7 @@
   {{ end }}
 </form>
 
-<turbo-frame id="events" target="_top">
+<turbo-frame id="events" data-turbo-action="replace" target="_top">
   <div class="mt-10">
     {{ if $.Events }}
       <table class="min-w-full border-0 rounded-none shadow-none md:rounded-lg md:shadow overflow-hidden block md:table text-left">
@@ -61,7 +67,7 @@
               </td>
               <td class="px-5 py-5 border-b border-gray-200 text-sm flex md:table-cell">
                 <span class="w-1/3 inline-block md:hidden font-bold truncate">{{ "Status" | translate }}</span>
-                <span class="px-4 py-2 text-sm whitespace-nowrap rounded-full text-white" style="background-color: {{ .Status.Color }};">{{ .Status.Label }}</span>
+                <span class="px-2 py-2 text-xs whitespace-nowrap rounded-full text-white" style="background-color: {{ .Status.Color }};">{{ .Status.Label }}</span>
               </td>
               <td class="px-5 py-5 border-b border-gray-200 text-sm flex md:table-cell">
                 <span class="inline-block w-1/3 md:hidden font-bold truncate">{{ "Participation" | translate }}</span>
