@@ -41,6 +41,7 @@ type config struct {
 	dsn        string
 	locale     string
 	sessionKey string
+	logo       string
 }
 
 type application struct {
@@ -69,6 +70,7 @@ func run(args []string, stdout io.Writer) error {
 	flagSet.StringVar(&cfg.dsn, "dsn", "tdispo.db", "database data source name")
 	flagSet.StringVar(&cfg.locale, "locale", "auto", "locale of the application")
 	flagSet.StringVar(&cfg.sessionKey, "session-key", "xxx", "session key for cookies encryption")
+	flagSet.StringVar(&cfg.logo, "logo", "tdispo.svg", "path of logo in assets")
 
 	if err := flagSet.Parse(args[1:]); err != nil {
 		return err

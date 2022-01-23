@@ -7,9 +7,9 @@
 
 <form method="get" action="/" data-turbo-frame="events" x-data @change="$el.requestSubmit()" @input.debounce.500ms="$el.requestSubmit()">
   {{ with $.Form }}
-    <div class="flex justify-center pt-20">
-      <div class="flex flex-col items-center gap-y-6">
-        <img class="w-1/2 ml-auto mr-auto" src="/assets/tdispo.svg">
+    <div class="flex justify-center pt-5">
+      <div class="flex md:w-1/2 flex-col items-center gap-y-6">
+        <img class="w-1/2 md:w-1/3 ml-auto mr-auto" src='/assets/{{ globals.Logo }}'>
 
         <div class="md:w-2/3 bg-white items-center flex border border-gray-200 rounded-full p-3 shadow text-md">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -30,12 +30,6 @@
             <span class="toggle"></span>
           </label>
         </div>
-
-        <noscript>
-          <div class="flex justify-center">
-            <input type="submit" value='{{ "Search" | translate }}' class="btn">
-          </div>
-        </noscript>
       </div>
     </div>
   {{ end }}
@@ -51,12 +45,11 @@
             <th class="px-5 py-3 text-gray-900 border-b border-gray-200 text-sm uppercase font-normal">{{ "Title" | translate }}</th>
             <th class="px-5 py-3 text-gray-900 border-b border-gray-200 text-sm uppercase font-normal">{{ "Status" | translate }}</th>
             <th class="px-5 py-3 text-gray-900 border-b border-gray-200 text-sm uppercase font-normal">{{ "Participation" | translate }}</th>
-            <th class="px-5 py-3 text-gray-900 border-b border-gray-200 text-sm uppercase font-normal">{{ "Actions" | translate }}</th>
           </tr>
         </thead>
         <tbody class="flex flex-col gap-y-10 md:table-row-group">
           {{ range $.Events }}
-            <tr class="bg-white rounded-lg shadow block md:table-row">
+            <tr class="bg-white rounded-lg shadow block md:table-row cursor-pointer hover:bg-gray-200" x-data @click="window.location.href='/{{ .ID }}'">
               <td class="px-5 py-5 border-b border-gray-200 text-sm flex md:table-cell">
                 <span class="inline-block w-1/3 md:hidden font-bold truncate">{{ "Date" | translate }}</span>
                 <span class="w-2/3">{{ .StartsAt | format globals.AsDate }}</span>
@@ -77,16 +70,6 @@
                     <span class="w-2/3">{{ index $.AttendText $part.Attend.Int64 | translate }}</span>
                   {{ end }}
                 {{ end }}
-              </td>
-              <td class="px-5 py-5 border-b border-gray-200 text-sm flex md:table-cell">
-                <span class="w-1/3 inline-block md:hidden font-bold truncate">{{ "Actions" | translate }}</span>
-                <div class="w-2/3 flex flex-wrap gap-2 overflow-hidden">
-                  <a href="/{{ .ID }}" class="btn">{{ "Details" | translate }}</a>
-                  {{ if globals.IsAdmin }}
-                    <a href="/{{ .ID }}/edit" class="btn">{{ "edit" | translate }}</a>
-                    <a href="/{{ .ID }}" data-turbo-method="delete" data-turbo-confirm='{{ "Are you sure?" | translate }}' class="btn btn-danger">{{ "delete" | translate }}</a>
-                  {{ end }}
-                </div>
               </td>
             </tr>
           {{ end }}
