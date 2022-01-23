@@ -11,8 +11,7 @@ services:
       - db:/root
     labels: 
       - traefik.enable=true 
-      - traefik.http.middlewares.auth.basicauth.users=pcbb:`${auth}`
-      - traefik.http.routers.nginx.rule=Host(`${url}`) 
-      - traefik.http.routers.nginx.entrypoints=web,websecure 
+      - traefik.http.middlewares.auth.basicauth.users=pcbb:${auth}
+      - traefik.http.routers.nginx.rule=Host(`${url}`)
+      - traefik.http.routers.nginx.entrypoints=web,websecure
       - traefik.http.routers.nginx.middlewares=redirect-to-https@file,auth
-
