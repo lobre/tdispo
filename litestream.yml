@@ -1,0 +1,11 @@
+access-key-id: $LITESTREAM_KEY_ID
+secret-access-key: $LITESTREAM_ACCESS_KEY
+
+dbs:
+  - path: tdispo.db
+    replicas:
+      - type: s3
+        endpoint: $LITESTREAM_ENDPOINT
+        bucket: $LITESTREAM_BUCKET
+        path: tdispo.db
+        force-path-style: true

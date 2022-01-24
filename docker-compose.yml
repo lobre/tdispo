@@ -6,23 +6,27 @@ volumes:
 services: 
   app: 
     build: .
-    command: [ "-dsn", "/root/tdispo.db", "-session-key", "${key}", "-logo", "pcbb.png" ]
+    command: [ "-dsn", "/root/tdispo.db", "-session-key", "${session_key}", "-logo", "pcbb.png" ]
     volumes:
       - db:/root
     labels: 
       - traefik.enable=true 
-      - traefik.http.middlewares.auth.basicauth.users=pcbb:${auth}
+      - traefik.http.middlewares.auth.basicauth.users=pcbb:${basic_auth}
       - traefik.http.routers.nginx.rule=Host(`${url}`)
       - traefik.http.routers.nginx.entrypoints=web,websecure
       - traefik.http.routers.nginx.middlewares=redirect-to-https@file,auth
 
   litestream:
     image: litestream/litestream
-    command: [ "replicate", "/data/tdispo.db", "s3://${litestream_url}" ]
+    command: [ "replicate" ]
+    working_dir: /data
     depends_on:
       - app
     volumes:
+      - ./litestream.yml:/etc/litestream.yml
       - db:/data
     environment:
-      - LITESTREAM_ACCESS_KEY_ID=${litestream_key_id}
-      - LITESTREAM_SECRET_ACCESS_KEY=${litestream_secret_key}
+      - LITESTREAM_KEY_ID=${litestream_key_id}
+      - LITESTREAM_ACCESS_KEY=${litestream_access_key}
+      - LITESTREAM_BUCKET=${litestream_bucket}
+      - LITESTREAM_ENDPOINT=${litestream_endpoint}
