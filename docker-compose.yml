@@ -18,7 +18,7 @@ services:
 
   litestream:
     image: litestream/litestream
-    command: [ "replicate", "/data/tdispo.db", "${litestream_bucket}" ]
+    command: [ "replicate", "/data/tdispo.db", "s3://${litestream_url}" ]
     volumes:
       - db:/data
     environment:
