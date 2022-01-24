@@ -15,3 +15,12 @@ services:
       - traefik.http.routers.nginx.rule=Host(`${url}`)
       - traefik.http.routers.nginx.entrypoints=web,websecure
       - traefik.http.routers.nginx.middlewares=redirect-to-https@file,auth
+
+  litestream:
+    image: litestream/litestream
+    command: [ "replicate", "/data/tdispo.db", "${litestream_bucket}" ]
+    volumes:
+      - db:/data
+    environment:
+      - LITESTREAM_ACCESS_KEY_ID=${litestream_key_id}
+      - LITESTREAM_SECRET_ACCESS_KEY=${litestream_secret_key}

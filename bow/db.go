@@ -53,9 +53,23 @@ func (db *DB) Open() (err error) {
 		return fmt.Errorf("enable wal: %w", err)
 	}
 
+	// When in WAL mode, setting the synchronous flag to NORMAL is a good
+	// choice for most applications. This mode ensures that fsync() calls
+	// are only called when the WAL becomes full and has execute a checkpoint
+	// to the main database file. This is safe as the WAL is append only.
+	if _, err := db.db.Exec(`PRAGMA synchronous = NORMAL;`); err != nil {
+		return fmt.Errorf("set synchronous to normal: %w", err)
+	}
+
 	// Enable foreign key checks because it is not enabled by default.
 	if _, err = db.db.Exec(`PRAGMA foreign_keys = ON;`); err != nil {
 		return fmt.Errorf("enable foreign keys check: %w", err)
+	}
+
+	// Configure the busy timeout to help external processes such as litestream
+	// to acquire a write lock in case the application already has a lock.
+	if _, err = db.db.Exec(`PRAGMA busy_timeout = 5000;`); err != nil {
+		return fmt.Errorf("set busy timeout: %w", err)
 	}
 
 	if err := db.migrate(); err != nil {
