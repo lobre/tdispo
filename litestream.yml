@@ -9,3 +9,5 @@ dbs:
         bucket: $LITESTREAM_BUCKET
         path: tdispo.db
         force-path-style: true
+        retention: 720h # 30 days
+        snapshot-interval: 24h
