@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build go generate && go install
 
 # final image
 FROM alpine
-RUN apk add --no-cache sqlite3
+RUN apk add --no-cache sqlite
 COPY --from=builder /go/bin/tdispo /usr/local/bin/
 EXPOSE 8080
 VOLUME /root
