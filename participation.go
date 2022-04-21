@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 )
 
 const (
@@ -58,6 +59,10 @@ func findParticipationsByEvent(ctx context.Context, tx *sql.Tx, id int) (_ []*Pa
 		// attach guest
 		part.Guest, err = findGuestByID(ctx, tx, part.GuestID)
 		if err != nil {
+			if errors.Is(err, ErrNoRecord) {
+				// guest has been removed, skip
+				continue
+			}
 			return nil, 0, err
 		}
 
@@ -102,6 +107,10 @@ func findParticipationsByGuest(ctx context.Context, tx *sql.Tx, id int) (_ []*Pa
 		// attach event
 		part.Event, err = findEventByID(ctx, tx, part.EventID)
 		if err != nil {
+			if errors.Is(err, ErrNoRecord) {
+				// event has been removed, skip
+				continue
+			}
 			return nil, 0, err
 		}
 
