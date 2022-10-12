@@ -39,8 +39,8 @@ var (
 type config struct {
 	port       int
 	dsn        string
-	locale     string
 	sessionKey string
+	locale     string
 	logo       string
 }
 
@@ -68,8 +68,8 @@ func run(args []string, stdout io.Writer) error {
 
 	flagSet.IntVar(&cfg.port, "port", 8080, "http server port")
 	flagSet.StringVar(&cfg.dsn, "dsn", "tdispo.db", "database data source name")
-	flagSet.StringVar(&cfg.locale, "locale", "auto", "locale of the application")
 	flagSet.StringVar(&cfg.sessionKey, "session-key", "xxx", "session key for cookies encryption")
+	flagSet.StringVar(&cfg.locale, "locale", "auto", "locale of the application")
 	flagSet.StringVar(&cfg.logo, "logo", "tdispo.svg", "path of logo in assets")
 
 	if err := flagSet.Parse(args[1:]); err != nil {
@@ -84,9 +84,9 @@ func run(args []string, stdout io.Writer) error {
 
 	app.Core, err = bow.NewCore(
 		fsys,
+		bow.WithGlobals(app.addGlobals),
 		bow.WithDB(cfg.dsn),
 		bow.WithSession(cfg.sessionKey),
-		bow.WithGlobals(app.addGlobals),
 		bow.WithTranslator(cfg.locale),
 	)
 	if err != nil {

@@ -60,6 +60,27 @@ func NewViews() *Views {
 	return &views
 }
 
+// safe returns a verbatim unescaped HTML from a string.
+func safe(s string) template.HTML {
+	return template.HTML(s)
+}
+
+// partial is meant to be added as a ReqFuncMap to include partials from within templates.
+func (views *Views) partial(r *http.Request) interface{} {
+	return func(name string, data interface{}) (template.HTML, error) {
+		partial, ok := views.partials[name]
+		if !ok {
+			return "", fmt.Errorf("partial %s not found", name)
+		}
+
+		var buf bytes.Buffer
+		if err := views.renderWithFuncs(&buf, r, partial, "main", data); err != nil {
+			return "", err
+		}
+		return template.HTML(buf.String()), nil
+	}
+}
+
 // Funcs adds the elements of the argument map to the list of
 // functions to inject into templates.
 func (views *Views) Funcs(funcs template.FuncMap) {
@@ -143,6 +164,55 @@ func (views *Views) Parse(fsys fs.FS) error {
 	return nil
 }
 
+// parseTemplate creates a new template from the given path and parses the main and
+// associated templates from the given filesystem. It also attached funcs.
+func parseTemplate(fsys fs.FS, funcs template.FuncMap, main string, associated []string) (*template.Template, error) {
+	tmpl := template.New("main").Funcs(funcs)
+
+	if main != "" {
+		b, err := fs.ReadFile(fsys, main)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = tmpl.Parse(string(b))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for _, path := range associated {
+		b, err := fs.ReadFile(fsys, path)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = tmpl.New(templateName(path)).Parse(string(b))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return tmpl, nil
+}
+
+// templateName returns a template name from a path.
+// It removes the extension, removes the leading "_" from partials
+// and trims the root directory.
+func templateName(path string) string {
+	base := filepath.Base(path)
+	base = strings.TrimSuffix(base, filepath.Ext(base))
+
+	if base[0:1] == partialPrefix {
+		base = base[1:]
+	}
+
+	dirs := strings.Split(filepath.Dir(path), string(os.PathSeparator))
+	dir := filepath.Join(dirs[1:]...)
+
+	return filepath.Join(dir, base)
+}
+
 // Render renders a given view or partial.
 //
 // For page views, the layout can be set using the WithLayout function or using the ApplyLayout middleware.
@@ -181,21 +251,6 @@ func (views *Views) Render(w http.ResponseWriter, r *http.Request, name string, 
 	}
 }
 
-// ServerError writes an error message and stack trace to the logger,
-// then sends a generic 500 Internal Server Error response to the user.
-func (views *Views) ServerError(w http.ResponseWriter, err error) {
-	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-	views.Logger.Output(2, trace)
-
-	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-}
-
-// ClientError sends a specific status code and corresponding description to the user.
-// This should be used to send responses when there's a problem with the request that the user sent.
-func (views *Views) ClientError(w http.ResponseWriter, status int) {
-	http.Error(w, http.StatusText(status), status)
-}
-
 // renderWithFuncs injects dynamic funcs and renders the given template.
 func (views *Views) renderWithFuncs(w io.Writer, r *http.Request, tmpl *template.Template, name string, data interface{}) error {
 	tmpl, err := tmpl.Clone()
@@ -227,53 +282,19 @@ func renderBuffered(w io.Writer, tmpl *template.Template, name string, data inte
 	return nil
 }
 
-// templateName returns a template name from a path.
-// It removes the extension, removes the leading "_" from partials
-// and trims the root directory.
-func templateName(path string) string {
-	base := filepath.Base(path)
-	base = strings.TrimSuffix(base, filepath.Ext(base))
+// ServerError writes an error message and stack trace to the logger,
+// then sends a generic 500 Internal Server Error response to the user.
+func (views *Views) ServerError(w http.ResponseWriter, err error) {
+	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
+	views.Logger.Output(2, trace)
 
-	if base[0:1] == partialPrefix {
-		base = base[1:]
-	}
-
-	dirs := strings.Split(filepath.Dir(path), string(os.PathSeparator))
-	dir := filepath.Join(dirs[1:]...)
-
-	return filepath.Join(dir, base)
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
-// parseTemplate creates a new template from the given path and parses the main and
-// associated templates from the given filesystem. It also attached funcs.
-func parseTemplate(fsys fs.FS, funcs template.FuncMap, main string, associated []string) (*template.Template, error) {
-	tmpl := template.New("main").Funcs(funcs)
-
-	if main != "" {
-		b, err := fs.ReadFile(fsys, main)
-		if err != nil {
-			return nil, err
-		}
-
-		_, err = tmpl.Parse(string(b))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	for _, path := range associated {
-		b, err := fs.ReadFile(fsys, path)
-		if err != nil {
-			return nil, err
-		}
-
-		_, err = tmpl.New(templateName(path)).Parse(string(b))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return tmpl, nil
+// ClientError sends a specific status code and corresponding description to the user.
+// This should be used to send responses when there's a problem with the request that the user sent.
+func (views *Views) ClientError(w http.ResponseWriter, status int) {
+	http.Error(w, http.StatusText(status), status)
 }
 
 // WithLayout returns a shallow copy of the request but with the information of the layout to apply.
@@ -293,26 +314,5 @@ func ApplyLayout(layout string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			h.ServeHTTP(w, WithLayout(r, layout))
 		})
-	}
-}
-
-// safe returns a verbatim unescaped HTML from a string.
-func safe(s string) template.HTML {
-	return template.HTML(s)
-}
-
-// partial is meant to be added as a ReqFuncMap to include partials from within templates.
-func (views *Views) partial(r *http.Request) interface{} {
-	return func(name string, data interface{}) (template.HTML, error) {
-		partial, ok := views.partials[name]
-		if !ok {
-			return "", fmt.Errorf("partial %s not found", name)
-		}
-
-		var buf bytes.Buffer
-		if err := views.renderWithFuncs(&buf, r, partial, "main", data); err != nil {
-			return "", err
-		}
-		return template.HTML(buf.String()), nil
 	}
 }

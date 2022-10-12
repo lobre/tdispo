@@ -70,12 +70,6 @@ func NewCore(fsys fs.FS, options ...Option) (*Core, error) {
 				return nosurf.Token(r)
 			}
 		},
-
-		"flash": func(r *http.Request) interface{} {
-			return func() string {
-				return core.Session.PopString(r, "flash")
-			}
-		},
 	})
 
 	if err := core.Views.Parse(fsys); err != nil {
@@ -161,6 +155,15 @@ func WithSession(key string) Option {
 	return func(core *Core) error {
 		core.Session = sessions.New([]byte(key))
 		core.Session.Lifetime = 12 * time.Hour
+
+		core.Views.ReqFuncs(ReqFuncMap{
+			"flash": func(r *http.Request) interface{} {
+				return func() string {
+					return core.Session.PopString(r, "flash")
+				}
+			},
+		})
+
 		return nil
 	}
 }
