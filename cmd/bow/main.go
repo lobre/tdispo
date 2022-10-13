@@ -136,6 +136,17 @@ func createSkeleton(conf initConfig) error {
 		// compute local path without skel/
 		parts := strings.Split(path, "/")
 		localPath := filepath.Join(parts[1:]...)
+		rootPath := parts[1]
+
+		// skip migrations folder if no db
+		if !conf.WithDB && rootPath == "migrations" {
+			return nil
+		}
+
+		// skip translations folder is no translator
+		if !conf.WithTranslator && rootPath == "translations" {
+			return nil
+		}
 
 		if d.IsDir() {
 			if err := os.MkdirAll(localPath, os.ModeDir|0755); err != nil {
