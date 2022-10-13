@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lobre/tdispo/bow"
+	"github.com/lobre/bow"
 )
 
 type Event struct {

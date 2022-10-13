@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/lobre/tdispo/bow"
+	"github.com/lobre/bow"
 )
 
 func (app *application) findStatuses(w http.ResponseWriter, r *http.Request) {

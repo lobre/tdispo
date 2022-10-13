@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/lobre/tdispo/bow"
+	"github.com/lobre/bow"
 	"github.com/mattn/go-sqlite3"
 )
 

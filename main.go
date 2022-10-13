@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/lobre/tdispo/bow"
+	"github.com/lobre/bow"
 )
 
 //go:generate tailwindcss --input ./tailwind.css --output ./assets/tailwind.css --minify

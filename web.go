@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/lobre/tdispo/bow"
+	"github.com/lobre/bow"
 )
 
 type contextKey int
