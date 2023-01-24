@@ -12,7 +12,7 @@ RUN apk upgrade --no-cache -U && \
 
 # install build deps
 RUN apk add build-base
-RUN npm --global config set user root && npm --global install tailwindcss
+RUN npm --global install tailwindcss
 
 # build application
 COPY . /go/src/app
