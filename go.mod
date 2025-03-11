@@ -10,5 +10,5 @@ require (
 	github.com/justinas/alice v1.2.0
 	github.com/justinas/nosurf v1.1.1
 	github.com/lobre/bow v0.0.0-20221013120857-df7cb9378023 // indirect
-	github.com/mattn/go-sqlite3 v1.14.15
+	github.com/mattn/go-sqlite3 v1.14.24
 )
