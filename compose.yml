@@ -1,5 +1,9 @@
 volumes:
   db: {}
+
+networks:
+  server_proxy:
+    external: true
  
 services: 
   app: 
