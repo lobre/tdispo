@@ -9,9 +9,17 @@ services:
       - db:/root
     labels: 
       - traefik.enable=true 
-      - traefik.http.middlewares.auth.basicauth.users=pcbb:${basic_auth}
-      - traefik.http.routers.nginx.rule=Host(`${url}`)
-      - traefik.http.routers.nginx.entrypoints=websecure
+      - traefik.http.routers.tdispo_secure.rule=Host(`${url}`)
+      - traefik.http.routers.tdispo_secure.entrypoints=websecure
+      - traefik.http.routers.tdispo_secure.tls=true
+      - traefik.http.routers.tdispo_secure.tls.certresolver=letsencrypt
+      - traefik.http.middlewares.tdispo_auth.basicauth.users=pcbb:${basic_auth}
+      - traefik.http.routers.tdispo_secure.middlewares=tdispo_auth
+
+      - ghosts.auth=true
+      - ghosts.host=${url}
+      - ghosts.category=~Applications
+      - ghosts.proto=https
 
   litestream:
     image: litestream/litestream
