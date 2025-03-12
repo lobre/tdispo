@@ -1,5 +1,5 @@
-FROM node:alpine as node
-FROM golang:alpine as builder
+FROM node:alpine AS node
+FROM golang:alpine AS builder
 
 # gather npm and node
 COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules

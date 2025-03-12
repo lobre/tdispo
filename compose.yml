@@ -1,5 +1,3 @@
-version: '3.8' 
-
 volumes:
   db: {}
  
@@ -13,8 +11,7 @@ services:
       - traefik.enable=true 
       - traefik.http.middlewares.auth.basicauth.users=pcbb:${basic_auth}
       - traefik.http.routers.nginx.rule=Host(`${url}`)
-      - traefik.http.routers.nginx.entrypoints=web,websecure
-      - traefik.http.routers.nginx.middlewares=redirect-to-https@file,auth
+      - traefik.http.routers.nginx.entrypoints=websecure
 
   litestream:
     image: litestream/litestream
