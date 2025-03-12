@@ -11,6 +11,8 @@ services:
     command: [ "-dsn", "/root/tdispo.db", "-session-key", "${session_key}", "-logo", "pcbb.png" ]
     volumes:
       - db:/root
+    networks:
+      - server_proxy
     labels: 
       - traefik.enable=true 
       - traefik.http.routers.tdispo_secure.rule=Host(`${url}`)
